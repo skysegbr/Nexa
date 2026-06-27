@@ -1,0 +1,598 @@
+import { h, useRef, useEffect } from "./nexa.js";
+
+const SVG_NS    = "http://www.w3.org/2000/svg";
+const NODE_W    = 188;
+const NODE_H    = 128;
+const PORT_R    = 7;
+const MIN_SCALE = 0.15;
+const MAX_SCALE = 4;
+const MM_W      = 180;    // mini-map width
+const MM_H      = 110;    // mini-map height
+
+const STATUS_FILL = {
+  idle:    "#475569",
+  running: "#3b82f6",
+  success: "#22c55e",
+  error:   "#ef4444",
+};
+
+// ── SVG helpers ────────────────────────────────────────────────────────────────
+
+function svgEl(tag, attrs = {}) {
+  const node = document.createElementNS(SVG_NS, tag);
+  for (const [k, v] of Object.entries(attrs)) node.setAttribute(k, v);
+  return node;
+}
+
+function bezier(x1, y1, x2, y2) {
+  const c = Math.max(48, Math.abs(y2 - y1) * 0.5);
+  return `M ${x1} ${y1} C ${x1} ${y1 + c}, ${x2} ${y2 - c}, ${x2} ${y2}`;
+}
+
+function clip(str, max) {
+  return str.length > max ? str.slice(0, max - 1) + "…" : str;
+}
+
+// ── PipelineCanvasController ───────────────────────────────────────────────────
+//
+// Pure imperative SVG controller — no virtual DOM.
+// Node schema: { id, label, body?, x, y, color?, status?, deps?: id[] }
+
+class PipelineCanvasController {
+  constructor(wrap, cbRef) {
+    this.wrap  = wrap;
+    this.cbRef = cbRef;   // { current: callbacks object }
+    this.nodes = [];
+    this.sel   = new Set();
+    this.pan   = { x: 0, y: 0 };
+    this.scale = 1;
+
+    this._drag    = null;
+    this._panning = null;
+    this._conn    = null;
+    this._selConn = null;   // selected connection key "fromId|toId"
+
+    this._nodeEls = new Map();   // id (string) → { g, bg, header, hfill, dot, label, body }
+    this._connEls = new Map();   // key → { path, hit }  (visible path + invisible hit-area)
+
+    this._init();
+    this._bindGlobal();
+  }
+
+  // ── Setup ──────────────────────────────────────────────────────────────────
+
+  _init() {
+    this.svg = svgEl("svg");
+    this.svg.style.cssText = "display:block;width:100%;height:100%;cursor:default;user-select:none";
+
+    const defs   = svgEl("defs");
+    const marker = svgEl("marker", { id: "ncv-arrow", markerWidth: "8", markerHeight: "6", refX: "7", refY: "3", orient: "auto" });
+    const mPoly  = svgEl("polygon", { points: "0 0,8 3,0 6", fill: "#64748b" });
+    marker.appendChild(mPoly);
+    const markerSel = svgEl("marker", { id: "ncv-arrow-sel", markerWidth: "8", markerHeight: "6", refX: "7", refY: "3", orient: "auto" });
+    const mPolySel  = svgEl("polygon", { points: "0 0,8 3,0 6", fill: "#ef4444" });
+    markerSel.appendChild(mPolySel);
+    defs.append(marker, markerSel);
+    this.svg.appendChild(defs);
+
+    this.g         = svgEl("g");
+    this.connLayer = svgEl("g");
+    this.nodeLayer = svgEl("g");
+    this.g.appendChild(this.connLayer);
+    this.g.appendChild(this.nodeLayer);
+    this.svg.appendChild(this.g);
+
+    // Ghost line for connection drawing
+    this.ghost = svgEl("path", {
+      fill: "none", stroke: "#94a3b8",
+      "stroke-width": "2", "stroke-dasharray": "6 3",
+      visibility: "hidden",
+    });
+    this.g.appendChild(this.ghost);
+
+    this.wrap.appendChild(this.svg);
+    this._applyXform();
+
+    this.svg.addEventListener("mousedown",   this._onSvgDown.bind(this));
+    this.svg.addEventListener("wheel",       this._onWheel.bind(this), { passive: false });
+    this.svg.addEventListener("contextmenu", (e) => e.preventDefault());
+
+    this._buildMinimap();
+  }
+
+  _buildMinimap() {
+    this.mmWrap = document.createElement("div");
+    this.mmWrap.className = "m-minimap-wrap";
+
+    this.mmSvg       = svgEl("svg");
+    this.mmNodeLayer = svgEl("g");
+    this.mmViewport  = svgEl("rect", { class: "m-minimap-viewport" });
+    this.mmSvg.append(this.mmNodeLayer, this.mmViewport);
+    this.mmWrap.appendChild(this.mmSvg);
+    this.wrap.appendChild(this.mmWrap);
+  }
+
+  _bindGlobal() {
+    this._mm  = this._onMove.bind(this);
+    this._mu  = this._onUp.bind(this);
+    this._kbd = this._onKeyDown.bind(this);
+    document.addEventListener("mousemove", this._mm);
+    document.addEventListener("mouseup",   this._mu);
+    document.addEventListener("keydown",   this._kbd);
+  }
+
+  // ── Public API ─────────────────────────────────────────────────────────────
+
+  setNodes(nodes) {
+    this.nodes = nodes.map(n => ({ ...n }));
+    this._syncNodes();
+    this._syncConns();
+    this._updateMinimap();
+  }
+
+  fitView() {
+    if (!this.nodes.length) return;
+    const rect = this.wrap.getBoundingClientRect();
+    const xs   = this.nodes.map(n => n.x);
+    const ys   = this.nodes.map(n => n.y);
+    const x0   = Math.min(...xs), y0 = Math.min(...ys);
+    const x1   = Math.max(...xs) + NODE_W, y1 = Math.max(...ys) + NODE_H;
+    const s    = Math.min(1, 0.9 * Math.min(
+      rect.width  / (x1 - x0 + 80),
+      rect.height / (y1 - y0 + 80),
+    ));
+    this.scale = s;
+    this.pan.x = (rect.width  - (x1 - x0) * s) / 2 - x0 * s;
+    this.pan.y = (rect.height - (y1 - y0) * s) / 2 - y0 * s;
+    this._applyXform();
+    this._updateMinimap();
+  }
+
+  zoomStep(factor) {
+    const rect = this.wrap.getBoundingClientRect();
+    const mx = rect.width / 2, my = rect.height / 2;
+    const next = Math.min(MAX_SCALE, Math.max(MIN_SCALE, this.scale * factor));
+    this.pan.x = mx - (mx - this.pan.x) * (next / this.scale);
+    this.pan.y = my - (my - this.pan.y) * (next / this.scale);
+    this.scale = next;
+    this._applyXform();
+    this._updateMinimap();
+  }
+
+  autoLayout() {
+    if (!this.nodes.length) return;
+    const HGAP = NODE_W + 60, VGAP = NODE_H + 50, PAD = 80;
+
+    // topological sort (Kahn's)
+    const idStr = n => String(n.id);
+    const inDeg = new Map(this.nodes.map(n => [idStr(n), 0]));
+    const children = new Map(this.nodes.map(n => [idStr(n), []]));
+    for (const n of this.nodes) {
+      for (const d of (n.deps || [])) {
+        const dk = String(d);
+        if (inDeg.has(dk)) inDeg.set(dk, inDeg.get(dk) + 1);
+        children.get(dk)?.push(idStr(n));
+      }
+    }
+    const levels = new Map();
+    const queue = this.nodes.filter(n => inDeg.get(idStr(n)) === 0).map(idStr);
+    queue.forEach(id => levels.set(id, 0));
+    while (queue.length) {
+      const id = queue.shift();
+      for (const cid of (children.get(id) || [])) {
+        const lv = Math.max(levels.get(cid) || 0, (levels.get(id) || 0) + 1);
+        levels.set(cid, lv);
+        inDeg.set(cid, inDeg.get(cid) - 1);
+        if (inDeg.get(cid) === 0) queue.push(cid);
+      }
+    }
+    // group by level
+    const byLevel = new Map();
+    for (const [id, lv] of levels) {
+      if (!byLevel.has(lv)) byLevel.set(lv, []);
+      byLevel.get(lv).push(id);
+    }
+    const maxInLevel = Math.max(...[...byLevel.values()].map(a => a.length));
+    for (const [lv, ids] of byLevel) {
+      const totalH = ids.length * NODE_H + (ids.length - 1) * (VGAP - NODE_H);
+      const startY = PAD + (maxInLevel * NODE_H - totalH) / 2;
+      ids.forEach((id, i) => {
+        const node = this.nodes.find(n => idStr(n) === id);
+        if (node) {
+          node.x = PAD + lv * HGAP;
+          node.y = startY + i * VGAP;
+          this.cbRef.current.onNodeMove?.(node.id, node.x, node.y);
+        }
+      });
+    }
+    this._syncNodes();
+    this._syncConns();
+    requestAnimationFrame(() => this.fitView());
+  }
+
+  destroy() {
+    document.removeEventListener("mousemove", this._mm);
+    document.removeEventListener("mouseup",   this._mu);
+    document.removeEventListener("keydown",   this._kbd);
+    this.wrap.innerHTML = "";
+  }
+
+  // ── Node sync ──────────────────────────────────────────────────────────────
+
+  _syncNodes() {
+    const ids = new Set(this.nodes.map(n => String(n.id)));
+    for (const [id, refs] of this._nodeEls) {
+      if (!ids.has(id)) { refs.g.remove(); this._nodeEls.delete(id); }
+    }
+    for (const node of this.nodes) {
+      const id = String(node.id);
+      if (this._nodeEls.has(id)) {
+        this._updateNode(this._nodeEls.get(id), node);
+      } else {
+        const refs = this._buildNode(node);
+        this.nodeLayer.appendChild(refs.g);
+        this._nodeEls.set(id, refs);
+      }
+    }
+  }
+
+  _buildNode(node) {
+    const g      = svgEl("g",       { class: "m-pnode" });
+    const bg     = svgEl("rect",    { class: "m-pnode-bg",     width: NODE_W, height: NODE_H, rx: "8", ry: "8" });
+    const header = svgEl("rect",    { class: "m-pnode-header", width: NODE_W, height: "36",  rx: "8", ry: "8" });
+    const hfill  = svgEl("rect",    { class: "m-pnode-hfill",  width: NODE_W, height: "8",   y:  "28" });
+    const dot    = svgEl("circle",  { class: "m-pnode-dot",    cx: "14", cy: "18", r: "5" });
+    const label  = svgEl("text",    { class: "m-pnode-label",  x: "26",  y: "23" });
+    const body   = svgEl("text",    { class: "m-pnode-body",   x: "10",  y: "52" });
+
+    const editG  = svgEl("g",    { class: "m-pnode-action m-pnode-edit-btn", transform: `translate(${NODE_W - 52},8)` });
+    const editBg = svgEl("rect", { class: "m-pnode-action-bg", width: "20", height: "20", rx: "4" });
+    const editTx = svgEl("text", { class: "m-pnode-action-icon", x: "10", y: "14", "text-anchor": "middle" });
+    editTx.textContent = "✎";
+    editG.append(editBg, editTx);
+    editG.addEventListener("mousedown", (e) => { e.stopPropagation(); this.cbRef.current.onNodeEdit?.(node.id); });
+
+    const delG  = svgEl("g",    { class: "m-pnode-action m-pnode-del-btn", transform: `translate(${NODE_W - 28},8)` });
+    const delBg = svgEl("rect", { class: "m-pnode-action-bg m-pnode-del-bg", width: "20", height: "20", rx: "4" });
+    const delTx = svgEl("text", { class: "m-pnode-action-icon", x: "10", y: "14", "text-anchor": "middle" });
+    delTx.textContent = "✕";
+    delG.append(delBg, delTx);
+    delG.addEventListener("mousedown", (e) => { e.stopPropagation(); this.cbRef.current.onNodeDelete?.(node.id); });
+
+    // Input port — top center
+    const portIn = svgEl("g", { class: "m-pnode-port m-pnode-port-in", transform: `translate(${NODE_W / 2},0)` });
+    portIn.appendChild(svgEl("circle", { class: "m-pnode-port-circle", r: PORT_R }));
+    portIn.addEventListener("mouseup", (e) => {
+      if (this._conn && String(this._conn.fromId) !== String(node.id)) {
+        this.cbRef.current.onNodeConnect?.(this._conn.fromId, node.id);
+      }
+      this._endConn();
+      // does not call stopPropagation: document.mouseup needs to fire to clean up the drag
+    });
+
+    // Output port — bottom center
+    const portOut = svgEl("g", { class: "m-pnode-port m-pnode-port-out", transform: `translate(${NODE_W / 2},${NODE_H})` });
+    portOut.appendChild(svgEl("circle", { class: "m-pnode-port-circle", r: PORT_R }));
+    portOut.addEventListener("mousedown", (e) => { e.stopPropagation(); this._startConn(node.id); });
+
+    g.append(bg, header, hfill, dot, label, body, editG, delG, portIn, portOut);
+    g.addEventListener("mousedown", (e) => {
+      if (e.button === 0) { e.stopPropagation(); this._startDrag(node.id, e); }
+    });
+    g.addEventListener("contextmenu", (e) => {
+      e.preventDefault(); e.stopPropagation();
+      this.cbRef.current.onContextMenu?.(node.id, e.clientX, e.clientY);
+    });
+
+    const refs = { g, bg, header, hfill, dot, label, body };
+    this._updateNode(refs, node);
+    return refs;
+  }
+
+  _updateNode({ g, bg, header, hfill, dot, label, body }, node) {
+    const color = node.color || "#0f766e";
+    const sel   = this.sel.has(String(node.id));
+    g.setAttribute("transform",    `translate(${node.x},${node.y})`);
+    bg.setAttribute("stroke",      sel ? "#ffffff" : "rgba(255,255,255,0.1)");
+    bg.setAttribute("stroke-width", sel ? "2.5" : "1.5");
+    header.setAttribute("fill",    color);
+    hfill.setAttribute("fill",     color);
+    dot.setAttribute("fill",       STATUS_FILL[node.status || "idle"]);
+    label.textContent = clip(node.label || "Node", 24);
+    body.innerHTML    = "";
+    (node.body || "").split("\n").slice(0, 4).forEach((line, i) => {
+      const t = svgEl("tspan", { x: "10", dy: i === 0 ? "0" : "1.35em" });
+      t.textContent = clip(line, 28);
+      body.appendChild(t);
+    });
+  }
+
+  // ── Connection sync ────────────────────────────────────────────────────────
+
+  _syncConns() {
+    const needed = new Set();
+    for (const n of this.nodes) {
+      for (const dep of (n.deps || [])) {
+        if (this.nodes.find(d => String(d.id) === String(dep))) needed.add(`${dep}|${n.id}`);
+      }
+    }
+    for (const [key, els] of this._connEls) {
+      if (!needed.has(key)) {
+        els.path.remove(); els.hit.remove();
+        this._connEls.delete(key);
+      }
+    }
+    for (const key of needed) {
+      const [fId, tId] = key.split("|");
+      const from = this.nodes.find(n => String(n.id) === fId);
+      const to   = this.nodes.find(n => String(n.id) === tId);
+      if (!from || !to) continue;
+
+      const d   = bezier(from.x + NODE_W / 2, from.y + NODE_H, to.x + NODE_W / 2, to.y);
+      const sel = this._selConn === key;
+
+      if (this._connEls.has(key)) {
+        const { path, hit } = this._connEls.get(key);
+        path.setAttribute("d", d);
+        hit.setAttribute("d", d);
+        path.setAttribute("stroke",      sel ? "#ef4444" : "#64748b");
+        path.setAttribute("marker-end",  sel ? "url(#ncv-arrow-sel)" : "url(#ncv-arrow)");
+      } else {
+        // visible path
+        const path = svgEl("path", {
+          class: "m-pipeline-conn", d, fill: "none",
+          stroke: "#64748b", "stroke-width": "2",
+          "marker-end": "url(#ncv-arrow)",
+        });
+        // invisible wide hit area for click detection
+        const hit = svgEl("path", {
+          class: "m-pipeline-conn-hit", d, fill: "none",
+          stroke: "transparent", "stroke-width": "12",
+        });
+        hit.addEventListener("click",    (e) => { e.stopPropagation(); this._selectConn(key); });
+        hit.addEventListener("dblclick", (e) => { e.stopPropagation(); this._deleteConn(key); });
+        hit.addEventListener("contextmenu", (e) => { e.preventDefault(); e.stopPropagation(); this._selectConn(key); });
+
+        this.connLayer.append(path, hit);
+        this._connEls.set(key, { path, hit });
+      }
+    }
+  }
+
+  _selectConn(key) {
+    this._selConn = this._selConn === key ? null : key;
+    this._syncConns();
+  }
+
+  _deleteConn(key) {
+    const [fId, tId] = key.split("|");
+    this._selConn = null;
+    this.cbRef.current.onConnectionDelete?.(Number(fId) || fId, Number(tId) || tId);
+  }
+
+  // ── Mini-map ───────────────────────────────────────────────────────────────
+
+  _updateMinimap() {
+    if (!this.nodes.length) { this.mmNodeLayer.innerHTML = ""; return; }
+
+    const PAD = 10;
+    const xs  = this.nodes.map(n => n.x);
+    const ys  = this.nodes.map(n => n.y);
+    const x0  = Math.min(...xs) - PAD, y0 = Math.min(...ys) - PAD;
+    const x1  = Math.max(...xs) + NODE_W + PAD, y1 = Math.max(...ys) + NODE_H + PAD;
+    const nw  = x1 - x0, nh = y1 - y0;
+    const s   = Math.min((MM_W - PAD * 2) / nw, (MM_H - PAD * 2) / nh);
+    const ox  = (MM_W - nw * s) / 2;
+    const oy  = (MM_H - nh * s) / 2;
+
+    // Node rectangles
+    this.mmNodeLayer.innerHTML = "";
+    for (const node of this.nodes) {
+      this.mmNodeLayer.appendChild(svgEl("rect", {
+        x:       ox + (node.x - x0) * s,
+        y:       oy + (node.y - y0) * s,
+        width:   Math.max(4, NODE_W * s),
+        height:  Math.max(3, NODE_H * s),
+        rx:      "2",
+        fill:    node.color || "#0f766e",
+        opacity: "0.85",
+      }));
+    }
+
+    // Viewport rectangle
+    const wRect = this.wrap.getBoundingClientRect();
+    const vx0   = (-this.pan.x) / this.scale;
+    const vy0   = (-this.pan.y) / this.scale;
+    const vx1   = (wRect.width  - this.pan.x) / this.scale;
+    const vy1   = (wRect.height - this.pan.y) / this.scale;
+    this.mmViewport.setAttribute("x",      ox + (vx0 - x0) * s);
+    this.mmViewport.setAttribute("y",      oy + (vy0 - y0) * s);
+    this.mmViewport.setAttribute("width",  Math.max(8, (vx1 - vx0) * s));
+    this.mmViewport.setAttribute("height", Math.max(6, (vy1 - vy0) * s));
+    this.mmSvg.setAttribute("viewBox", `0 0 ${MM_W} ${MM_H}`);
+    this.mmSvg.setAttribute("width",  MM_W);
+    this.mmSvg.setAttribute("height", MM_H);
+  }
+
+  // ── Events ─────────────────────────────────────────────────────────────────
+
+  _onSvgDown(e) {
+    if (e.button !== 0) return;
+    this.sel.clear();
+    this._selConn = null;
+    this._redrawSel();
+    this._syncConns();
+    this._panning = { sx: e.clientX, sy: e.clientY, ox: this.pan.x, oy: this.pan.y };
+  }
+
+  _startDrag(id, e) {
+    this._selConn = null;
+    if (!e.shiftKey && !e.ctrlKey && !e.metaKey) {
+      if (!this.sel.has(String(id))) { this.sel.clear(); this.sel.add(String(id)); this._redrawSel(); }
+    } else {
+      this.sel.has(String(id)) ? this.sel.delete(String(id)) : this.sel.add(String(id));
+      this._redrawSel();
+    }
+    const p = this._toCanvas(e.clientX, e.clientY);
+    this._drag = {
+      ids:  [...this.sel],
+      sx:   p.x, sy: p.y,
+      orig: Object.fromEntries(
+        this.nodes.filter(n => this.sel.has(String(n.id))).map(n => [n.id, { x: n.x, y: n.y }]),
+      ),
+    };
+  }
+
+  _startConn(fromId) {
+    this._conn = { fromId };
+    this.ghost.setAttribute("visibility", "visible");
+  }
+
+  _endConn() {
+    this._conn = null;
+    this.ghost.setAttribute("visibility", "hidden");
+    this.ghost.setAttribute("d", "");
+  }
+
+  _onMove(e) {
+    const p = this._toCanvas(e.clientX, e.clientY);
+
+    if (this._drag) {
+      const dx = p.x - this._drag.sx, dy = p.y - this._drag.sy;
+      for (const node of this.nodes) {
+        if (!this._drag.ids.includes(String(node.id))) continue;
+        const o = this._drag.orig[node.id];
+        node.x = o.x + dx; node.y = o.y + dy;
+        const refs = this._nodeEls.get(String(node.id));
+        if (refs) refs.g.setAttribute("transform", `translate(${node.x},${node.y})`);
+      }
+      this._syncConns();
+      this._updateMinimap();
+    }
+
+    if (this._panning) {
+      this.pan.x = this._panning.ox + (e.clientX - this._panning.sx);
+      this.pan.y = this._panning.oy + (e.clientY - this._panning.sy);
+      this._applyXform();
+      this._updateMinimap();
+    }
+
+    if (this._conn) {
+      const from = this.nodes.find(n => n.id === this._conn.fromId);
+      if (from) this.ghost.setAttribute("d", bezier(from.x + NODE_W / 2, from.y + NODE_H, p.x, p.y));
+    }
+  }
+
+  _onUp() {
+    if (this._drag) {
+      for (const id of this._drag.ids) {
+        const node = this.nodes.find(n => String(n.id) === id);
+        if (node) this.cbRef.current.onNodeMove?.(node.id, node.x, node.y);
+      }
+      this._drag = null;
+    }
+    if (this._panning) this._panning = null;
+    if (this._conn)    this._endConn();
+  }
+
+  _onKeyDown(e) {
+    // Ignore when focus is in a text field
+    const tag = document.activeElement?.tagName;
+    if (tag === "INPUT" || tag === "TEXTAREA") return;
+
+    // Delete selected nodes
+    if (e.key === "Delete" || e.key === "Backspace") {
+      // Delete selected connection first
+      if (this._selConn) {
+        const [fId, tId] = this._selConn.split("|");
+        this.cbRef.current.onConnectionDelete?.(Number(fId) || fId, Number(tId) || tId);
+        this._selConn = null;
+        return;
+      }
+      // Delete selected nodes
+      for (const id of this.sel) {
+        this.cbRef.current.onNodeDelete?.(Number(id) || id);
+      }
+      this.sel.clear();
+    }
+  }
+
+  _onWheel(e) {
+    e.preventDefault();
+    const rect   = this.wrap.getBoundingClientRect();
+    const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+    const factor = e.deltaY < 0 ? 1.12 : 0.9;
+    const next   = Math.min(MAX_SCALE, Math.max(MIN_SCALE, this.scale * factor));
+    this.pan.x   = mx - (mx - this.pan.x) * (next / this.scale);
+    this.pan.y   = my - (my - this.pan.y) * (next / this.scale);
+    this.scale   = next;
+    this._applyXform();
+    this._updateMinimap();
+  }
+
+  // ── Helpers ────────────────────────────────────────────────────────────────
+
+  _applyXform() {
+    this.g.setAttribute("transform", `translate(${this.pan.x},${this.pan.y}) scale(${this.scale})`);
+  }
+
+  _toCanvas(cx, cy) {
+    const r = this.wrap.getBoundingClientRect();
+    return { x: (cx - r.left - this.pan.x) / this.scale, y: (cy - r.top - this.pan.y) / this.scale };
+  }
+
+  _redrawSel() {
+    for (const [id, refs] of this._nodeEls) {
+      const node = this.nodes.find(n => String(n.id) === id);
+      if (node) this._updateNode(refs, node);
+    }
+  }
+}
+
+// ── PipelineCanvas component ───────────────────────────────────────────────────
+//
+// Props:
+//   nodes              Array   [{ id, label, body, x, y, color, status, deps }]
+//   onNodeEdit         (id) → void
+//   onNodeDelete       (id) → void
+//   onNodeMove         (id, x, y) → void
+//   onNodeConnect      (fromId, toId) → void
+//   onConnectionDelete (fromId, toId) → void
+//   onContextMenu      (id, clientX, clientY) → void
+
+function jc(...c) { return c.filter(Boolean).join(" "); }
+
+export function PipelineCanvas({
+  nodes = [],
+  onNodeEdit,
+  onNodeDelete,
+  onNodeMove,
+  onNodeConnect,
+  onConnectionDelete,
+  onContextMenu,
+  controllerRef,
+  className = "",
+  style,
+} = {}) {
+  const wrapRef = useRef(null);
+  const ctrlRef = useRef(null);
+  const cbRef   = useRef({});
+
+  cbRef.current = { onNodeEdit, onNodeDelete, onNodeMove, onNodeConnect, onConnectionDelete, onContextMenu };
+
+  useEffect(() => {
+    if (!wrapRef.current) return undefined;
+    const ctrl = new PipelineCanvasController(wrapRef.current, cbRef);
+    ctrlRef.current = ctrl;
+    if (controllerRef) controllerRef.current = ctrl;
+    ctrl.setNodes(nodes);
+    requestAnimationFrame(() => ctrl.fitView());
+    return () => { ctrl.destroy(); if (controllerRef) controllerRef.current = null; };
+  }, []);
+
+  useEffect(() => {
+    ctrlRef.current?.setNodes(nodes);
+  }, [nodes]);
+
+  return h("div", { ref: wrapRef, className: jc("m-pipeline-wrap", className), style });
+}

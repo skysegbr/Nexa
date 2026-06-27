@@ -1,0 +1,56 @@
+.i-panel {
+  display: grid;
+  align-content: center;
+  justify-items: start;
+  width: min(760px, calc(100% - 32px));
+  margin: 0 auto;
+  padding-block: 48px;
+}
+
+.i-hero-mark {
+  display: grid;
+  place-items: center;
+  width: clamp(64px, 10vw, 140px);
+  aspect-ratio: 1;
+  overflow: visible;
+  background: transparent;
+  transform: translateX(-12px);
+}
+
+.i-hero-mark img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.i-eyebrow {
+  margin: 0 0 8px;
+  color: var(--i-eyebrow);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.i-title {
+  max-width: 680px;
+  margin: 0;
+  font-size: clamp(2rem, 8vw, 5rem);
+  line-height: 0.98;
+  letter-spacing: -0.02em;
+}
+
+.i-copy {
+  max-width: 560px;
+  margin: 24px 0 0;
+  color: var(--i-text-muted);
+  font-size: 1.05rem;
+  line-height: 1.65;
+}
+
+@media (max-width: 576px) {
+  .i-panel {
+    align-content: start;
+    padding-top: 36px;
+  }
+}

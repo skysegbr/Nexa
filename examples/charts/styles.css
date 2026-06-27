@@ -1,0 +1,73 @@
+@import "./components/Toolbar.css";
+@import "./components/DonutChart.css";
+@import "./components/ChartFallback.css";
+
+:root {
+  color-scheme: light dark;
+  --c-bg: #f1f5f9;
+  --c-surface: #ffffff;
+  --c-text: #0f172a;
+  --c-muted: #64748b;
+  --c-border: #cbd5e1;
+  --c-accent: #0f766e;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --c-bg: #0f172a;
+    --c-surface: #1e293b;
+    --c-text: #e2e8f0;
+    --c-muted: #94a3b8;
+    --c-border: #334155;
+    --c-accent: #2dd4bf;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--c-bg);
+  color: var(--c-text);
+  font: 16px/1.5 -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+.c-page {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 2.5rem 1.5rem 4rem;
+  display: grid;
+  gap: 1.5rem;
+}
+
+.c-eyebrow {
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--c-accent);
+}
+
+.c-header h1 {
+  margin: 0.25rem 0 0.5rem;
+  font-size: 1.75rem;
+}
+
+.c-copy {
+  margin: 0;
+  max-width: 60ch;
+  color: var(--c-muted);
+}
+
+.c-stage {
+  min-height: 320px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--c-border);
+  border-radius: 12px;
+  background: var(--c-surface);
+  padding: 1.5rem;
+}

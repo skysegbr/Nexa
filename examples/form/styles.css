@@ -1,0 +1,20 @@
+@import "./components/FormHero.css";
+@import "./components/ContactForm.css";
+@import "./components/FormSummary.css";
+
+.form-page {
+  padding-block: var(--m-space-6);
+}
+
+.form-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--m-space-4);
+  align-items: start;
+}
+
+@media (min-width: 768px) {
+  .form-layout {
+    grid-template-columns: minmax(0, 1.4fr) minmax(280px, 0.8fr);
+  }
+}

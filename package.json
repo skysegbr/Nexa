@@ -1,0 +1,25 @@
+{
+  "name": "nexa",
+  "version": "0.1.0",
+  "description": "Next-generation frontend framework in plain JavaScript, with no build step.",
+  "type": "module",
+  "main": "dist/nexa.js",
+  "style": "dist/nexa-ui.css",
+  "exports": {
+    ".": "./dist/nexa.js",
+    "./components": "./dist/nexa-components.js",
+    "./ui.css": "./dist/nexa-ui.css"
+  },
+  "files": [
+    "dist",
+    "docs",
+    "examples"
+  ],
+  "keywords": [
+    "nexa",
+    "frontend",
+    "javascript",
+    "no-build",
+    "ui"
+  ]
+}

@@ -1,0 +1,23 @@
+.form-summary h2 {
+  margin: 0;
+  font-size: var(--m-font-size-lg);
+}
+
+.form-summary pre {
+  min-height: 240px;
+  margin: 0;
+  overflow: auto;
+  padding: var(--m-space-4);
+  border: 1px solid var(--m-border);
+  border-radius: var(--m-radius);
+  background: var(--m-surface-muted);
+  color: var(--m-text);
+  font: var(--m-font-size-sm) / 1.6 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+@media (min-width: 768px) {
+  .form-summary {
+    position: sticky;
+    top: var(--m-space-4);
+  }
+}

@@ -1,0 +1,26 @@
+.c-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.c-toolbar-btn {
+  border: 1px solid var(--c-border);
+  border-radius: 999px;
+  background: var(--c-surface);
+  color: var(--c-text);
+  padding: 0.45rem 1rem;
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.c-toolbar-btn:hover {
+  border-color: var(--c-accent);
+}
+
+.c-toolbar-btn.is-active {
+  background: var(--c-accent);
+  border-color: var(--c-accent);
+  color: #ffffff;
+}

@@ -1,0 +1,134 @@
+.l-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  backdrop-filter: blur(10px);
+  background: color-mix(in srgb, var(--l-surface) 82%, transparent);
+  border-bottom: 1px solid var(--l-border);
+}
+
+.l-header-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0.9rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+}
+
+.l-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 800;
+  font-size: 1.15rem;
+  color: var(--l-text);
+  text-decoration: none;
+}
+
+.l-logo-mark {
+  display: inline-grid;
+  place-items: center;
+  width: 1.8rem;
+  height: 1.8rem;
+  border-radius: 8px;
+  background: var(--l-gradient);
+  color: #ffffff;
+  font-size: 0.9rem;
+}
+
+.l-nav {
+  display: flex;
+  align-items: center;
+  gap: 1.75rem;
+}
+
+.l-nav-link {
+  color: var(--l-muted);
+  text-decoration: none;
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.l-nav-link:hover {
+  color: var(--l-text);
+}
+
+.l-nav-cta {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.5rem 1.15rem;
+  background: var(--l-text);
+  color: var(--l-surface);
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.l-nav-cta:hover {
+  opacity: 0.85;
+}
+
+.l-menu-btn {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  width: 2.4rem;
+  height: 2.4rem;
+  border: 1px solid var(--l-border);
+  border-radius: 8px;
+  background: var(--l-surface);
+  cursor: pointer;
+}
+
+.l-menu-bar {
+  display: block;
+  margin: 0 auto;
+  width: 1.1rem;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--l-text);
+}
+
+@media (max-width: 760px) {
+  .l-menu-btn {
+    display: inline-flex;
+  }
+
+  .l-nav {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+    padding: 0.5rem 1.5rem 1rem;
+    background: var(--l-surface);
+    border-bottom: 1px solid var(--l-border);
+    transform-origin: top;
+    transform: scaleY(0);
+    opacity: 0;
+    pointer-events: none;
+    transition: transform 0.18s ease, opacity 0.18s ease;
+  }
+
+  .l-nav.is-open {
+    transform: scaleY(1);
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .l-nav-link,
+  .l-nav-cta {
+    padding: 0.65rem 0;
+  }
+
+  .l-nav-cta {
+    margin-top: 0.4rem;
+    justify-content: center;
+  }
+}

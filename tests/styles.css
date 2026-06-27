@@ -1,0 +1,87 @@
+:root {
+  color-scheme: light dark;
+  --t-bg: #0f172a;
+  --t-surface: #1e293b;
+  --t-text: #e2e8f0;
+  --t-muted: #94a3b8;
+  --t-pass: #22c55e;
+  --t-fail: #ef4444;
+  --t-border: #334155;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 2rem 1.25rem;
+  background: var(--t-bg);
+  color: var(--t-text);
+  font: 15px/1.5 -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+main {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+h1 {
+  margin: 0 0 0.25rem;
+  font-size: 1.5rem;
+}
+
+.t-hint {
+  margin: 0 0 1.5rem;
+  color: var(--t-muted);
+}
+
+.t-hint code {
+  background: var(--t-surface);
+  border-radius: 4px;
+  padding: 0.1rem 0.35rem;
+}
+
+.t-summary {
+  margin: 0 0 1rem;
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.t-summary-pass {
+  color: var(--t-pass);
+}
+
+.t-summary-fail {
+  color: var(--t-fail);
+}
+
+.t-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--t-border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.t-item {
+  padding: 0.6rem 0.9rem;
+  border-bottom: 1px solid var(--t-border);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.85rem;
+}
+
+.t-item:last-child {
+  border-bottom: none;
+}
+
+.t-pass {
+  color: var(--t-pass);
+  background: color-mix(in srgb, var(--t-pass) 8%, var(--t-surface));
+}
+
+.t-fail {
+  color: var(--t-fail);
+  background: color-mix(in srgb, var(--t-fail) 12%, var(--t-surface));
+}

@@ -1,0 +1,79 @@
+.g-grid {
+  column-count: 1;
+  column-gap: 1.1rem;
+}
+
+@media (min-width: 640px) {
+  .g-grid {
+    column-count: 2;
+  }
+}
+
+@media (min-width: 1024px) {
+  .g-grid {
+    column-count: 3;
+  }
+}
+
+.g-card {
+  margin: 0 0 1.1rem;
+  break-inside: avoid;
+}
+
+.g-card-btn {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 1px solid var(--g-border);
+  border-radius: 0.85rem;
+  overflow: hidden;
+  background: var(--g-surface);
+  font: inherit;
+  text-align: left;
+  cursor: zoom-in;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+.g-card-btn:hover,
+.g-card-btn:focus-visible {
+  border-color: var(--g-accent);
+  transform: translateY(-2px);
+}
+
+.g-card-img {
+  display: block;
+  width: 100%;
+  height: auto;
+  background: var(--g-surface-alt);
+  opacity: 0;
+  transform: scale(1.03);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.g-card-img.is-loaded {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.g-card-caption {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.8rem 0.95rem;
+}
+
+.g-card-title {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.g-card-author {
+  font-size: 0.78rem;
+  color: var(--g-muted);
+}
+
+.g-empty {
+  text-align: center;
+  color: var(--g-muted);
+  padding: 3rem 1rem;
+}

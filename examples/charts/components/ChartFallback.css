@@ -1,0 +1,30 @@
+.c-fallback {
+  display: grid;
+  justify-items: center;
+  gap: 0.65rem;
+  max-width: 36ch;
+  text-align: center;
+}
+
+.c-fallback-title {
+  margin: 0;
+  font-weight: 700;
+}
+
+.c-fallback-detail {
+  margin: 0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.8rem;
+  color: var(--c-muted);
+}
+
+.c-fallback-btn {
+  border: 1px solid var(--c-accent);
+  border-radius: 8px;
+  background: var(--c-accent);
+  color: #ffffff;
+  padding: 0.5rem 1.1rem;
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+}

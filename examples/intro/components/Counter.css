@@ -1,0 +1,43 @@
+.i-counter-group {
+  display: grid;
+  justify-items: start;
+  margin-top: 32px;
+  gap: 16px;
+}
+
+.i-counter {
+  display: grid;
+  place-items: center;
+  width: 120px;
+  aspect-ratio: 1;
+  border: 1px solid var(--i-border);
+  border-radius: 8px;
+  background: var(--i-surface);
+  color: var(--i-text);
+  font-size: 3rem;
+  font-weight: 800;
+}
+
+.i-counter-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.i-counter-btn {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border: 1px solid var(--i-btn-bg);
+  border-radius: 8px;
+  background: var(--i-btn-bg);
+  color: var(--i-bg);
+  font-size: 1.4rem;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.i-counter-btn:hover {
+  background: var(--i-btn-hover);
+  border-color: var(--i-btn-hover);
+}

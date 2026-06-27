@@ -1,0 +1,49 @@
+.form-hero {
+  display: grid;
+  justify-items: center;
+  gap: var(--m-space-3);
+  margin-bottom: var(--m-space-5);
+  text-align: center;
+}
+
+.form-hero-topbar {
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.form-logo {
+  display: grid;
+  place-items: center;
+  width: clamp(72px, 12vw, 108px);
+  aspect-ratio: 1;
+}
+
+.form-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.form-hero h1,
+.form-hero p { margin: 0; }
+
+.form-hero h1 {
+  font-size: clamp(1.8rem, 5vw, 2.4rem);
+  line-height: 1.05;
+}
+
+.form-hero > p:last-of-type {
+  max-width: 62ch;
+  color: var(--m-text-muted);
+  line-height: 1.6;
+}
+
+.form-kicker {
+  margin: 0;
+  color: var(--m-primary);
+  font-size: var(--m-font-size-xs);
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}

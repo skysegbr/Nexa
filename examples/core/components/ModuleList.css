@@ -1,0 +1,11 @@
+.core-item-title {
+  margin: 0;
+  font-weight: 800;
+}
+
+.core-item-desc {
+  margin: 4px 0 0;
+  color: var(--m-text-muted);
+  font-size: var(--m-font-size-sm);
+  line-height: 1.5;
+}

@@ -1,0 +1,10 @@
+.i-server-msg {
+  max-width: 560px;
+  margin: 28px 0 0;
+  padding: 14px 16px;
+  border-left: 4px solid var(--i-primary);
+  background: var(--i-surface);
+  color: var(--i-text-muted);
+  font-size: 0.95rem;
+  border-radius: 0 4px 4px 0;
+}

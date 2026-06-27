@@ -1,0 +1,5 @@
+.mob-breakpoint-label {
+  font-size: 0.8rem;
+  color: var(--m-primary);
+  font-family: monospace;
+}

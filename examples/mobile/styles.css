@@ -1,0 +1,6 @@
+@import "./components/HomeScreen.css";
+@import "./components/ExploreScreen.css";
+
+.mob-main {
+  padding-block: var(--m-space-4);
+}

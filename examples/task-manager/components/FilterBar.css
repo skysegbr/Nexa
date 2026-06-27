@@ -1,0 +1,16 @@
+.tm-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--m-space-2);
+}
+
+.tm-filters .m-form-field {
+  flex: 1 1 100%;
+  margin: 0;
+}
+
+@media (min-width: 576px) {
+  .tm-filters .m-form-field { flex: 1 1 160px; }
+  .tm-filters .m-form-field:last-child { flex: 2 1 200px; }
+}

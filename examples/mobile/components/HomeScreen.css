@@ -1,0 +1,36 @@
+.mob-swipe-area {
+  display: grid;
+  place-items: center;
+  min-height: 120px;
+  text-align: center;
+  user-select: none;
+  touch-action: pan-y;
+  cursor: default;
+}
+
+.mob-swipe-hint {
+  margin: 0 0 var(--m-space-2);
+}
+
+.mob-swipe-result {
+  color: var(--m-primary);
+  font-weight: 700;
+}
+
+.mob-features-title {
+  margin: 0 0 var(--m-space-3);
+  font-size: 1rem;
+  font-weight: 900;
+}
+
+.mob-feature-name {
+  display: block;
+  margin-bottom: var(--m-space-1);
+  font-weight: 700;
+}
+
+.mob-feature-body {
+  margin: 0;
+  font-size: var(--m-font-size-sm);
+  color: var(--m-text-muted);
+}

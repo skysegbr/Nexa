@@ -1,0 +1,62 @@
+@import "./components/StatsRow.css";
+@import "./components/FilterBar.css";
+@import "./components/TaskList.css";
+@import "./components/TaskDrawer.css";
+
+.tm-layout {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: var(--m-bg);
+}
+
+.tm-main {
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+  padding: var(--m-space-4) var(--m-space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--m-space-4);
+}
+
+/* Topbar */
+.tm-topbar {
+  display: flex;
+  align-items: center;
+  gap: var(--m-space-2);
+  padding: var(--m-space-2) var(--m-space-4);
+  padding-top: calc(var(--m-space-2) + var(--m-safe-top));
+  background: var(--m-surface);
+  border-bottom: 1px solid var(--m-border);
+  position: sticky;
+  top: 0;
+  z-index: var(--m-z-appbar);
+}
+
+.tm-topbar-brand {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--m-primary);
+  letter-spacing: -0.02em;
+  margin-right: auto;
+}
+
+/* Loading */
+.tm-loading {
+  display: flex;
+  justify-content: center;
+  padding: var(--m-space-8);
+}
+
+/* Pagination row */
+.tm-pagination-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: var(--m-font-size-sm);
+  color: var(--m-text-muted);
+  flex-wrap: wrap;
+  gap: var(--m-space-3);
+}

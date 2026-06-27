@@ -1,0 +1,16 @@
+.core-toolbar {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--m-space-3);
+}
+
+@media (min-width: 576px) {
+  .core-toolbar {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    align-items: center;
+  }
+}
+
+@media (max-width: 575px) {
+  .core-toolbar .m-button { width: 100%; }
+}

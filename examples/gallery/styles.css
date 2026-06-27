@@ -1,0 +1,73 @@
+@import "./components/CategoryFilter.css";
+@import "./components/PhotoGrid.css";
+@import "./components/Lightbox.css";
+
+:root {
+  color-scheme: light dark;
+  --g-bg: #f8fafc;
+  --g-surface: #ffffff;
+  --g-surface-alt: #f1f5f9;
+  --g-text: #0f172a;
+  --g-muted: #64748b;
+  --g-border: #e2e8f0;
+  --g-accent: #ea580c;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --g-bg: #0b1120;
+    --g-surface: #111827;
+    --g-surface-alt: #0f172a;
+    --g-text: #e2e8f0;
+    --g-muted: #94a3b8;
+    --g-border: #1f2937;
+    --g-accent: #fb923c;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--g-bg);
+  color: var(--g-text);
+  font: 16px/1.6 -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+.g-page {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 2.5rem 1.5rem 4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+}
+
+.g-header {
+  text-align: center;
+  max-width: 56ch;
+  margin: 0 auto;
+}
+
+.g-eyebrow {
+  margin: 0 0 0.35rem;
+  color: var(--g-accent);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.g-header h1 {
+  margin: 0 0 0.6rem;
+  font-size: clamp(1.7rem, 3.4vw, 2.4rem);
+  letter-spacing: -0.01em;
+}
+
+.g-lede {
+  margin: 0;
+  color: var(--g-muted);
+  font-size: 1rem;
+}

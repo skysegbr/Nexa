@@ -1,0 +1,10 @@
+@import "./components/CoreHeader.css";
+@import "./components/CoreToolbar.css";
+@import "./components/CoreMeter.css";
+@import "./components/ModuleList.css";
+@import "./components/ReverseButton.css";
+
+.core-page {
+  display: grid;
+  gap: var(--m-space-6);
+}

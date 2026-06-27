@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Nexa - Engine Tests</title>
+    <link rel="icon" type="image/png" href="/assets/nexa-logo-dark-bg.png" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main>
+      <h1>Nexa engine tests</h1>
+      <p class="t-hint">
+        No build step, no test framework — this page imports
+        <code>dist/nexa.js</code> directly and runs assertions against the
+        real DOM. Open the console for stack traces on failures.
+      </p>
+      <div id="results">Running…</div>
+    </main>
+    <script type="module" src="./run.js"></script>
+  </body>
+</html>
