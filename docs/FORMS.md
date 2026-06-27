@@ -34,6 +34,12 @@ const form = useForm({
 });
 ```
 
+CDN import:
+
+```js
+import { useForm } from "https://cdn.jsdelivr.net/gh/skysegbr/Nexa@main/dist/nexa.js";
+```
+
 ### Returned object
 
 | Property | Type | Description |

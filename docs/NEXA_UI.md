@@ -10,6 +10,15 @@ It does not require Node or a build step. Just import the CSS in your HTML.
 <link rel="stylesheet" href="./nexa-ui.css" />
 ```
 
+Or load the public build from jsDelivr:
+
+```html
+<link
+  rel="stylesheet"
+  href="https://cdn.jsdelivr.net/gh/skysegbr/Nexa@main/dist/nexa-ui.css"
+/>
+```
+
 For component helpers, import the optional JavaScript module:
 
 ```js
@@ -36,6 +45,16 @@ import {
   Tooltip,
   Toast,
 } from "./nexa-components.js";
+```
+
+CDN import:
+
+```js
+import {
+  Button,
+  Card,
+  TextField,
+} from "https://cdn.jsdelivr.net/gh/skysegbr/Nexa@main/dist/nexa-components.js";
 ```
 
 ## Tokens

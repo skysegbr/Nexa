@@ -52,6 +52,33 @@ Create an HTML file with a root element and import your app as a module:
 
 `type="module"` lets the browser use `import` directly.
 
+### Using the CDN
+
+For quick experiments or apps that do not copy Nexa locally, import the public
+GitHub build through jsDelivr:
+
+```html
+<link
+  rel="stylesheet"
+  href="https://cdn.jsdelivr.net/gh/skysegbr/Nexa@main/dist/nexa-ui.css"
+/>
+
+<main id="app"></main>
+
+<script type="module">
+  import { h, render } from "https://cdn.jsdelivr.net/gh/skysegbr/Nexa@main/dist/nexa.js";
+
+  function App() {
+    return h("h1", null, "Hello from Nexa");
+  }
+
+  render(App, document.getElementById("app"));
+</script>
+```
+
+For production, prefer a fixed tag instead of `@main`, such as
+`https://cdn.jsdelivr.net/gh/skysegbr/Nexa@v0.1.0/dist/nexa.js`.
+
 ## 3. First Component
 
 In `app.js`:

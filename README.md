@@ -40,12 +40,25 @@ light and dark themes.
 
 ## Using The CDN
 
-After publishing this repository on GitHub, load it through jsDelivr:
+Nexa is published as a public GitHub repository, so you can load the browser
+modules directly through jsDelivr:
+
+```text
+https://cdn.jsdelivr.net/gh/skysegbr/Nexa@main/dist/nexa.js
+https://cdn.jsdelivr.net/gh/skysegbr/Nexa@main/dist/nexa-components.js
+https://cdn.jsdelivr.net/gh/skysegbr/Nexa@main/dist/nexa-ui.css
+https://cdn.jsdelivr.net/gh/skysegbr/Nexa@main/dist/nexa-canvas.js
+https://cdn.jsdelivr.net/gh/skysegbr/Nexa@main/dist/nexa-canvas.css
+https://cdn.jsdelivr.net/gh/skysegbr/Nexa@main/dist/nexa-editor.js
+https://cdn.jsdelivr.net/gh/skysegbr/Nexa@main/dist/nexa-editor.css
+```
+
+Minimal page:
 
 ```html
 <link
   rel="stylesheet"
-  href="https://cdn.jsdelivr.net/gh/skysegbr/Nexa@v0.2.0/dist/nexa-ui.css"
+  href="https://cdn.jsdelivr.net/gh/skysegbr/Nexa@main/dist/nexa-ui.css"
 />
 
 <main id="app"></main>
@@ -56,11 +69,11 @@ After publishing this repository on GitHub, load it through jsDelivr:
     render,
     useState,
     useTheme,
-  } from "https://cdn.jsdelivr.net/gh/skysegbr/Nexa@v0.2.0/dist/nexa.js";
+  } from "https://cdn.jsdelivr.net/gh/skysegbr/Nexa@main/dist/nexa.js";
   import {
     Button,
     ThemeToggle,
-  } from "https://cdn.jsdelivr.net/gh/skysegbr/Nexa@v0.2.0/dist/nexa-components.js";
+  } from "https://cdn.jsdelivr.net/gh/skysegbr/Nexa@main/dist/nexa-components.js";
 
   function App() {
     const [count, setCount] = useState(0);
@@ -79,7 +92,12 @@ After publishing this repository on GitHub, load it through jsDelivr:
 </script>
 ```
 
-For real projects, prefer fixed tags such as `v0.2.0` instead of `main`.
+`@main` always follows the latest pushed code. For production, create a release
+tag and pin the CDN URL to it, for example:
+
+```text
+https://cdn.jsdelivr.net/gh/skysegbr/Nexa@v0.1.0/dist/nexa.js
+```
 
 ## Using Locally
 

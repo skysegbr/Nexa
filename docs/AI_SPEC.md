@@ -27,6 +27,17 @@ Core ideas:
 /dist/nexa-ui.css          ← design system CSS (required for components to look right)
 ```
 
+Public CDN URLs:
+
+```text
+https://cdn.jsdelivr.net/gh/skysegbr/Nexa@main/dist/nexa.js
+https://cdn.jsdelivr.net/gh/skysegbr/Nexa@main/dist/nexa-components.js
+https://cdn.jsdelivr.net/gh/skysegbr/Nexa@main/dist/nexa-ui.css
+```
+
+Use `@main` for the latest code during development. For production, pin a
+release tag such as `@v0.1.0`.
+
 Typical HTML entry point:
 
 ```html
