@@ -23,27 +23,22 @@ For component helpers, import the optional JavaScript module:
 
 ```js
 import {
-  Alert,
-  Badge,
-  Button,
-  Card,
-  Checkbox,
-  Chip,
-  Dialog,
-  Drawer,
-  Dropdown,
-  EmptyState,
-  IconButton,
-  Pagination,
-  Progress,
-  Select,
-  Spinner,
-  Tabs,
-  Table,
-  Textarea,
-  TextField,
-  Tooltip,
-  Toast,
+  // Basic
+  Alert, Badge, Button, Card, Checkbox, Chip, FAB, IconButton,
+  // Form
+  CodeEditor, Combobox, FileDropZone, FormField, Select, Switch,
+  Textarea, TextField,
+  // Layout
+  Collapse, EmptyState, Table,
+  // Navigation
+  AppBar, BottomNav, BottomSheet, Navbar, Pagination,
+  Stepper, TabPanel, Tabs,
+  // Feedback
+  Progress, Spinner, Toast, ToastStack,
+  // Overlay
+  ContextMenu, Dialog, Drawer, Dropdown, Tooltip,
+  // Mobile
+  SwipeableListItem, ThemeToggle,
 } from "./nexa-components.js";
 ```
 
@@ -368,14 +363,12 @@ h("li", { className: "m-list-item m-board-card m-draggable m-dragging" })
 h("article", { className: "m-card m-board-column m-dropzone m-dropzone-active" })
 ```
 
-## Using It In The Current Project
-
-The todo list already imports:
+## Typical Project Setup
 
 ```html
-<link rel="stylesheet" href="./nexa-ui.css" />
+<link rel="stylesheet" href="/dist/nexa-ui.css" />
 <link rel="stylesheet" href="./styles.css" />
 ```
 
-`nexa-ui.css` contains the reusable framework.
-`styles.css` contains only the page-specific layout.
+`nexa-ui.css` contains the reusable framework tokens and component styles.
+`styles.css` contains only the page-specific layout and custom tokens (e.g. `--l-accent`).

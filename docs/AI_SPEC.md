@@ -23,8 +23,14 @@ Core ideas:
 
 ```
 /dist/nexa.js              ← core framework  (h, render, hooks, context)
-/dist/nexa-components.js   ← UI component library (~25 components)
+/dist/nexa-components.js   ← UI component library (~38 components)
 /dist/nexa-ui.css          ← design system CSS (required for components to look right)
+/dist/nexa-hmr.js          ← HMR client (dev only — injected by server.py)
+/dist/nexa-canvas.js       ← SVG pipeline canvas (PipelineCanvasController)
+/dist/nexa-canvas.css      ← styles for nexa-canvas
+/dist/nexa-editor.js       ← full-featured code editor component
+/dist/nexa-editor.css      ← styles for nexa-editor
+/dist/nexa-editor-snippets.js ← boilerplate snippet catalog for nexa-editor
 ```
 
 Public CDN URLs:
@@ -274,7 +280,9 @@ const [theme, setTheme] = useLocalStorage('theme', 'light');
 ### `useFetch`
 
 ```js
-const { data, loading, error } = useFetch('/api/users');
+const { data, loading, error, refetch } = useFetch('/api/users');
+// Pass null/undefined as url to skip fetching
+// refetch() re-runs the same request on demand
 ```
 
 ### `useToast`
@@ -295,9 +303,11 @@ navigate('/dashboard');
 ### `useTheme`
 
 ```js
-const { theme, toggleTheme } = useTheme();
+const { theme, setTheme, toggleTheme } = useTheme();
 // theme: 'light' | 'dark'
-// Requires ThemeProvider context (see §7)
+// Standalone — reads/writes localStorage('nexa-theme') and sets data-theme on <html>
+// Does NOT require ThemeProvider. Multiple useTheme() instances stay in sync via
+// a 'nexa:themechange' CustomEvent.
 ```
 
 ### `useContext` / `createContext`
@@ -312,7 +322,65 @@ useLongPress(ref, { onLongPress, delay });
 useNetworkStatus() // → { online, type }
 useOrientation()   // → { angle, type }
 useVibrate()       // → { vibrate(pattern) }
-useHistory(initial) // undo/redo stack
+
+const { state, set, undo, redo, canUndo, canRedo } = useHistory(initial, { limit: 50 });
+// Undo/redo stack. set(value) or set(prev => next). canUndo/canRedo are booleans.
+```
+
+### Utility hooks
+
+```js
+// Stable unique ID (survives re-renders)
+const id = useId();
+
+// Debounce — returns a copy of value that only updates after delay ms of silence
+const query = useDebounce(inputValue, 300);
+
+// Throttle — returns a function that fires at most once per delay ms
+const onScroll = useThrottle((e) => setY(e.target.scrollTop), 100);
+
+// CSS media query — reactive boolean
+const isMobile = useMediaQuery('(max-width: 768px)');
+
+// Intersection observer — returns the latest IntersectionObserverEntry
+const entry = useIntersectionObserver(ref, { threshold: 0.5, once: true });
+// entry.isIntersecting, entry.intersectionRatio, etc.
+
+// WebSocket with auto-reconnect
+const { status, lastMessage, send } = useWebSocket('wss://api.example.com/ws');
+// status: 'connecting' | 'open' | 'closed' | 'error'
+// send(data) — serializes objects to JSON automatically
+
+// Virtual list — renders only visible rows (all items must have equal fixed height)
+const { containerRef, virtualItems, totalHeight } = useVirtualList(rows, { itemHeight: 48 });
+// attach containerRef to the scrollable wrapper; render virtualItems; use totalHeight for spacer
+
+// i18n
+const { t } = useTranslation({ hello: 'Hello, {name}!' });
+t('hello', { name: 'Ana' }) // → 'Hello, Ana!'
+
+// Context menu position state (pair with ContextMenu component)
+const { menu, openMenu, closeMenu } = useContextMenu();
+// openMenu(e) — call on onContextMenu; menu = { open, x, y }
+```
+
+### Component utilities
+
+```js
+// memo — skip re-render when props are shallowly equal (or pass custom compare fn)
+const MemoRow = memo(Row);
+const MemoRow = memo(Row, (prev, next) => prev.id === next.id);
+
+// createPortal — render children into a different DOM node (escapes overflow/z-index)
+return h('div', null,
+  h('p', null, 'Normal'),
+  createPortal(h(Modal, { onClose }), document.body),
+);
+
+// createLazy — lazy-load a component via dynamic import()
+const Chart = createLazy(() => import('./components/Chart.js'));
+const Chart = createLazy(() => import('./Chart.js'), h(Spinner, null)); // custom fallback
+// Shows fallback while loading. On error, throws — catch with useErrorBoundary.
 ```
 
 ---
@@ -431,7 +499,7 @@ h('input', { required: true })
 
 ## 9. UI Components (`/dist/nexa-components.js`)
 
-Import only what you use:
+~38 components. Import only what you use:
 
 ```js
 import { Button, Card, TextField } from '/dist/nexa-components.js';
@@ -574,6 +642,26 @@ h(Combobox, {
   searchPlaceholder: 'Search...',
   error: '',
 })
+
+// FileDropZone — drag-and-drop file upload area
+h(FileDropZone, {
+  onFiles: (files) => upload(files),  // files: File[]
+  accept: 'image/*',                  // optional MIME filter
+  multiple: true,
+  label: 'Drop files here or click to browse',
+  hint: 'PNG, JPG up to 10 MB',
+  progress: 60,                       // 0–100, shows Progress bar when set
+  disabled: false,
+})
+
+// CodeEditor — thin wrapper for CodeMirror or Monaco (whichever is on window)
+h(CodeEditor, {
+  value: code,
+  onChange: (v) => setCode(v),
+  mode: 'javascript',   // language mode
+  theme: 'default',
+  options: {},          // passed through to the underlying editor
+})
 ```
 
 ### Feedback
@@ -658,6 +746,20 @@ h(BottomNav, {
   ],
 })
 
+// ThemeToggle — icon button that calls useTheme().toggleTheme()
+h(ThemeToggle)  // no props required; renders sun/moon SVG icon
+
+// SwipeableListItem — mobile swipe-to-reveal actions
+h(SwipeableListItem, {
+  actions: [
+    { label: 'Delete', className: 'm-swipeable-action-danger', onClick: del },
+    { label: 'Archive', onClick: archive },
+  ],
+  actionWidth: 72,  // px per action button
+},
+  h('div', { className: 'list-row' }, 'Row content')
+)
+
 // Stepper
 h(Stepper, {
   activeStep: 1,             // 0-based index
@@ -721,6 +823,23 @@ h(Dropdown, {
 // Tooltip
 h(Tooltip, { content: 'Click to save' },
   h(Button, null, 'Save')
+)
+
+// ContextMenu — right-click context menu (pair with useContextMenu hook)
+const { menu, openMenu, closeMenu } = useContextMenu();
+h('div', { onContextMenu: openMenu },
+  'Right-click me',
+  h(ContextMenu, {
+    open: menu.open,
+    x: menu.x,
+    y: menu.y,
+    onClose: closeMenu,
+    items: [
+      { label: 'Edit',   icon: '✏️', onClick: edit },
+      { divider: true },
+      { label: 'Delete', icon: '🗑️', onClick: del, danger: true },
+    ],
+  }),
 )
 ```
 

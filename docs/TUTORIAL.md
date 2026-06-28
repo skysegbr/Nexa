@@ -563,32 +563,34 @@ function App() {
 render(App, document.getElementById("app"));
 ```
 
-## 14. Current Limits
+## 14. What Nexa Covers
 
-Nexa is still intentionally small. Today it already covers:
+Nexa is intentionally small but complete for most production use cases.
 
-- Function components.
-- Hook state scoped to each component.
-- Multiple roots.
-- State with `useState`.
-- Form state and validation with `useForm`.
-- Refs with `useRef`.
-- Memoization with `useMemo` and `useCallback`.
-- Effects with cleanup using `useEffect`.
-- Events.
-- Common DOM props and attributes.
-- `key` for dynamic element lists.
-- `Fragment`.
-- Optional UI helpers such as buttons, fields, tabs, dialogs, tables, and toast.
-- Advanced UI helpers such as drawer, dropdown, tooltip, progress, and
-  pagination.
-- Incremental DOM updates.
+**Core engine**
+- Function components with local hook state and multiple independent roots.
+- Incremental DOM patching with keyed reconciliation and SVG namespace support.
+- `useState`, `useReducer`, `useEffect` (with cleanup), `useRef`, `useMemo`, `useCallback`.
+- `useErrorBoundary` — catch render errors in a subtree and show fallback UI.
+- `useForm` — full form management: validation, touched, dirty, submit, reset, serialize.
+- `createContext` + `useContext` — scoped values via `Context.provide(value, renderFn)`.
+- `memo`, `createPortal`, `createLazy`, `useId`.
 
-It does not have yet:
+**Utility hooks**
+- `useTheme`, `useLocalStorage`, `useRouter`, `useFetch`, `useToast`.
+- `useHistory` — undo/redo wrapper around a state value.
+- `useDebounce`, `useThrottle`, `useMediaQuery`.
+- `useIntersectionObserver`, `useWebSocket`, `useVirtualList`.
+- `useTranslation`, `useContextMenu`.
 
-- JSX.
-- Router.
-- Context.
-- Data fetching helpers such as `useFetch`.
+**Mobile hooks**
+- `useSwipe`, `useLongPress`, `useNetworkStatus`, `useOrientation`, `useVibrate`.
 
-Those would be good next steps for the framework.
+**38 UI components** — buttons, fields, layout, navigation, overlays, mobile shell.
+
+**CSS framework** — mobile-first grid, spacing, display, and dark mode utilities.
+
+**What Nexa intentionally omits**
+- JSX — by design. `h()` is the DSL; no compiler or transpiler needed.
+- SSR — Nexa targets the browser directly.
+- A bundler — no build step is the core design principle.

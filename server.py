@@ -20,7 +20,19 @@ import threading
 import time
 from pathlib import Path
 
-PORT = int(sys.argv[1]) if len(sys.argv) > 1 else 8000
+import socket
+
+def _find_free_port(start: int) -> int:
+    port = start
+    while port < 65535:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            if s.connect_ex(("", port)) != 0:
+                return port
+        port += 1
+    raise OSError("No free port found")
+
+_requested_port = int(sys.argv[1]) if len(sys.argv) > 1 else 8000
+PORT = _requested_port if len(sys.argv) > 1 else _find_free_port(_requested_port)
 WATCH_EXTENSIONS = {".js", ".css", ".html", ".json"}
 POLL_INTERVAL = 0.5
 SKIP_DIRS = {"node_modules", ".git", "__pycache__", ".cache"}
@@ -123,4 +135,7 @@ if __name__ == "__main__":
         print(f"[Nexa HMR] http://localhost:{PORT}", flush=True)
         print("[Nexa HMR] add to your HTML (dev only):", flush=True)
         print('[Nexa HMR]   <script src="/dist/nexa-hmr.js"></script>', flush=True)
-        httpd.serve_forever()
+        try:
+            httpd.serve_forever()
+        except KeyboardInterrupt:
+            print("\n[Nexa HMR] server stopped", flush=True)
