@@ -1106,6 +1106,69 @@ my-app/
 | **Hooks in `components/`** | `useXxx.js` alongside the components — centralizes fetching and complex state |
 | **CSS class prefix** | Pick a short prefix per project (`l-` landing, `tm-` task-manager) to avoid collisions with Nexa's `m-*` classes |
 
+### Scaling to domain subfolders
+
+When an app grows beyond ~6 components, group by feature/domain **inside** `components/`.
+Never group by type (`forms/`, `ui/`, `shared/`).
+
+```
+my-app/
+  index.html
+  app.js
+  styles.css
+  data.js
+  components/
+    auth/
+      LoginForm.js
+      LoginForm.css
+      RegisterForm.js
+      RegisterForm.css
+    dashboard/
+      MetricsRow.js
+      MetricsRow.css
+      RevenueChart.js
+      RevenueChart.css
+      useDashboard.js     ← domain hook lives inside the domain folder
+    settings/
+      ProfileForm.js
+      ProfileForm.css
+      BillingSection.js
+      BillingSection.css
+```
+
+**Rules for domain subfolders:**
+
+| Rule | Detail |
+|------|--------|
+| **Domain = feature, not type** | `auth/`, `dashboard/`, `settings/` — never `forms/`, `modals/`, `shared/` |
+| **Paired CSS stays next to the JS** | `auth/LoginForm.js` → `auth/LoginForm.css` |
+| **`styles.css` still collects everything** | Even nested CSS is imported at root — components never import their own CSS |
+| **Domain hook lives in its domain** | `dashboard/useDashboard.js`, not a separate `hooks/` folder |
+| **`data.js` stays at root** | Unless the project is very large, keep one `data.js`; don't split per domain |
+| **Minimum 2 files to justify a folder** | Don't create `auth/` for a single `LoginForm.js` |
+| **Flat first, then split** | Start flat. Create a subfolder when you have 3+ files for the same domain |
+
+CSS imports in `styles.css` for a domain-structured app:
+
+```css
+/* styles.css */
+@import './components/auth/LoginForm.css';
+@import './components/auth/RegisterForm.css';
+@import './components/dashboard/MetricsRow.css';
+@import './components/dashboard/RevenueChart.css';
+@import './components/settings/ProfileForm.css';
+@import './components/settings/BillingSection.css';
+```
+
+JS imports use the full relative path:
+
+```js
+// app.js
+import { LoginForm }    from './components/auth/LoginForm.js';
+import { MetricsRow }   from './components/dashboard/MetricsRow.js';
+import { ProfileForm }  from './components/settings/ProfileForm.js';
+```
+
 **Two CSS strategies:**
 
 | Scenario | Approach |
@@ -1485,5 +1548,7 @@ Before submitting any Nexa code, verify:
 - [ ] `styles.css` collects component CSS via `@import` — components don't import CSS
 - [ ] Static/mock data lives in `data.js` as `UPPER_CASE` named exports
 - [ ] `app.js` only imports, orchestrates top-level state, and calls `render()`
-- [ ] No `src/` wrapper, no `pages/`, no `store/` directories
+- [ ] No `src/` wrapper, no `pages/`, no `store/`, no `utils/` directories
+- [ ] For 6+ components, group by domain inside `components/` (e.g. `components/auth/`, `components/dashboard/`) — never by type
+- [ ] Domain hooks live inside their domain folder (`components/auth/useAuth.js`), not a top-level `hooks/`
 - [ ] CSS class names use a project-wide prefix (e.g. `l-`, `tm-`, `a-`) not `m-*`
