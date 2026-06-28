@@ -65,9 +65,9 @@ const CSS_GROUPS = [
 
 const SHADOW_OPTIONS = [
   { label: 'None',    value: 'none' },
-  { label: 'Soft',    value: '0 1px 3px rgba(0,0,0,.12)' },
-  { label: 'Medium',  value: '0 4px 12px rgba(0,0,0,.15)' },
-  { label: 'Strong',  value: '0 8px 24px rgba(0,0,0,.2)' },
+  { label: 'Subtle',  value: 'var(--m-shadow-1)' },
+  { label: 'Medium',  value: 'var(--m-shadow-2)' },
+  { label: 'Strong',  value: 'var(--m-shadow-3)' },
   { label: 'Colored', value: '0 4px 16px rgba(15,118,110,.35)' },
 ];
 

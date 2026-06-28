@@ -24,7 +24,7 @@ export const CATALOG = [
     defaultProps: { children: 'Click here', variant: 'contained' },
     propDefs: [
       { key: 'children', label: 'Text', type: 'text' },
-      { key: 'variant', label: 'Variant', type: 'select', options: ['text', 'contained', 'tonal', 'danger'] },
+      { key: 'variant', label: 'Variant', type: 'select', options: ['text', 'contained', 'tonal', 'outline', 'danger'] },
       { key: 'disabled', label: 'Disabled', type: 'boolean' },
     ],
   },
@@ -84,6 +84,7 @@ export const CATALOG = [
     propDefs: [
       { key: 'children', label: 'Content', type: 'text' },
       { key: 'padded', label: 'With padding', type: 'boolean' },
+      { key: 'className', label: 'Extra CSS classes (ex: m-card-hover)', type: 'text' },
     ],
   },
   {
