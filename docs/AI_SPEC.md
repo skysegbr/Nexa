@@ -499,7 +499,7 @@ h('input', { required: true })
 
 ## 9. UI Components (`/dist/nexa-components.js`)
 
-~38 components. Import only what you use:
+~38 components + CSS-only primitives. Import only what you use:
 
 ```js
 import { Button, Card, TextField } from '/dist/nexa-components.js';
@@ -510,7 +510,7 @@ import { Button, Card, TextField } from '/dist/nexa-components.js';
 ```js
 // Button
 h(Button, {
-  variant: 'contained',   // 'text' | 'contained' | 'tonal' | 'danger'
+  variant: 'contained',   // 'text' | 'contained' | 'tonal' | 'danger' | 'outline'
   type: 'button',         // 'button' | 'submit' | 'reset'
   disabled: false,
   onClick: fn,
@@ -543,6 +543,43 @@ h(FAB, {
 ```js
 // Card
 h(Card, { padded: true }, h('p', null, 'Content'))
+// CSS: add m-card-hover for a clickable card (pointer + hover border/shadow)
+
+// Divider — CSS-only, no JS component needed
+h('hr', { className: 'm-divider' })
+h('span', { className: 'm-divider-vertical' })   // inline vertical separator
+
+// Avatar — CSS-only
+h('span', { className: 'm-avatar m-avatar-md' }, 'AB')          // initials
+h('span', { className: 'm-avatar m-avatar-md' },
+  h('img', { src: url, alt: name })                              // photo
+)
+// Sizes: m-avatar-xs (24px) | m-avatar-sm (32px) | m-avatar-md (40px) | m-avatar-lg (56px) | m-avatar-xl (72px)
+
+// Avatar group (overlapping)
+h('div', { className: 'm-avatar-group' },
+  h('span', { className: 'm-avatar m-avatar-sm' }, 'A'),
+  h('span', { className: 'm-avatar m-avatar-sm' }, 'B'),
+  h('span', { className: 'm-avatar m-avatar-sm' }, '+3'),
+)
+
+// Skeleton — CSS-only loading placeholder
+h('div', { className: 'm-skeleton', style: { width: '100%', height: 20 } })
+h('div', { className: 'm-skeleton m-skeleton-text', style: { width: '60%' } })
+h('div', { className: 'm-skeleton m-skeleton-circle', style: { width: 40, height: 40 } })
+
+// Breadcrumb — CSS-only
+h('ol', { className: 'm-breadcrumb' },
+  h('li', { className: 'm-breadcrumb-item' },
+    h('a', { className: 'm-breadcrumb-link', href: '/' }, 'Home'),
+    h('span', { className: 'm-breadcrumb-sep' }, '/'),
+  ),
+  h('li', { className: 'm-breadcrumb-item' },
+    h('a', { className: 'm-breadcrumb-link', href: '/projects' }, 'Projects'),
+    h('span', { className: 'm-breadcrumb-sep' }, '/'),
+  ),
+  h('li', { className: 'm-breadcrumb-item' }, 'Current page'),
+)
 
 // Collapse — accordion section
 h(Collapse, {
@@ -749,6 +786,20 @@ h(BottomNav, {
 // ThemeToggle — icon button that calls useTheme().toggleTheme()
 h(ThemeToggle)  // no props required; renders sun/moon SVG icon
 
+// Sidebar nav links — CSS-only, use inside .m-sidebar
+h('nav', { className: 'm-sidebar-section' },
+  h('p', { className: 'm-sidebar-label' }, 'Main'),
+  h('a', { className: 'm-sidebar-link m-sidebar-link-active', href: '/dashboard' },
+    h('span', { className: 'm-sidebar-link-icon' }, '⊞'),
+    'Dashboard',
+  ),
+  h('a', { className: 'm-sidebar-link', href: '/projects' },
+    h('span', { className: 'm-sidebar-link-icon' }, '◫'),
+    'Projects',
+    h('span', { className: 'm-sidebar-link-badge m-badge' }, '3'),
+  ),
+)
+
 // SwipeableListItem — mobile swipe-to-reveal actions
 h(SwipeableListItem, {
   actions: [
@@ -853,7 +904,9 @@ All tokens are CSS custom properties set on `:root` by `nexa-ui.css`.
 /* Colors */
 --m-bg             /* page background #f4f6f8 */
 --m-surface        /* card/panel background #ffffff */
+--m-surface-soft   /* tinted surface #eef4f2 */
 --m-surface-muted  /* subtle surface #f8fafc */
+--m-surface-raised /* interactive hover surface #f1f5f9 */
 --m-text           /* primary text #18212b */
 --m-text-muted     /* secondary text #617080 */
 --m-border         /* borders #cbd6e0 */
@@ -877,8 +930,11 @@ All tokens are CSS custom properties set on `:root` by `nexa-ui.css`.
 --m-space-2   /* 8px */
 --m-space-3   /* 12px */
 --m-space-4   /* 16px */
+--m-space-5   /* 20px */
 --m-space-6   /* 24px */
 --m-space-8   /* 32px */
+--m-space-10  /* 40px */
+--m-space-12  /* 48px */
 
 /* Shape */
 --m-radius     /* 8px */
@@ -898,6 +954,12 @@ All tokens are CSS custom properties set on `:root` by `nexa-ui.css`.
 --m-font-size-base    /* 1rem */
 --m-font-size-lg      /* 1.125rem */
 --m-font-size-xl      /* 1.25rem */
+--m-font-size-2xl     /* 1.5rem */
+--m-font-size-3xl     /* 1.875rem */
+
+/* Transitions */
+--m-transition-fast   /* 120ms ease */
+--m-transition-base   /* 200ms ease */
 
 /* Z-index layers */
 --m-z-dropdown  /* 30 */
