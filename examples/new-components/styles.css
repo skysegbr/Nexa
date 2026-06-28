@@ -26,3 +26,25 @@
 .badge-success { background: var(--m-success-soft); color: var(--m-success); }
 .badge-running { background: var(--m-info-soft);    color: var(--m-info);    }
 .badge-error   { background: var(--m-danger-soft);  color: var(--m-danger);  }
+
+/* Sidebar demo shell */
+.sidebar-demo-shell {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  border: 1px solid var(--m-border);
+  border-radius: var(--m-radius);
+  overflow: hidden;
+  min-height: 280px;
+}
+
+.sidebar-demo-pane {
+  padding: var(--m-space-4);
+  background: var(--m-surface);
+  border-right: 1px solid var(--m-border);
+}
+
+.sidebar-demo-content {
+  display: grid;
+  place-items: center;
+  background: var(--m-bg);
+}

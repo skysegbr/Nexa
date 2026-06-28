@@ -1386,7 +1386,10 @@ export function CodeEditor({
         valueRef.current = v;
         onChange?.(v);
       });
-      return undefined;
+      return () => {
+        editorRef.current?.getWrapperElement?.()?.remove();
+        editorRef.current = null;
+      };
     }
 
     if (typeof window.monaco !== "undefined") {
