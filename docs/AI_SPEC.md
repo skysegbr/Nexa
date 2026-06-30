@@ -288,9 +288,14 @@ const { data, loading, error, refetch } = useFetch('/api/users');
 ### `useToast`
 
 ```js
-const { show } = useToast();
-// show({ title: 'Saved!', variant: 'success' })
-// Requires <ToastStack> rendered somewhere in the tree (see §9)
+const { toasts, toast } = useToast();
+// toast.success('Saved!')
+// toast.error('Failed to save.', { title: 'Error' })
+// toast.warning(msg) / toast.info(msg) — same signature
+// toast.dismiss(id)
+// Render <ToastStack toasts={toasts} onClose={(id) => toast.dismiss(id)} />
+// somewhere in the tree (see §9) — useToast only holds the queue, it does
+// not render anything itself.
 ```
 
 ### `useRouter`
@@ -395,7 +400,9 @@ import { createContext, useContext, h } from '/dist/nexa.js';
 // Create
 const AuthCtx = createContext({ user: null, login: () => {} });
 
-// Provide — use ctx.provide(value, renderFn), NOT a Provider component
+// Provide — use ctx.provide(value, renderFn), NOT a Provider component.
+// The provider must construct its subtree INSIDE the renderFn thunk, so that
+// h(Header)/h(Main) execute while `ctx` is on top of the context stack.
 function AuthProvider() {
   const [user, setUser] = useState(null);
   const ctx = { user, login: (u) => setUser(u) };
@@ -412,20 +419,50 @@ function UserBadge() {
 }
 ```
 
-### ThemeProvider pattern
+### ❌ A "Provider component" that takes `children` as a prop does NOT work
 
 ```js
-// Nexa built-in theme hook requires this context to be set up:
-import { useTheme } from '/dist/nexa.js';
-
-const ThemeCtx = createContext({ theme: 'light', toggleTheme: () => {} });
-
+// WRONG — by the time h(ThemeProvider, null, h(App)) can call ThemeProvider,
+// JS has already evaluated h(App) as an argument expression — meaning App()
+// (and everything inside it) already ran, with nothing on the context stack.
+// Wrapping the already-evaluated `children` vnode in `() => children` does
+// NOT defer that evaluation; it happened before this function body started.
 function ThemeProvider({ children }) {
   const [theme, setTheme] = useLocalStorage('theme', 'light');
-  const toggleTheme = () => setTheme((t) => t === 'light' ? 'dark' : 'light');
-  return ThemeCtx.provide({ theme, toggleTheme }, () => children);
+  return ThemeCtx.provide({ theme, toggleTheme: () => {} }, () => children);
 }
+render(() => h(ThemeProvider, null, h(App)), document.getElementById('app'));
+// → useContext(ThemeCtx) anywhere inside App always sees the default value.
 ```
+
+`useTheme()` (§6) is standalone and does NOT need a context — it already
+reads/writes `localStorage` directly. Only reach for a custom context like
+the one above when you need state that isn't already covered by a hook.
+
+### Composing multiple contexts
+
+Because a provider must own the construction of what it wraps, the way to
+combine several contexts is to nest `.provide()` calls in one
+composition-root component — typically the function passed to `render()`:
+
+```js
+function App() {
+  const auth = useAuthState();  // plain hooks, not components — see §11
+  const cart = useCartState();
+
+  return AuthCtx.provide(auth, () =>
+    CartCtx.provide(cart, () =>
+      h(Shell)
+    )
+  );
+}
+
+render(App, document.getElementById('app'));
+```
+
+`useAuthState()`/`useCartState()` hold each domain's state and return the
+value object for that domain's context. See §11 for where these hooks live
+in a domain-componentized project.
 
 ---
 
@@ -1210,6 +1247,93 @@ my-app/
 | **Minimum 2 files to justify a folder** | Don't create `auth/` for a single `LoginForm.js` |
 | **Flat first, then split** | Start flat. Create a subfolder when you have 3+ files for the same domain |
 
+### Domain-owned context
+
+A domain whose own components need to share state (not just one parent
+prop-drilling into its children) gets its own `createContext` call, living
+in the domain folder next to the hook that owns the state:
+
+```
+components/
+  cart/
+    CartContext.js     ← createContext(...) + useCartState() hook
+    CartButton.js
+    CartButton.css
+    CartDrawer.js
+    CartDrawer.css
+  auth/
+    AuthContext.js      ← createContext(...) + useAuthState() hook
+    AuthMenu.js
+    AuthMenu.css
+```
+
+```js
+// components/cart/CartContext.js
+import { createContext, useCallback, useMemo, useState } from '/dist/nexa.js';
+
+export const CartContext = createContext({ items: [], addItem: () => {} });
+
+// A hook, not a component — the actual h(Shell) call that needs this value
+// on the stack happens in app.js. See "Composing multiple contexts" in §7.
+export function useCartState() {
+  const [items, setItems] = useState([]);
+  const addItem = useCallback((product) => {
+    setItems((prev) => {
+      const existing = prev.find((i) => i.id === product.id);
+      if (existing) return prev.map((i) => i.id === product.id ? { ...i, qty: i.qty + 1 } : i);
+      return [...prev, { ...product, qty: 1 }];
+    });
+  }, []);
+  return useMemo(() => ({ items, addItem }), [items, addItem]);
+}
+```
+
+```js
+// app.js — the one place all domain contexts get composed
+import { h, render } from '/dist/nexa.js';
+import { CartContext, useCartState } from './components/cart/CartContext.js';
+import { AuthContext, useAuthState } from './components/auth/AuthContext.js';
+import { Shell } from './components/Shell.js';
+
+function App() {
+  const cart = useCartState();
+  const auth = useAuthState();
+
+  return CartContext.provide(cart, () =>
+    AuthContext.provide(auth, () =>
+      h(Shell)
+    )
+  );
+}
+
+render(App, document.getElementById('app'));
+```
+
+Each domain's own components consume their own context directly:
+
+```js
+// components/cart/CartButton.js
+import { h, useContext } from '/dist/nexa.js';
+import { Badge, IconButton } from '/dist/nexa-components.js';
+import { CartContext } from './CartContext.js';
+
+export function CartButton({ onClick }) {
+  const { items } = useContext(CartContext);
+  return h(IconButton, { label: 'Cart', onClick },
+    h(Badge, null, items.reduce((n, i) => n + i.qty, 0)),
+  );
+}
+```
+
+**Rules for domain-owned context:**
+
+| Rule | Detail |
+|------|--------|
+| **Context + its hook live together** | `cart/CartContext.js` exports both `CartContext` and `useCartState()` |
+| **The hook holds state, the context just carries it** | `useCartState()` is a plain hook (`useState`/`useCallback`/`useMemo`) — not a component |
+| **Only `app.js` composes providers** | Nest `.provide()` calls in the root component — never a separate `<XProvider>` component that takes `children` as a prop (see §7) |
+| **Domains don't read each other's context** | Cross-domain interaction happens through props/callbacks passed at the composition root (`app.js`), not by importing another domain's context |
+
 CSS imports in `styles.css` for a domain-structured app:
 
 ```css
@@ -1613,4 +1737,5 @@ Before submitting any Nexa code, verify:
 - [ ] No `src/` wrapper, no `pages/`, no `store/`, no `utils/` directories
 - [ ] For 6+ components, group by domain inside `components/` (e.g. `components/auth/`, `components/dashboard/`) — never by type
 - [ ] Domain hooks live inside their domain folder (`components/auth/useAuth.js`), not a top-level `hooks/`
+- [ ] A domain needing shared state owns its own `createContext` next to its hook (`cart/CartContext.js`) — providers are composed by nesting `.provide()` calls in `app.js`, never via a separate component that takes `children` as a prop
 - [ ] CSS class names use a project-wide prefix (e.g. `l-`, `tm-`, `a-`) not `m-*`

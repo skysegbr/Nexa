@@ -193,6 +193,7 @@ python -m http.server 8080
 | [examples/gallery](./examples/gallery) | Photo gallery: category filter, masonry grid with lazy-load fade-in, keyboard/swipe lightbox with focus trap |
 | [examples/mindmap](./examples/mindmap) | Draggable mindmap: free-form card positioning, double-click inline editing, SVG bezier connectors that track card size, branch coloring |
 | [examples/drug-recalls](./examples/drug-recalls) | Live dashboard over the openFDA drug recall API: debounced search, classification/status filters, donut + bar charts, sortable table, recall detail dialog |
+| [examples/storefront](./examples/storefront) | Domain-componentized architecture: `catalog/`, `cart/`, `auth/` each own their own `createContext` + state hook, composed once in `app.js`, integrated through `Shell.js`. Products fetched live from fakestoreapi.com |
 
 The task manager requires its own backend:
 

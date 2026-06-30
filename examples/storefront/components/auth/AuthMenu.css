@@ -1,0 +1,11 @@
+.sf-auth-menu {
+  display: flex;
+  align-items: center;
+  gap: var(--m-space-2);
+}
+
+.sf-auth-name {
+  font-size: var(--m-font-size-sm);
+  font-weight: 600;
+  color: var(--m-text-muted);
+}
