@@ -47,21 +47,22 @@ function SectionSkeleton() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!loading) return;
     const t = setTimeout(() => setLoading(false), 2200);
     return () => clearTimeout(t);
-  }, []);
+  }, [loading]);
 
   return h(
     "div",
     { className: "demo-section" },
     h("p", { className: "demo-label" }, "Skeleton — loading placeholder"),
     h("p", { className: "m-text-sm m-text-muted", style: { marginBottom: "var(--m-space-4)" } },
-      "Cards carregam em 2.2 s. ",
+      "Cards load in 2.2 s. ",
       h("button", {
         className: "m-button m-button-tonal m-text-sm",
         style: { minHeight: 28, padding: "0 10px" },
         onClick: () => setLoading(true),
-      }, "Recarregar"),
+      }, "Reload"),
     ),
     h(
       "div",
@@ -81,7 +82,7 @@ function SectionAvatar() {
     { className: "demo-section" },
     h("p", { className: "demo-label" }, "Avatar"),
 
-    h("p", { className: "m-text-xs m-text-muted", style: { marginBottom: "var(--m-space-3)" } }, "Tamanhos"),
+    h("p", { className: "m-text-xs m-text-muted", style: { marginBottom: "var(--m-space-3)" } }, "Sizes"),
     h("div", { className: "m-cluster" },
       h("span", { className: "m-avatar m-avatar-xs" }, "A"),
       h("span", { className: "m-avatar m-avatar-sm" }, "AB"),
@@ -90,7 +91,7 @@ function SectionAvatar() {
       h("span", { className: "m-avatar m-avatar-xl" }, "GH"),
     ),
 
-    h("p", { className: "m-text-xs m-text-muted", style: { margin: "var(--m-space-4) 0 var(--m-space-3)" } }, "Com cores customizadas"),
+    h("p", { className: "m-text-xs m-text-muted", style: { margin: "var(--m-space-4) 0 var(--m-space-3)" } }, "With custom colors"),
     h("div", { className: "m-cluster" },
       h("span", { className: "m-avatar m-avatar-md", style: { background: "#dbeafe", color: "#175cd3" } }, "BR"),
       h("span", { className: "m-avatar m-avatar-md", style: { background: "#fef0c7", color: "#b54708" } }, "CM"),
@@ -98,7 +99,7 @@ function SectionAvatar() {
       h("span", { className: "m-avatar m-avatar-md", style: { background: "#dcfae6", color: "#067647" } }, "EL"),
     ),
 
-    h("p", { className: "m-text-xs m-text-muted", style: { margin: "var(--m-space-4) 0 var(--m-space-3)" } }, "Grupo com sobreposição"),
+    h("p", { className: "m-text-xs m-text-muted", style: { margin: "var(--m-space-4) 0 var(--m-space-3)" } }, "Group with overlap"),
     h("div", { className: "m-cluster" },
       h("div", { className: "m-avatar-group" },
         h("span", { className: "m-avatar m-avatar-sm", style: { background: "#fef0c7", color: "#b54708" } }, "CM"),
@@ -106,7 +107,7 @@ function SectionAvatar() {
         h("span", { className: "m-avatar m-avatar-sm" }, "AL"),
         h("span", { className: "m-avatar m-avatar-sm", style: { background: "var(--m-surface-raised)", color: "var(--m-text-muted)" } }, "+5"),
       ),
-      h("span", { className: "m-text-sm m-text-muted" }, "8 membros"),
+      h("span", { className: "m-text-sm m-text-muted" }, "8 members"),
     ),
   );
 }
@@ -165,7 +166,7 @@ function SectionSidebarNav() {
     { className: "demo-section" },
     h("p", { className: "demo-label" }, "Sidebar nav links"),
     h("p", { className: "m-text-sm m-text-muted", style: { marginBottom: "var(--m-space-4)" } },
-      "Simulação do shell de app com sidebar. Clique nos itens.",
+      "App shell simulation with sidebar. Click the items.",
     ),
     h(
       "div",
@@ -198,7 +199,7 @@ function SectionSidebarNav() {
       h(
         "div",
         { className: "sidebar-demo-content" },
-        h("p", { className: "m-text-muted m-text-sm" }, `Página: ${active}`),
+        h("p", { className: "m-text-muted m-text-sm" }, `Page: ${active}`),
       ),
     ),
   );
@@ -210,20 +211,20 @@ function SectionVariants() {
   return h(
     "div",
     { className: "demo-section" },
-    h("p", { className: "demo-label" }, "Variantes — m-button-outline e m-card-hover"),
+    h("p", { className: "demo-label" }, "Variants — m-button-outline and m-card-hover"),
 
     h("p", { className: "m-text-xs m-text-muted", style: { marginBottom: "var(--m-space-3)" } }, "m-button-outline"),
     h("div", { className: "demo-row" },
-      h("button", { className: "m-button m-button-outline" }, "Cancelar"),
+      h("button", { className: "m-button m-button-outline" }, "Cancel"),
       h("button", { className: "m-button m-button-outline" },
-        h("i", { className: "bi bi-download" }), " Exportar",
+        h("i", { className: "bi bi-download" }), " Export",
       ),
-      h("button", { className: "m-button m-button-outline", disabled: true }, "Desativado"),
+      h("button", { className: "m-button m-button-outline", disabled: true }, "Disabled"),
     ),
 
-    h("p", { className: "m-text-xs m-text-muted", style: { margin: "var(--m-space-5) 0 var(--m-space-3)" } }, "m-card-hover (clicável)"),
+    h("p", { className: "m-text-xs m-text-muted", style: { margin: "var(--m-space-5) 0 var(--m-space-3)" } }, "m-card-hover (clickable)"),
     h("div", { className: "m-grid-3" },
-      ["Relatório mensal", "Pipeline de dados", "Painel de vendas"].map((title) =>
+      ["Monthly report", "Data pipeline", "Sales dashboard"].map((title) =>
         h(
           "article",
           {
@@ -232,7 +233,7 @@ function SectionVariants() {
             onClick: () => {},
           },
           h("p", { style: { margin: "0 0 var(--m-space-2)", fontWeight: 700 } }, title),
-          h("p", { className: "m-text-sm m-text-muted", style: { margin: 0 } }, "Clique para abrir"),
+          h("p", { className: "m-text-sm m-text-muted", style: { margin: 0 } }, "Click to open"),
         ),
       ),
     ),
@@ -246,9 +247,9 @@ export function PageNewUI() {
     "div",
     { className: "m-stack" },
     h("div", null,
-      h("h2", { className: "m-title", style: { fontSize: "1.5rem" } }, "Novos componentes UI"),
+      h("h2", { className: "m-title", style: { fontSize: "1.5rem" } }, "New UI Components"),
       h("p", { className: "m-body m-text-sm", style: { marginTop: "var(--m-space-2)" } },
-        "Skeleton, Avatar, Breadcrumb, Sidebar nav links e variantes CSS-only.",
+        "Skeleton, Avatar, Breadcrumb, Sidebar nav links and CSS-only variants.",
       ),
     ),
     h(SectionSkeleton),
