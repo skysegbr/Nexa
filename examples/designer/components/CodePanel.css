@@ -1,0 +1,72 @@
+/* ── Code panel (bottom) ─────────────────────────────────────────────────── */
+
+.d-code-panel {
+  height: 220px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  background: #14192a;
+  border-top: 1px solid #0d1117;
+}
+
+.d-code-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--m-space-4);
+  height: 40px;
+  background: #1a2035;
+  border-bottom: 1px solid #0d1117;
+  flex-shrink: 0;
+}
+
+.d-code-tabs {
+  display: flex;
+  gap: 4px;
+}
+
+.d-code-tab {
+  padding: 4px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #7a8aaa;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: color .12s, border-color .12s;
+}
+
+.d-code-tab:hover { color: #c9d3e8; }
+.d-code-tab.is-active { color: #6ee7b7; border-color: #6ee7b7; }
+.d-code-tab:disabled { opacity: .4; cursor: not-allowed; }
+
+.d-copy-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #6ee7b7;
+  background: rgba(110, 231, 183, 0.12);
+  border: 1px solid rgba(110, 231, 183, 0.25);
+  border-radius: var(--m-radius-sm);
+  cursor: pointer;
+  transition: background .12s;
+}
+
+.d-copy-btn:hover { background: rgba(110, 231, 183, 0.2); }
+
+.d-code-pre {
+  flex: 1;
+  margin: 0;
+  padding: var(--m-space-4);
+  font-family: 'Fira Code', 'Cascadia Code', 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 12.5px;
+  line-height: 1.65;
+  color: #c9d3e8;
+  background: transparent;
+  overflow: auto;
+  white-space: pre;
+}

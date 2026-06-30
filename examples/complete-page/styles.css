@@ -1,10 +1,9 @@
-.complete-main { min-width: 0; }
+@import "./components/WorkspaceSidebar.css";
+@import "./components/WorkspaceTopbar.css";
+@import "./components/MetricCard.css";
+@import "./components/ProjectTable.css";
 
-.workspace-topbar h1 {
-  margin: 0;
-  font-size: 1.35rem;
-  line-height: 1.2;
-}
+.complete-main { min-width: 0; }
 
 .workspace-kicker {
   margin: 0;
@@ -14,38 +13,6 @@
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
-
-.workspace-sidebar .m-brand-mark {
-  background: var(--m-primary-soft);
-}
-
-.workspace-sidebar .m-brand-mark img { padding: 4px; }
-
-.workspace-nav {
-  display: grid;
-  gap: var(--m-space-2);
-}
-
-.workspace-nav .m-button {
-  grid-template-columns: minmax(0, 1fr) auto;
-  justify-items: start;
-  width: 100%;
-}
-
-.workspace-nav-active { background: var(--m-primary-soft); }
-
-.metric-card {
-  display: grid;
-  gap: var(--m-space-3);
-  padding: var(--m-space-4);
-}
-
-.metric-card strong {
-  font-size: 2rem;
-  line-height: 1;
-}
-
-.metric-card .m-chip { justify-self: start; }
 
 .filters-card { display: grid; gap: var(--m-space-4); }
 
@@ -59,26 +26,5 @@
 @media (min-width: 576px) {
   .filters-grid {
     grid-template-columns: minmax(0, 1fr) 220px;
-  }
-}
-
-.project-cell {
-  display: grid;
-  gap: var(--m-space-1);
-  min-width: 200px;
-}
-
-.project-cell span {
-  color: var(--m-text-muted);
-  font-size: var(--m-font-size-sm);
-  line-height: 1.45;
-}
-
-@media (max-width: 767px) {
-  .workspace-topbar {
-    align-items: flex-start;
-    flex-direction: column;
-    height: auto;
-    padding-block: var(--m-space-4);
   }
 }

@@ -1,0 +1,14 @@
+.workspace-topbar h1 {
+  margin: 0;
+  font-size: 1.35rem;
+  line-height: 1.2;
+}
+
+@media (max-width: 767px) {
+  .workspace-topbar {
+    align-items: flex-start;
+    flex-direction: column;
+    height: auto;
+    padding-block: var(--m-space-4);
+  }
+}

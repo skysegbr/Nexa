@@ -1,0 +1,73 @@
+.mm-node {
+  position: absolute;
+  width: 200px;
+  padding: var(--m-space-3) var(--m-space-3) var(--m-space-2);
+  background: var(--m-surface);
+  border: 2px solid var(--mm-node-color, var(--m-primary));
+  border-radius: var(--m-radius);
+  box-shadow: var(--m-shadow-1);
+  cursor: grab;
+  user-select: none;
+  transition: box-shadow .12s;
+}
+
+.mm-node:hover { box-shadow: var(--m-shadow-2); }
+
+.mm-node.is-dragging {
+  cursor: grabbing;
+  box-shadow: var(--m-shadow-3);
+  opacity: .95;
+}
+
+.mm-node-root {
+  border-width: 3px;
+}
+
+.mm-node-root .mm-node-text {
+  font-weight: 700;
+}
+
+.mm-node-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--mm-node-color, var(--m-primary));
+  margin-bottom: 6px;
+}
+
+.mm-node-text {
+  margin: 0;
+  font-size: var(--m-font-size-sm);
+  line-height: 1.4;
+  color: var(--m-text);
+  word-break: break-word;
+  cursor: text;
+}
+
+.mm-node-input {
+  width: 100%;
+  padding: 4px 6px;
+  font: inherit;
+  font-size: var(--m-font-size-sm);
+  color: var(--m-text);
+  background: var(--m-surface-muted);
+  border: 1px solid var(--m-border);
+  border-radius: var(--m-radius-sm);
+  resize: vertical;
+  box-sizing: border-box;
+}
+
+.mm-node-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 2px;
+  margin-top: 4px;
+  opacity: 0;
+  transition: opacity .12s;
+}
+
+.mm-node:hover .mm-node-actions,
+.mm-node:focus-within .mm-node-actions {
+  opacity: 1;
+}

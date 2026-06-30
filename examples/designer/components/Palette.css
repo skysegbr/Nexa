@@ -1,0 +1,103 @@
+/* ── Palette (left sidebar) ──────────────────────────────────────────────── */
+
+.d-palette {
+  width: 216px;
+  flex-shrink: 0;
+  background: var(--m-surface);
+  border-right: 1px solid var(--m-border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.d-palette-head {
+  padding: var(--m-space-3) var(--m-space-4) var(--m-space-2);
+  flex-shrink: 0;
+}
+
+.d-palette-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--m-text-muted);
+}
+
+.d-palette-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 0 var(--m-space-3) var(--m-space-3);
+  flex-shrink: 0;
+}
+
+.d-filter-btn {
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 500;
+  border: 1px solid var(--m-border);
+  border-radius: 99px;
+  background: transparent;
+  color: var(--m-text-muted);
+  cursor: pointer;
+  transition: all .12s;
+  white-space: nowrap;
+}
+
+.d-filter-btn:hover { border-color: var(--m-primary); color: var(--m-primary); }
+
+.d-filter-btn.is-active {
+  background: var(--m-primary);
+  border-color: var(--m-primary);
+  color: #fff;
+}
+
+.d-palette-list {
+  flex: 1;
+  overflow-y: auto;
+  padding-bottom: var(--m-space-4);
+}
+
+.d-palette-category {
+  padding: var(--m-space-3) var(--m-space-4) var(--m-space-1);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  color: var(--m-text-muted);
+  margin: 0;
+}
+
+.d-palette-item {
+  display: flex;
+  align-items: center;
+  gap: var(--m-space-2);
+  width: 100%;
+  padding: 7px var(--m-space-4);
+  font-size: var(--m-font-size-sm);
+  font-weight: 500;
+  color: var(--m-text);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background .1s;
+  text-align: left;
+}
+
+.d-palette-item:hover { background: var(--m-surface-muted); }
+
+.d-palette-icon {
+  font-size: 15px;
+  color: var(--m-primary);
+  flex-shrink: 0;
+}
+
+.d-palette-plus {
+  margin-left: auto;
+  font-size: 14px;
+  color: var(--m-text-muted);
+  opacity: 0;
+  transition: opacity .1s;
+}
+
+.d-palette-item:hover .d-palette-plus { opacity: 1; }

@@ -1,0 +1,3 @@
+.badge-success { background: var(--m-success-soft); color: var(--m-success); }
+.badge-running { background: var(--m-info-soft);    color: var(--m-info);    }
+.badge-error   { background: var(--m-danger-soft);  color: var(--m-danger);  }

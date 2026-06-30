@@ -1,0 +1,12 @@
+.metric-card {
+  display: grid;
+  gap: var(--m-space-3);
+  padding: var(--m-space-4);
+}
+
+.metric-card strong {
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.metric-card .m-chip { justify-self: start; }

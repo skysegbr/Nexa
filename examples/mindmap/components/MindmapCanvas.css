@@ -1,0 +1,49 @@
+.mm-canvas {
+  flex: 1;
+  overflow: auto;
+  position: relative;
+  background-color: var(--m-surface-muted);
+  background-image: radial-gradient(circle, var(--m-border) 1px, transparent 1px);
+  background-size: 26px 26px;
+}
+
+.mm-canvas-grid {
+  position: relative;
+}
+
+.mm-links {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: visible;
+}
+
+.mm-link {
+  fill: none;
+  stroke-width: 2.5;
+  opacity: .8;
+  stroke-linecap: round;
+}
+
+.mm-canvas-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mm-canvas-empty-inner {
+  display: grid;
+  gap: var(--m-space-3);
+  justify-items: center;
+  text-align: center;
+  color: var(--m-text-muted);
+}
+
+.mm-canvas-empty-icon {
+  font-size: 48px;
+  color: var(--m-border);
+}
+
+.mm-canvas-empty-sub {
+  margin: 0;
+}

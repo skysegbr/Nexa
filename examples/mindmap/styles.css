@@ -1,0 +1,11 @@
+@import "./components/MindmapToolbar.css";
+@import "./components/MindmapCanvas.css";
+@import "./components/MindmapNode.css";
+
+.mm-app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+  background: var(--m-bg);
+}

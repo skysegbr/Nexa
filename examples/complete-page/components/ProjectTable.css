@@ -1,0 +1,11 @@
+.project-cell {
+  display: grid;
+  gap: var(--m-space-1);
+  min-width: 200px;
+}
+
+.project-cell span {
+  color: var(--m-text-muted);
+  font-size: var(--m-font-size-sm);
+  line-height: 1.45;
+}
