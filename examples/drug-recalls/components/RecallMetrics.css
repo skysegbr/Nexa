@@ -1,0 +1,24 @@
+.dr-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--m-space-4);
+}
+
+.dr-metric {
+  display: grid;
+  gap: var(--m-space-1);
+  padding: var(--m-space-4);
+}
+
+.dr-metric strong {
+  font-size: 1.75rem;
+  line-height: 1;
+}
+
+.dr-metric span {
+  color: var(--m-text-muted);
+  font-size: var(--m-font-size-sm);
+}
+
+.dr-metric-danger strong { color: var(--m-danger); }
+.dr-metric-warning strong { color: var(--m-warning); }

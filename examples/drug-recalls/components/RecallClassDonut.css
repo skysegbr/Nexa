@@ -1,0 +1,40 @@
+.dr-donut {
+  display: flex;
+  align-items: center;
+  gap: var(--m-space-5);
+  flex-wrap: wrap;
+}
+
+.dr-donut-svg {
+  width: 140px;
+  height: 140px;
+  flex-shrink: 0;
+}
+
+.dr-donut-arc {
+  transition: stroke-dasharray .3s ease;
+}
+
+.dr-donut-legend {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--m-space-2);
+  font-size: var(--m-font-size-sm);
+  color: var(--m-text-muted);
+}
+
+.dr-donut-legend li {
+  display: flex;
+  align-items: center;
+  gap: var(--m-space-2);
+}
+
+.dr-donut-swatch {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}

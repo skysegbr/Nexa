@@ -1,0 +1,12 @@
+.dr-filters {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--m-space-4);
+}
+
+@media (min-width: 700px) {
+  .dr-filters {
+    grid-template-columns: minmax(0, 1fr) 220px 200px;
+    align-items: start;
+  }
+}

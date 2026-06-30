@@ -1,0 +1,46 @@
+@import "./components/DashboardToolbar.css";
+@import "./components/RecallFilters.css";
+@import "./components/RecallMetrics.css";
+@import "./components/RecallClassDonut.css";
+@import "./components/RecallStateBars.css";
+@import "./components/RecallTable.css";
+@import "./components/RecallDetailDialog.css";
+
+.dr-app {
+  min-height: 100vh;
+  background: var(--m-bg);
+}
+
+.dr-charts-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--m-space-4);
+}
+
+@media (min-width: 800px) {
+  .dr-charts-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.dr-chart-card {
+  background: var(--m-surface);
+  border: 1px solid var(--m-border);
+  border-radius: var(--m-radius);
+  padding: var(--m-space-4);
+}
+
+.dr-chart-title {
+  margin: 0 0 var(--m-space-4);
+  font-size: var(--m-font-size-xs);
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--m-text-muted);
+}
+
+.dr-chart-empty {
+  display: grid;
+  place-items: center;
+  min-height: 180px;
+}
