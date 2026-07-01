@@ -300,6 +300,8 @@ export function Dialog({
   ...props
 } = {}) {
   const panelRef = useRef(null);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
 
   useEffect(() => {
     if (!open) {
@@ -314,7 +316,7 @@ export function Dialog({
 
     const onKeyDown = (event) => {
       if (event.key === "Escape") {
-        onClose?.();
+        onCloseRef.current?.();
         return;
       }
 
@@ -333,7 +335,7 @@ export function Dialog({
         previousActive.focus();
       }
     };
-  }, [open, onClose]);
+  }, [open]);
 
   if (!open) {
     return null;
@@ -594,6 +596,8 @@ export function Drawer({
   ...props
 } = {}) {
   const panelRef = useRef(null);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
 
   useEffect(() => {
     if (!open) {
@@ -608,7 +612,7 @@ export function Drawer({
 
     const onKeyDown = (event) => {
       if (event.key === "Escape") {
-        onClose?.();
+        onCloseRef.current?.();
         return;
       }
       if (event.key === "Tab") {
@@ -625,7 +629,7 @@ export function Drawer({
         previousActive.focus();
       }
     };
-  }, [open, onClose]);
+  }, [open]);
 
   if (!open) {
     return null;
