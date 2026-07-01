@@ -1650,6 +1650,54 @@ export function usePalette() {
   return { palette, palettes: PALETTES, setPalette, customColor, setCustomColor };
 }
 
+// ── useDesign ──────────────────────────────────────────────
+//
+// Switches the overall visual design, independent of theme and palette.
+// Sets data-design on <html>; "nexa" (default) needs no stylesheet beyond
+// nexa-ui.css. "bootstrap" only takes effect if the optional
+// dist/nexa-bootstrap.css is also loaded — it's scoped entirely under
+// [data-design="bootstrap"], so loading it changes nothing until this hook
+// (or a manual data-design="bootstrap" attribute) switches to it.
+//
+// Usage:
+//   const { design, designs, setDesign } = useDesign();
+//   setDesign("bootstrap");
+
+const DESIGNS = ["nexa", "bootstrap"];
+
+export function useDesign() {
+  const getResolved = () => {
+    try {
+      const stored = localStorage.getItem("nexa-design");
+      if (DESIGNS.includes(stored)) return stored;
+    } catch {}
+    return "nexa";
+  };
+
+  const [design, setDesignState] = useState(getResolved);
+
+  // Apply to DOM and persist.
+  useEffect(() => {
+    document.documentElement.setAttribute("data-design", design);
+    try { localStorage.setItem("nexa-design", design); } catch {}
+  }, [design]);
+
+  // Stay in sync when another useDesign instance changes the design.
+  useEffect(() => {
+    const handler = (e) => setDesignState(e.detail);
+    window.addEventListener("nexa:designchange", handler);
+    return () => window.removeEventListener("nexa:designchange", handler);
+  }, []);
+
+  const setDesign = (next) => {
+    if (!DESIGNS.includes(next)) return;
+    setDesignState(next);
+    window.dispatchEvent(new CustomEvent("nexa:designchange", { detail: next }));
+  };
+
+  return { design, designs: DESIGNS, setDesign };
+}
+
 // ── useHistory ─────────────────────────────────────────────
 //
 // Wraps a state value with undo/redo history.

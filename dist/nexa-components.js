@@ -1,4 +1,4 @@
-import { h, useEffect, useRef, useState, useCallback, useTheme, usePalette, useMemo } from "./nexa.js";
+import { h, useEffect, useRef, useState, useCallback, useTheme, usePalette, useDesign, useMemo } from "./nexa.js";
 
 function startDrag(e, panel) {
   if (!panel || e.button !== 0) return;
@@ -1762,6 +1762,39 @@ export function PaletteSwitcher({ className = "", ...props } = {}) {
       value: customColor || "#0f766e",
       onInput: (event) => setCustomColor(event.target.value),
     }),
+  );
+}
+
+const _DESIGN_LABELS = { nexa: "Nexa", bootstrap: "Bootstrap" };
+
+// Switches data-design via useDesign(). Only visible if dist/nexa-bootstrap.css
+// (or another design stylesheet) is loaded — otherwise switching design is a
+// no-op, since "bootstrap" has nothing to style against.
+export function DesignSwitcher({ className = "", ...props } = {}) {
+  const { design, designs, setDesign } = useDesign();
+
+  return h(
+    "div",
+    {
+      ...props,
+      className: joinClasses("m-design-switcher", className),
+      role: "radiogroup",
+      "aria-label": "Design",
+    },
+    designs.map((name) =>
+      h(
+        "button",
+        {
+          key: name,
+          type: "button",
+          role: "radio",
+          "aria-checked": name === design,
+          className: joinClasses("m-chip", name === design && "m-chip-active"),
+          onClick: () => setDesign(name),
+        },
+        _DESIGN_LABELS[name] ?? name,
+      ),
+    ),
   );
 }
 

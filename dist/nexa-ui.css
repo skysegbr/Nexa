@@ -73,7 +73,7 @@
   --m-radius-xl: 24px;
 
   /* Shadows */
-  --m-shadow-1: 0 1px 2px rgb(15 23 42 / 0.08);
+  --m-shadow-1: 0 1px 3px rgb(15 23 42 / 0.12), 0 1px 2px rgb(15 23 42 / 0.08);
   --m-shadow-2: 0 8px 24px rgb(15 23 42 / 0.12);
   --m-shadow-3: 0 16px 40px rgb(15 23 42 / 0.16);
 
@@ -138,7 +138,7 @@
     --m-info-soft:     #0c1a3a;
     --m-focus:         #2dd4bf;
 
-    --m-shadow-1: 0 1px 2px rgb(0 0 0 / 0.24);
+    --m-shadow-1: 0 1px 3px rgb(0 0 0 / 0.36), 0 1px 2px rgb(0 0 0 / 0.24);
     --m-shadow-2: 0 8px 24px rgb(0 0 0 / 0.32);
     --m-shadow-3: 0 16px 40px rgb(0 0 0 / 0.40);
   }
@@ -171,7 +171,7 @@
   --m-info-soft:      #0c1a3a;
   --m-focus:          #2dd4bf;
 
-  --m-shadow-1: 0 1px 2px rgb(0 0 0 / 0.24);
+  --m-shadow-1: 0 1px 3px rgb(0 0 0 / 0.36), 0 1px 2px rgb(0 0 0 / 0.24);
   --m-shadow-2: 0 8px 24px rgb(0 0 0 / 0.32);
   --m-shadow-3: 0 16px 40px rgb(0 0 0 / 0.40);
 }
@@ -203,7 +203,7 @@
   --m-info-soft:      #dbeafe;
   --m-focus:          #9ee8df;
 
-  --m-shadow-1: 0 1px 2px rgb(15 23 42 / 0.08);
+  --m-shadow-1: 0 1px 3px rgb(15 23 42 / 0.12), 0 1px 2px rgb(15 23 42 / 0.08);
   --m-shadow-2: 0 8px 24px rgb(15 23 42 / 0.12);
   --m-shadow-3: 0 16px 40px rgb(15 23 42 / 0.16);
 }
@@ -361,6 +361,14 @@
 .m-palette-swatch-custom::-moz-color-swatch {
   border: none;
   border-radius: inherit;
+}
+
+/* ── DesignSwitcher ────────────────────────────────────── */
+
+.m-design-switcher {
+  display: inline-flex;
+  gap: var(--m-space-2);
+  align-items: center;
 }
 
 /* ── Reset ─────────────────────────────────────────────── */
@@ -2250,6 +2258,7 @@ textarea.m-field {
   border-bottom: 1px solid var(--m-border);
   background: color-mix(in srgb, var(--m-surface) 92%, transparent);
   backdrop-filter: blur(12px);
+  box-shadow: var(--m-shadow-1);
 }
 
 @media (min-width: 768px) {

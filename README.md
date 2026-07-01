@@ -18,6 +18,8 @@ Two optional add-ons build on top of that core:
   — `FullCodeEditor`, a [CodeMirror](https://codemirror.net/5/) wrapper with a
   toolbar, snippet browser, and autocomplete. Requires the local CodeMirror
   assets in `assets/codemirror/` (no CDN).
+- `dist/nexa-bootstrap.css` — optional Bootstrap 5 visual skin, switched at
+  runtime with `useDesign()`. See [Design](#design) below.
 
 ## Logo Meaning
 
@@ -122,6 +124,7 @@ import {
   // Theme
   useTheme,
   usePalette,
+  useDesign,
   // Mobile
   useLongPress,
   useNetworkStatus,
@@ -140,6 +143,7 @@ import {
   Card,
   Checkbox,
   Chip,
+  DesignSwitcher,
   Dialog,
   Drawer,
   Dropdown,
@@ -376,6 +380,36 @@ directly as an inline style, and `nexa-ui.css` derives `--m-primary-hover`,
 `--m-primary-soft`, `--m-secondary`, and `--m-focus` from it with `color-mix()`
 — any color works without computing shades by hand. Requires a browser with
 `color-mix()` support (all evergreen browsers since 2023).
+
+### Design
+
+| Export | Description |
+|---|---|
+| `useDesign()` | Returns `{ design, designs, setDesign }` |
+
+Nexa's default look ("nexa") needs nothing beyond `nexa-ui.css`. To offer a
+Bootstrap 5 visual skin as an *option*, also load `dist/nexa-bootstrap.css`
+and switch `data-design="bootstrap"` at runtime:
+
+```html
+<link rel="stylesheet" href="./dist/nexa-ui.css" />
+<link rel="stylesheet" href="./dist/nexa-bootstrap.css" />
+```
+
+```js
+const { design, designs, setDesign } = useDesign();
+// design: "nexa" | "bootstrap"
+// designs: the full list, for building a picker
+// setDesign("bootstrap")
+```
+
+This is independent of `useTheme` and `usePalette` — light/dark and accent
+color both keep working under either design. `nexa-bootstrap.css` is scoped
+entirely under `[data-design="bootstrap"]`; if it isn't loaded, or the design
+is left at the default `"nexa"`, nothing changes. It re-points Nexa's
+existing `--m-*` tokens (color, radius, shadow, font) at Bootstrap 5's real
+values, plus a handful of grouped overrides for the few things that aren't
+token-driven (font-weight, focus-ring style, badge shape).
 
 ### Mobile hooks
 
@@ -649,6 +683,7 @@ version of Nexa.
 | `SwipeableListItem` | `actions`, `actionWidth` | Swipe left to reveal action buttons |
 | `ThemeToggle` | — | `IconButton` that calls `useTheme().toggleTheme()` internally |
 | `PaletteSwitcher` | — | Row of color swatches; calls `usePalette().setPalette()` internally |
+| `DesignSwitcher` | — | Chip toggle between designs; calls `useDesign().setDesign()` internally |
 
 ```js
 // SwipeableListItem — swipe left to reveal actions

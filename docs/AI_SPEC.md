@@ -332,6 +332,22 @@ const { palette, palettes, setPalette, customColor, setCustomColor } = usePalett
 // shade computation is needed on the JS side. Invalid hex strings are ignored.
 ```
 
+### `useDesign`
+
+```js
+const { design, designs, setDesign } = useDesign();
+// design: 'nexa' | 'bootstrap'
+// designs: the full list, for building a picker UI
+// Standalone, same pattern as useTheme/usePalette — reads/writes
+// localStorage('nexa-design') and sets data-design on <html>.
+//
+// "nexa" (default) needs nothing beyond nexa-ui.css. "bootstrap" only takes
+// visual effect if dist/nexa-bootstrap.css is ALSO loaded — that stylesheet
+// is scoped entirely under [data-design="bootstrap"], so it's inert until
+// this hook (or a manual data-design="bootstrap" attribute) switches to it.
+// Composes freely with useTheme and usePalette.
+```
+
 ### `useContext` / `createContext`
 
 See §7 below.
@@ -842,6 +858,10 @@ h(ThemeToggle)  // no props required; renders sun/moon SVG icon
 
 // PaletteSwitcher — row of color swatches, calls usePalette().setPalette()
 h(PaletteSwitcher)  // no props required
+
+// DesignSwitcher — chip toggle, calls useDesign().setDesign()
+// Only visually meaningful if dist/nexa-bootstrap.css is also loaded.
+h(DesignSwitcher)  // no props required
 
 // Sidebar nav links — CSS-only, use inside .m-sidebar
 h('nav', { className: 'm-sidebar-section' },

@@ -1,0 +1,215 @@
+/*
+ * Nexa × Bootstrap 5 — optional design skin.
+ *
+ * Opt-in and fully reversible: load this file ALONGSIDE nexa-ui.css (which
+ * stays untouched) and switch data-design="bootstrap" on <html> via
+ * useDesign() to activate it. Every rule below is scoped under
+ * [data-design="bootstrap"], so not loading this file — or leaving
+ * data-design at its default "nexa" — changes nothing.
+ *
+ * Nexa's whole visual system already runs on --m-* custom properties, so
+ * most of Bootstrap's look comes from re-pointing those tokens at
+ * Bootstrap 5's real values (colors, radius, shadow, font stack). The
+ * remaining differences are structural rather than color-only — Bootstrap
+ * uses lighter font-weights and a box-shadow focus glow instead of Nexa's
+ * outline ring — so those are grouped into a handful of :is() rules that
+ * cover every affected component at once, rather than one override per
+ * component.
+ */
+
+/* ── Tokens ────────────────────────────────────────────── */
+
+[data-design="bootstrap"] {
+  --m-font:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
+    Arial, "Noto Sans", sans-serif;
+
+  --m-radius:    0.375rem;
+  --m-radius-sm: 0.25rem;
+  --m-radius-lg: 0.5rem;
+  --m-radius-xl: 1rem;
+
+  --m-shadow-1: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.1), 0 0.0625rem 0.125rem rgba(0, 0, 0, 0.06);
+  --m-shadow-2: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+  --m-shadow-3: 0 1rem 3rem rgba(0, 0, 0, 0.175);
+
+  --m-bg:              #ffffff;
+  --m-surface:         #ffffff;
+  --m-surface-soft:    #f8f9fa;
+  --m-surface-muted:   #f8f9fa;
+  --m-surface-raised:  #e9ecef;
+  --m-text:            #212529;
+  --m-text-muted:      #6c757d;
+  --m-border:          #dee2e6;
+
+  --m-primary:         #0d6efd;
+  --m-primary-hover:   #0b5ed7;
+  --m-primary-soft:    #cfe2ff;
+  --m-secondary:       #6c757d;
+
+  --m-danger:          #dc3545;
+  --m-danger-hover:    #bb2d3b;
+  --m-danger-soft:     #f8d7da;
+  --m-success:         #198754;
+  --m-success-soft:    #d1e7dd;
+  --m-warning:         #ffc107;
+  --m-warning-soft:    #fff3cd;
+  --m-info:            #0dcaf0;
+  --m-info-soft:       #cff4fc;
+  --m-focus:           #0d6efd;
+}
+
+[data-theme="dark"][data-design="bootstrap"] {
+  --m-bg:              #212529;
+  --m-surface:         #2b3035;
+  --m-surface-soft:    #343a40;
+  --m-surface-muted:   #343a40;
+  --m-surface-raised:  #343a40;
+  --m-text:            #dee2e6;
+  --m-text-muted:      #adb5bd;
+  --m-border:          #495057;
+
+  --m-primary:         #6ea8fe;
+  --m-primary-hover:   #9ec5fe;
+  --m-primary-soft:    #052c65;
+
+  --m-danger:          #ea868f;
+  --m-danger-hover:    #f1aeb5;
+  --m-danger-soft:     #58151c;
+  --m-success:         #75b798;
+  --m-success-soft:    #0a3622;
+  --m-warning:         #ffda6a;
+  --m-warning-soft:    #664d03;
+  --m-info:            #6edff6;
+  --m-info-soft:       #032830;
+  --m-focus:           #6ea8fe;
+
+  --m-shadow-1: 0 1px 3px rgb(0 0 0 / 0.36), 0 1px 2px rgb(0 0 0 / 0.24);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"])[data-design="bootstrap"] {
+    --m-bg:              #212529;
+    --m-surface:         #2b3035;
+    --m-surface-soft:    #343a40;
+    --m-surface-muted:   #343a40;
+    --m-surface-raised:  #343a40;
+    --m-text:            #dee2e6;
+    --m-text-muted:      #adb5bd;
+    --m-border:          #495057;
+
+    --m-primary:         #6ea8fe;
+    --m-primary-hover:   #9ec5fe;
+    --m-primary-soft:    #052c65;
+
+    --m-danger:          #ea868f;
+    --m-danger-hover:    #f1aeb5;
+    --m-danger-soft:     #58151c;
+    --m-success:         #75b798;
+    --m-success-soft:    #0a3622;
+    --m-warning:         #ffda6a;
+    --m-warning-soft:    #664d03;
+    --m-info:            #6edff6;
+    --m-info-soft:       #032830;
+    --m-focus:           #6ea8fe;
+
+    --m-shadow-1: 0 1px 3px rgb(0 0 0 / 0.36), 0 1px 2px rgb(0 0 0 / 0.24);
+  }
+}
+
+/* ── Typography weight ────────────────────────────────────
+ * Bootstrap doesn't lean on heavy font-weights the way Nexa's Material-ish
+ * defaults do; flatten the boldest text back to a normal/medium scale
+ * across every component that hardcodes a heavy weight. */
+
+[data-design="bootstrap"] :is(
+  .m-button,
+  .m-eyebrow,
+  .m-title,
+  .m-label,
+  .m-error,
+  .m-chip,
+  .m-badge,
+  .m-table th,
+  .m-switch-label,
+  .m-pagination-item,
+  .m-collapse-header,
+  .m-app-bar-title,
+  .m-bottom-nav-item,
+  .m-bottom-nav-badge,
+  .m-file-dropzone-label,
+  .m-fab,
+  .m-navbar-link,
+  .m-combobox-option-selected,
+  .m-step-label
+) {
+  font-weight: 500;
+}
+
+[data-design="bootstrap"] .m-eyebrow {
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+[data-design="bootstrap"] .m-table th {
+  text-transform: none;
+}
+
+/* ── Focus ring ────────────────────────────────────────────
+ * Bootstrap uses a soft box-shadow glow instead of a solid outline ring. */
+
+[data-design="bootstrap"] :is(
+  .m-button,
+  .m-chip,
+  .m-field,
+  .m-combobox-search,
+  .m-dropdown-button,
+  .m-collapse-header,
+  .m-pagination-item,
+  .m-context-menu-button,
+  .m-bottom-nav-item,
+  .m-fab
+):focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 0.25rem color-mix(in srgb, var(--m-primary) 25%, transparent);
+}
+
+[data-design="bootstrap"] .m-field:focus,
+[data-design="bootstrap"] .m-combobox-search:focus {
+  outline: none;
+  box-shadow: 0 0 0 0.25rem color-mix(in srgb, var(--m-primary) 25%, transparent);
+}
+
+[data-design="bootstrap"] .m-switch-input:focus-visible + .m-switch-track {
+  outline: none;
+  box-shadow: 0 0 0 0.25rem color-mix(in srgb, var(--m-primary) 25%, transparent);
+}
+
+/* ── Badges: squared, not pill ─────────────────────────────
+ * Bootstrap's default .badge uses the base border-radius, not a pill.
+ * Nexa's Chip keeps its pill shape — that reads fine as a "chip" too. */
+
+[data-design="bootstrap"] .m-badge {
+  border-radius: var(--m-radius-sm);
+}
+
+/* ── Alerts & toasts: Bootstrap's per-variant border tints ───────────────
+ * These borders are hardcoded hex (not token-based) in nexa-ui.css, so they
+ * need a direct override to match Bootstrap's *-subtle border colors. */
+
+[data-design="bootstrap"] .m-alert-info    { border-color: #b6d4fe; }
+[data-design="bootstrap"] .m-alert-success { border-color: #a3cfbb; }
+[data-design="bootstrap"] .m-alert-warning { border-color: #ffe69c; }
+[data-design="bootstrap"] .m-alert-danger  { border-color: #f5c2c7; }
+
+[data-design="bootstrap"] .m-toast-success { border-color: #a3cfbb; }
+[data-design="bootstrap"] .m-toast-warning { border-color: #ffe69c; }
+[data-design="bootstrap"] .m-toast-danger  { border-color: #f5c2c7; }
+
+/* ── Tooltip: Bootstrap's near-black tooltip surface ─────────────────────
+ * Hardcoded hex in nexa-ui.css, independent of theme tokens. */
+
+[data-design="bootstrap"] .m-tooltip-wrap::after {
+  background: rgba(0, 0, 0, 0.9);
+  border-radius: var(--m-radius-sm);
+}
