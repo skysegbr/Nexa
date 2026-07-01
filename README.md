@@ -121,6 +121,7 @@ import {
   useState,
   // Theme
   useTheme,
+  usePalette,
   // Mobile
   useLongPress,
   useNetworkStatus,
@@ -147,6 +148,7 @@ import {
   FormField,
   IconButton,
   Pagination,
+  PaletteSwitcher,
   Progress,
   Select,
   Spinner,
@@ -342,6 +344,7 @@ neighbors or skipping the rest of an unmount.
 | Export | Description |
 |---|---|
 | `useTheme()` | Returns `{ theme, setTheme, toggleTheme }` |
+| `usePalette()` | Returns `{ palette, palettes, setPalette }` |
 
 `useTheme` reads the saved preference from `localStorage`, falls back to
 `prefers-color-scheme`, and writes `data-theme="dark"` or `data-theme="light"` on
@@ -352,6 +355,19 @@ const { theme, setTheme, toggleTheme } = useTheme();
 // theme: "dark" | "light"
 // setTheme("dark")  — set explicitly
 // toggleTheme()     — flip between the two
+```
+
+`usePalette` switches the accent color independently of light/dark — it writes
+`data-palette` on `<html>` and persists to `localStorage`. Each palette defines
+both a light and a dark variant of `--m-primary`, `--m-primary-hover`,
+`--m-primary-soft`, `--m-secondary`, and `--m-focus`, so it composes freely with
+`useTheme`.
+
+```js
+const { palette, palettes, setPalette } = usePalette();
+// palette: "default" | "violet" | "rose" | "blue"
+// palettes: the full list above, handy for building a picker
+// setPalette("violet")
 ```
 
 ### Mobile hooks
@@ -625,6 +641,7 @@ version of Nexa.
 | `FAB` | `label`, `extended`, `aboveNav`, `onClick` | Floating action button; `aboveNav` shifts above `BottomNav` |
 | `SwipeableListItem` | `actions`, `actionWidth` | Swipe left to reveal action buttons |
 | `ThemeToggle` | — | `IconButton` that calls `useTheme().toggleTheme()` internally |
+| `PaletteSwitcher` | — | Row of color swatches; calls `usePalette().setPalette()` internally |
 
 ```js
 // SwipeableListItem — swipe left to reveal actions

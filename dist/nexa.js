@@ -1565,6 +1565,51 @@ export function useTheme() {
   return { theme, setTheme, toggleTheme };
 }
 
+// ── usePalette ─────────────────────────────────────────────
+//
+// Switches the accent color palette independently of light/dark theme.
+// Sets data-palette on <html>; nexa-ui.css pairs each palette with both a
+// light and a dark variant, so palette and theme compose freely.
+//
+// Usage:
+//   const { palette, palettes, setPalette } = usePalette();
+//   setPalette("violet");
+
+const PALETTES = ["default", "violet", "rose", "blue"];
+
+export function usePalette() {
+  const getResolved = () => {
+    try {
+      const stored = localStorage.getItem("nexa-palette");
+      if (PALETTES.includes(stored)) return stored;
+    } catch {}
+    return "default";
+  };
+
+  const [palette, setPaletteState] = useState(getResolved);
+
+  // Apply to DOM and persist.
+  useEffect(() => {
+    document.documentElement.setAttribute("data-palette", palette);
+    try { localStorage.setItem("nexa-palette", palette); } catch {}
+  }, [palette]);
+
+  // Stay in sync when another usePalette instance changes the palette.
+  useEffect(() => {
+    const handler = (e) => setPaletteState(e.detail);
+    window.addEventListener("nexa:palettechange", handler);
+    return () => window.removeEventListener("nexa:palettechange", handler);
+  }, []);
+
+  const setPalette = (next) => {
+    if (!PALETTES.includes(next)) return;
+    setPaletteState(next);
+    window.dispatchEvent(new CustomEvent("nexa:palettechange", { detail: next }));
+  };
+
+  return { palette, palettes: PALETTES, setPalette };
+}
+
 // ── useHistory ─────────────────────────────────────────────
 //
 // Wraps a state value with undo/redo history.

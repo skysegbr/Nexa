@@ -208,6 +208,114 @@
   --m-shadow-3: 0 16px 40px rgb(15 23 42 / 0.16);
 }
 
+/* ── Palettes ──────────────────────────────────────────── */
+
+/*
+ * Accent palettes, independent of light/dark theme. "default" (teal) is the
+ * :root value above and needs no override block. Each other palette pairs a
+ * light variant with a dark variant, mirroring the [data-theme] pattern:
+ * usePalette() in nexa.js manages [data-palette] and localStorage.
+ */
+
+[data-palette="violet"] {
+  --m-primary:       #6d28d9;
+  --m-primary-hover: #5b21b6;
+  --m-primary-soft:  #ede9fe;
+  --m-secondary:     #9333ea;
+  --m-focus:         #c4b5fd;
+}
+
+[data-palette="rose"] {
+  --m-primary:       #be123c;
+  --m-primary-hover: #9f1239;
+  --m-primary-soft:  #ffe4e6;
+  --m-secondary:     #db2777;
+  --m-focus:         #fda4af;
+}
+
+[data-palette="blue"] {
+  --m-primary:       #1d4ed8;
+  --m-primary-hover: #1e40af;
+  --m-primary-soft:  #dbeafe;
+  --m-secondary:     #0284c7;
+  --m-focus:         #93c5fd;
+}
+
+[data-theme="dark"][data-palette="violet"] {
+  --m-primary:       #a78bfa;
+  --m-primary-hover: #c4b5fd;
+  --m-primary-soft:  #4c1d95;
+  --m-focus:         #a78bfa;
+}
+
+[data-theme="dark"][data-palette="rose"] {
+  --m-primary:       #fb7185;
+  --m-primary-hover: #fda4af;
+  --m-primary-soft:  #4c0519;
+  --m-focus:         #fb7185;
+}
+
+[data-theme="dark"][data-palette="blue"] {
+  --m-primary:       #60a5fa;
+  --m-primary-hover: #93c5fd;
+  --m-primary-soft:  #1e3a8a;
+  --m-focus:         #60a5fa;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"])[data-palette="violet"] {
+    --m-primary:       #a78bfa;
+    --m-primary-hover: #c4b5fd;
+    --m-primary-soft:  #4c1d95;
+    --m-focus:         #a78bfa;
+  }
+
+  :root:not([data-theme="light"])[data-palette="rose"] {
+    --m-primary:       #fb7185;
+    --m-primary-hover: #fda4af;
+    --m-primary-soft:  #4c0519;
+    --m-focus:         #fb7185;
+  }
+
+  :root:not([data-theme="light"])[data-palette="blue"] {
+    --m-primary:       #60a5fa;
+    --m-primary-hover: #93c5fd;
+    --m-primary-soft:  #1e3a8a;
+    --m-focus:         #60a5fa;
+  }
+}
+
+/* ── PaletteSwitcher ───────────────────────────────────── */
+
+.m-palette-switcher {
+  display: inline-flex;
+  gap: var(--m-space-2);
+  align-items: center;
+}
+
+.m-palette-swatch {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  padding: 0;
+  cursor: pointer;
+  transition: border-color var(--m-transition-fast), transform var(--m-transition-fast);
+}
+
+.m-palette-swatch:hover {
+  transform: scale(1.1);
+}
+
+.m-palette-swatch:focus-visible {
+  outline: 2px solid var(--m-focus);
+  outline-offset: 2px;
+}
+
+.m-palette-swatch.is-active {
+  border-color: var(--m-text);
+}
+
 /* ── Reset ─────────────────────────────────────────────── */
 
 *,

@@ -1,5 +1,5 @@
 import { h, render, useToast, useRouter } from "/dist/nexa.js";
-import { Navbar, ThemeToggle, ToastStack } from "/dist/nexa-components.js";
+import { Navbar, ThemeToggle, PaletteSwitcher, ToastStack } from "/dist/nexa-components.js";
 
 import { PageSwitches }    from "./pages/PageSwitches.js";
 import { PageCombobox }    from "./pages/PageCombobox.js";
@@ -28,7 +28,7 @@ function App() {
         { icon: h("i", { className: "bi bi-bell"         }), label: "Toasts & Dialog",   href: "#/toasts",   active: path === "/toasts"   },
         { icon: h("i", { className: "bi bi-stars"        }), label: "New UI",             href: "#/newui",    active: path === "/newui"    },
       ],
-      actions: h(ThemeToggle),
+      actions: [h(PaletteSwitcher, { key: "palette" }), h(ThemeToggle, { key: "theme" })],
     }),
 
     h(

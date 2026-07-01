@@ -315,6 +315,18 @@ const { theme, setTheme, toggleTheme } = useTheme();
 // a 'nexa:themechange' CustomEvent.
 ```
 
+### `usePalette`
+
+```js
+const { palette, palettes, setPalette } = usePalette();
+// palette: 'default' | 'violet' | 'rose' | 'blue'
+// palettes: the full list, for building a picker UI
+// Standalone, same pattern as useTheme — reads/writes localStorage('nexa-palette')
+// and sets data-palette on <html>. Independent of useTheme: nexa-ui.css pairs
+// each palette with both a light and a dark variant, so the two compose freely.
+// setPalette(x) is a no-op if x isn't in `palettes`.
+```
+
 ### `useContext` / `createContext`
 
 See §7 below.
@@ -822,6 +834,9 @@ h(BottomNav, {
 
 // ThemeToggle — icon button that calls useTheme().toggleTheme()
 h(ThemeToggle)  // no props required; renders sun/moon SVG icon
+
+// PaletteSwitcher — row of color swatches, calls usePalette().setPalette()
+h(PaletteSwitcher)  // no props required
 
 // Sidebar nav links — CSS-only, use inside .m-sidebar
 h('nav', { className: 'm-sidebar-section' },

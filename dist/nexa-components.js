@@ -1,4 +1,4 @@
-import { h, useEffect, useRef, useState, useCallback, useTheme, useMemo } from "./nexa.js";
+import { h, useEffect, useRef, useState, useCallback, useTheme, usePalette, useMemo } from "./nexa.js";
 
 function startDrag(e, panel) {
   if (!panel || e.button !== 0) return;
@@ -1713,6 +1713,42 @@ export function ThemeToggle({ className = "", ...props } = {}) {
       onClick: toggleTheme,
     },
     isDark ? h(_SunIcon, null) : h(_MoonIcon, null),
+  );
+}
+
+// Representative swatch color per palette (the light-mode --m-primary value);
+// shown regardless of the active theme so swatches stay recognizable in dark mode.
+const _PALETTE_SWATCH_COLORS = {
+  default: "#0f766e",
+  violet: "#6d28d9",
+  rose: "#be123c",
+  blue: "#1d4ed8",
+};
+
+export function PaletteSwitcher({ className = "", ...props } = {}) {
+  const { palette, palettes, setPalette } = usePalette();
+
+  return h(
+    "div",
+    {
+      ...props,
+      className: joinClasses("m-palette-switcher", className),
+      role: "radiogroup",
+      "aria-label": "Color palette",
+    },
+    palettes.map((name) =>
+      h("button", {
+        key: name,
+        type: "button",
+        role: "radio",
+        "aria-checked": name === palette,
+        "aria-label": name.charAt(0).toUpperCase() + name.slice(1),
+        title: name.charAt(0).toUpperCase() + name.slice(1),
+        className: joinClasses("m-palette-swatch", name === palette && "is-active"),
+        style: { backgroundColor: _PALETTE_SWATCH_COLORS[name] },
+        onClick: () => setPalette(name),
+      }),
+    ),
   );
 }
 
