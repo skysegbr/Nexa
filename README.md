@@ -656,7 +656,7 @@ version of Nexa.
 | `FileDropZone` | `onFiles`, `accept`, `multiple`, `progress`, `label`, `hint` |
 | `FormField` | `id`, `label`, `help`, `error` |
 | `IconButton` | `label`, `variant` |
-| `Navbar` | `brand`, `items`, `actions` |
+| `Navbar` | `brand`, `items`, `actions`, `defaultOpen`/`open`, `onToggle` — collapses into a hamburger menu below 768px |
 | `Pagination` | `page`, `total`, `siblings`, `onChange` |
 | `Progress` | `value`, `max`, `label` |
 | `Select` | `id`, `label`, `options`, `value`, `onChange` |

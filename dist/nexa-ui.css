@@ -1837,6 +1837,7 @@ textarea.m-field {
 .m-navbar {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: var(--m-space-4);
   min-height: 60px;
   padding: 0 var(--m-space-4);
@@ -1856,6 +1857,104 @@ textarea.m-field {
   flex-shrink: 0;
 }
 
+.m-navbar-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  margin-inline-start: auto;
+  border: none;
+  border-radius: var(--m-radius);
+  background: transparent;
+  color: var(--m-text);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.m-navbar-toggle:hover { background: var(--m-surface-muted); }
+
+.m-navbar-toggle:focus-visible {
+  outline: 3px solid var(--m-focus);
+  outline-offset: -3px;
+}
+
+.m-navbar-toggle-icon {
+  position: relative;
+  display: block;
+  width: 20px;
+  height: 2px;
+  background: currentColor;
+  border-radius: 2px;
+  transition: transform 200ms ease, opacity 200ms ease, background 200ms ease;
+}
+
+.m-navbar-toggle-icon::before,
+.m-navbar-toggle-icon::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  width: 20px;
+  height: 2px;
+  background: currentColor;
+  border-radius: 2px;
+  transition: transform 200ms ease, top 200ms ease;
+}
+
+.m-navbar-toggle-icon::before { top: -6px; }
+.m-navbar-toggle-icon::after { top: 6px; }
+
+.m-navbar-open .m-navbar-toggle-icon { background: transparent; }
+.m-navbar-open .m-navbar-toggle-icon::before { top: 0; transform: rotate(45deg); }
+.m-navbar-open .m-navbar-toggle-icon::after { top: 0; transform: rotate(-45deg); }
+
+@media (min-width: 768px) {
+  .m-navbar-toggle { display: none; }
+}
+
+.m-navbar-menu-wrap {
+  flex-basis: 100%;
+  order: 3;
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 220ms ease;
+}
+
+.m-navbar-open .m-navbar-menu-wrap {
+  grid-template-rows: 1fr;
+}
+
+.m-navbar-menu-inner { overflow: hidden; }
+
+.m-navbar-menu {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--m-space-1);
+  padding: var(--m-space-2) 0 var(--m-space-3);
+}
+
+@media (min-width: 768px) {
+  .m-navbar-menu-wrap {
+    flex-basis: auto;
+    order: 0;
+    flex: 1;
+    min-width: 0;
+    display: block;
+    grid-template-rows: none;
+    transition: none;
+  }
+
+  .m-navbar-menu-inner { overflow: visible; }
+
+  .m-navbar-menu {
+    flex-direction: row;
+    align-items: center;
+    gap: var(--m-space-4);
+    padding: 0;
+  }
+}
+
 .m-navbar-nav {
   display: flex;
   align-items: center;
@@ -1864,6 +1963,11 @@ textarea.m-field {
   margin: 0;
   padding: 0;
   flex-wrap: wrap;
+}
+
+@media (max-width: 767px) {
+  .m-navbar-nav { flex-direction: column; align-items: stretch; }
+  .m-navbar-link { width: 100%; }
 }
 
 .m-navbar-link {
@@ -1894,11 +1998,14 @@ textarea.m-field {
 .m-navbar-link-icon { font-size: 1rem; }
 
 .m-navbar-actions {
-  margin-inline-start: auto;
   display: flex;
   align-items: center;
   gap: var(--m-space-2);
   flex-shrink: 0;
+}
+
+@media (min-width: 768px) {
+  .m-navbar-actions { margin-inline-start: auto; }
 }
 
 /* ── Combobox ──────────────────────────────────────────── */

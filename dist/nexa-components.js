@@ -1,4 +1,4 @@
-import { h, useEffect, useRef, useState, useCallback, useTheme, usePalette, useDesign, useMemo } from "./nexa.js";
+import { h, useEffect, useRef, useState, useCallback, useTheme, usePalette, useDesign, useMemo, useId } from "./nexa.js";
 
 function startDrag(e, panel) {
   if (!panel || e.button !== 0) return;
@@ -1065,37 +1065,111 @@ export function Collapse({
 
 // ── Navbar ─────────────────────────────────────────────────
 
-export function Navbar({ brand, items = [], actions, className = "", ...props } = {}) {
+export function Navbar({
+  brand,
+  items = [],
+  actions,
+  defaultOpen = false,
+  open,
+  onToggle,
+  className = "",
+  ...props
+} = {}) {
+  const [internalOpen, setInternalOpen] = useState(defaultOpen);
+  const isOpen = open !== undefined ? open : internalOpen;
+  const menuId = useId();
+  const navRef = useRef(null);
+
+  const setOpen = (next) => {
+    if (open === undefined) setInternalOpen(next);
+    onToggle?.(next);
+  };
+
+  useEffect(() => {
+    if (!isOpen) return undefined;
+
+    const onMouseDown = (event) => {
+      if (navRef.current && !navRef.current.contains(event.target)) {
+        setOpen(false);
+      }
+    };
+    const onKeyDown = (event) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+
+    document.addEventListener("mousedown", onMouseDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", onMouseDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [isOpen]);
+
+  const hasMenu = items.length > 0 || hasChildren(actions);
+
   return h(
     "nav",
-    { ...props, className: joinClasses("m-navbar", className) },
+    {
+      ...props,
+      ref: navRef,
+      className: joinClasses("m-navbar", isOpen && "m-navbar-open", className),
+    },
     hasChildren(brand) && h("div", { className: "m-navbar-brand" }, brand),
-    items.length > 0 &&
+    hasMenu &&
       h(
-        "ul",
-        { className: "m-navbar-nav", role: "list" },
-        items.map((item, i) =>
+        "button",
+        {
+          type: "button",
+          className: "m-navbar-toggle",
+          onClick: () => setOpen(!isOpen),
+          ariaExpanded: isOpen ? "true" : "false",
+          ariaControls: menuId,
+          ariaLabel: isOpen ? "Close menu" : "Open menu",
+        },
+        h("span", { className: "m-navbar-toggle-icon", ariaHidden: "true" }),
+      ),
+    hasMenu &&
+      h(
+        "div",
+        { className: "m-navbar-menu-wrap" },
+        h(
+          "div",
+          { className: "m-navbar-menu-inner" },
           h(
-            "li",
-            { key: item.key ?? i },
-            h(
-              "a",
-              {
-                className: joinClasses(
-                  "m-navbar-link",
-                  item.active && "m-navbar-link-active",
+            "div",
+            { id: menuId, className: "m-navbar-menu" },
+            items.length > 0 &&
+              h(
+                "ul",
+                { className: "m-navbar-nav", role: "list" },
+                items.map((item, i) =>
+                  h(
+                    "li",
+                    { key: item.key ?? i },
+                    h(
+                      "a",
+                      {
+                        className: joinClasses(
+                          "m-navbar-link",
+                          item.active && "m-navbar-link-active",
+                        ),
+                        href: item.href || "#",
+                        onClick: (event) => {
+                          setOpen(false);
+                          item.onClick?.(event);
+                        },
+                        ariaCurrent: item.active ? "page" : undefined,
+                      },
+                      item.icon && h("span", { className: "m-navbar-link-icon", ariaHidden: "true" }, item.icon),
+                      item.label,
+                    ),
+                  ),
                 ),
-                href: item.href || "#",
-                onClick: item.onClick,
-                ariaCurrent: item.active ? "page" : undefined,
-              },
-              item.icon && h("span", { className: "m-navbar-link-icon", ariaHidden: "true" }, item.icon),
-              item.label,
-            ),
+              ),
+            hasChildren(actions) && h("div", { className: "m-navbar-actions" }, actions),
           ),
         ),
       ),
-    hasChildren(actions) && h("div", { className: "m-navbar-actions" }, actions),
   );
 }
 
