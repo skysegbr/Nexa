@@ -318,13 +318,18 @@ const { theme, setTheme, toggleTheme } = useTheme();
 ### `usePalette`
 
 ```js
-const { palette, palettes, setPalette } = usePalette();
-// palette: 'default' | 'violet' | 'rose' | 'blue'
+const { palette, palettes, setPalette, customColor, setCustomColor } = usePalette();
+// palette: 'default' | 'violet' | 'rose' | 'blue' | 'custom'
 // palettes: the full list, for building a picker UI
 // Standalone, same pattern as useTheme — reads/writes localStorage('nexa-palette')
 // and sets data-palette on <html>. Independent of useTheme: nexa-ui.css pairs
-// each palette with both a light and a dark variant, so the two compose freely.
+// each preset palette with both a light and a dark variant, so the two compose freely.
 // setPalette(x) is a no-op if x isn't in `palettes`.
+//
+// setCustomColor(hex) accepts any '#rgb' or '#rrggbb' color, switches palette
+// to 'custom', and writes --m-primary inline on <html>. nexa-ui.css derives
+// --m-primary-hover/-soft/-secondary/-focus from it via color-mix(), so no
+// shade computation is needed on the JS side. Invalid hex strings are ignored.
 ```
 
 ### `useContext` / `createContext`

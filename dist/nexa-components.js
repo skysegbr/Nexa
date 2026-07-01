@@ -1726,7 +1726,7 @@ const _PALETTE_SWATCH_COLORS = {
 };
 
 export function PaletteSwitcher({ className = "", ...props } = {}) {
-  const { palette, palettes, setPalette } = usePalette();
+  const { palette, palettes, setPalette, customColor, setCustomColor } = usePalette();
 
   return h(
     "div",
@@ -1736,19 +1736,32 @@ export function PaletteSwitcher({ className = "", ...props } = {}) {
       role: "radiogroup",
       "aria-label": "Color palette",
     },
-    palettes.map((name) =>
-      h("button", {
-        key: name,
-        type: "button",
-        role: "radio",
-        "aria-checked": name === palette,
-        "aria-label": name.charAt(0).toUpperCase() + name.slice(1),
-        title: name.charAt(0).toUpperCase() + name.slice(1),
-        className: joinClasses("m-palette-swatch", name === palette && "is-active"),
-        style: { backgroundColor: _PALETTE_SWATCH_COLORS[name] },
-        onClick: () => setPalette(name),
-      }),
-    ),
+    palettes
+      .filter((name) => name !== "custom")
+      .map((name) =>
+        h("button", {
+          key: name,
+          type: "button",
+          role: "radio",
+          "aria-checked": name === palette,
+          "aria-label": name.charAt(0).toUpperCase() + name.slice(1),
+          title: name.charAt(0).toUpperCase() + name.slice(1),
+          className: joinClasses("m-palette-swatch", name === palette && "is-active"),
+          style: { backgroundColor: _PALETTE_SWATCH_COLORS[name] },
+          onClick: () => setPalette(name),
+        }),
+      ),
+    h("input", {
+      key: "custom",
+      type: "color",
+      role: "radio",
+      "aria-checked": palette === "custom",
+      "aria-label": "Custom color",
+      title: "Custom color",
+      className: joinClasses("m-palette-swatch", "m-palette-swatch-custom", palette === "custom" && "is-active"),
+      value: customColor || "#0f766e",
+      onInput: (event) => setCustomColor(event.target.value),
+    }),
   );
 }
 

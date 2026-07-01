@@ -241,6 +241,18 @@
   --m-focus:         #93c5fd;
 }
 
+/*
+ * "custom" — free-form palette. usePalette().setCustomColor(hex) writes
+ * --m-primary as an inline style on <html>; these rules only derive the
+ * dependent shades from it via color-mix(), so any color works.
+ */
+[data-palette="custom"] {
+  --m-primary-hover: color-mix(in srgb, var(--m-primary) 82%, black);
+  --m-primary-soft:  color-mix(in srgb, var(--m-primary) 14%, white);
+  --m-secondary:     color-mix(in srgb, var(--m-primary) 60%, #64748b);
+  --m-focus:         color-mix(in srgb, var(--m-primary) 55%, white);
+}
+
 [data-theme="dark"][data-palette="violet"] {
   --m-primary:       #a78bfa;
   --m-primary-hover: #c4b5fd;
@@ -260,6 +272,12 @@
   --m-primary-hover: #93c5fd;
   --m-primary-soft:  #1e3a8a;
   --m-focus:         #60a5fa;
+}
+
+[data-theme="dark"][data-palette="custom"] {
+  --m-primary-hover: color-mix(in srgb, var(--m-primary) 80%, white);
+  --m-primary-soft:  color-mix(in srgb, var(--m-primary) 22%, black);
+  --m-focus:         color-mix(in srgb, var(--m-primary) 65%, white);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -282,6 +300,12 @@
     --m-primary-hover: #93c5fd;
     --m-primary-soft:  #1e3a8a;
     --m-focus:         #60a5fa;
+  }
+
+  :root:not([data-theme="light"])[data-palette="custom"] {
+    --m-primary-hover: color-mix(in srgb, var(--m-primary) 80%, white);
+    --m-primary-soft:  color-mix(in srgb, var(--m-primary) 22%, black);
+    --m-focus:         color-mix(in srgb, var(--m-primary) 65%, white);
   }
 }
 
@@ -314,6 +338,29 @@
 
 .m-palette-swatch.is-active {
   border-color: var(--m-text);
+}
+
+/* Native <input type="color">: squared off (vs. round presets) so it reads as
+   the "pick any color" control rather than another preset swatch. */
+.m-palette-swatch-custom {
+  border-radius: var(--m-radius-sm);
+  appearance: none;
+  background: none;
+}
+
+.m-palette-swatch-custom::-webkit-color-swatch-wrapper {
+  padding: 0;
+  border-radius: inherit;
+}
+
+.m-palette-swatch-custom::-webkit-color-swatch {
+  border: none;
+  border-radius: inherit;
+}
+
+.m-palette-swatch-custom::-moz-color-swatch {
+  border: none;
+  border-radius: inherit;
 }
 
 /* ── Reset ─────────────────────────────────────────────── */

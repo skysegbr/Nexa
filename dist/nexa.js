@@ -1571,11 +1571,18 @@ export function useTheme() {
 // Sets data-palette on <html>; nexa-ui.css pairs each palette with both a
 // light and a dark variant, so palette and theme compose freely.
 //
+// "custom" is a free-form palette: setCustomColor(hex) writes --m-primary
+// directly as an inline style on <html>, and nexa-ui.css derives
+// --m-primary-hover/-soft/-secondary/-focus from it with color-mix(), so any
+// color works without the caller computing shades by hand.
+//
 // Usage:
-//   const { palette, palettes, setPalette } = usePalette();
+//   const { palette, palettes, setPalette, customColor, setCustomColor } = usePalette();
 //   setPalette("violet");
+//   setCustomColor("#7c3aed"); // switches palette to "custom"
 
-const PALETTES = ["default", "violet", "rose", "blue"];
+const PALETTES = ["default", "violet", "rose", "blue", "custom"];
+const HEX_COLOR_RE = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i;
 
 export function usePalette() {
   const getResolved = () => {
@@ -1586,28 +1593,61 @@ export function usePalette() {
     return "default";
   };
 
+  const getResolvedCustomColor = () => {
+    try {
+      const stored = localStorage.getItem("nexa-palette-custom-color");
+      if (HEX_COLOR_RE.test(stored)) return stored;
+    } catch {}
+    return null;
+  };
+
   const [palette, setPaletteState] = useState(getResolved);
+  const [customColor, setCustomColorState] = useState(getResolvedCustomColor);
 
   // Apply to DOM and persist.
   useEffect(() => {
     document.documentElement.setAttribute("data-palette", palette);
     try { localStorage.setItem("nexa-palette", palette); } catch {}
-  }, [palette]);
+
+    if (palette === "custom" && customColor) {
+      document.documentElement.style.setProperty("--m-primary", customColor);
+    } else {
+      document.documentElement.style.removeProperty("--m-primary");
+    }
+  }, [palette, customColor]);
 
   // Stay in sync when another usePalette instance changes the palette.
   useEffect(() => {
-    const handler = (e) => setPaletteState(e.detail);
+    const handler = (e) => {
+      setPaletteState(e.detail.palette);
+      setCustomColorState(e.detail.customColor);
+    };
     window.addEventListener("nexa:palettechange", handler);
     return () => window.removeEventListener("nexa:palettechange", handler);
   }, []);
 
-  const setPalette = (next) => {
-    if (!PALETTES.includes(next)) return;
-    setPaletteState(next);
-    window.dispatchEvent(new CustomEvent("nexa:palettechange", { detail: next }));
+  const _apply = (nextPalette, nextCustomColor) => {
+    setPaletteState(nextPalette);
+    setCustomColorState(nextCustomColor);
+    window.dispatchEvent(
+      new CustomEvent("nexa:palettechange", {
+        detail: { palette: nextPalette, customColor: nextCustomColor },
+      }),
+    );
   };
 
-  return { palette, palettes: PALETTES, setPalette };
+  const setPalette = (next) => {
+    if (!PALETTES.includes(next)) return;
+    _apply(next, next === "custom" ? customColor : null);
+  };
+
+  const setCustomColor = (hex) => {
+    if (!HEX_COLOR_RE.test(hex)) return;
+    try { localStorage.setItem("nexa-palette-custom-color", hex); } catch {}
+    _apply("custom", hex);
+  };
+
+  return { palette, palettes: PALETTES, setPalette, customColor, setCustomColor };
 }
 
 // ── useHistory ─────────────────────────────────────────────

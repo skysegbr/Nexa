@@ -344,7 +344,7 @@ neighbors or skipping the rest of an unmount.
 | Export | Description |
 |---|---|
 | `useTheme()` | Returns `{ theme, setTheme, toggleTheme }` |
-| `usePalette()` | Returns `{ palette, palettes, setPalette }` |
+| `usePalette()` | Returns `{ palette, palettes, setPalette, customColor, setCustomColor }` |
 
 `useTheme` reads the saved preference from `localStorage`, falls back to
 `prefers-color-scheme`, and writes `data-theme="dark"` or `data-theme="light"` on
@@ -358,17 +358,24 @@ const { theme, setTheme, toggleTheme } = useTheme();
 ```
 
 `usePalette` switches the accent color independently of light/dark — it writes
-`data-palette` on `<html>` and persists to `localStorage`. Each palette defines
-both a light and a dark variant of `--m-primary`, `--m-primary-hover`,
+`data-palette` on `<html>` and persists to `localStorage`. Each preset palette
+defines both a light and a dark variant of `--m-primary`, `--m-primary-hover`,
 `--m-primary-soft`, `--m-secondary`, and `--m-focus`, so it composes freely with
 `useTheme`.
 
 ```js
-const { palette, palettes, setPalette } = usePalette();
-// palette: "default" | "violet" | "rose" | "blue"
+const { palette, palettes, setPalette, customColor, setCustomColor } = usePalette();
+// palette: "default" | "violet" | "rose" | "blue" | "custom"
 // palettes: the full list above, handy for building a picker
 // setPalette("violet")
+// setCustomColor("#7c3aed") — any hex color; switches palette to "custom"
 ```
+
+`"custom"` is a free-form palette: `setCustomColor(hex)` writes `--m-primary`
+directly as an inline style, and `nexa-ui.css` derives `--m-primary-hover`,
+`--m-primary-soft`, `--m-secondary`, and `--m-focus` from it with `color-mix()`
+— any color works without computing shades by hand. Requires a browser with
+`color-mix()` support (all evergreen browsers since 2023).
 
 ### Mobile hooks
 
