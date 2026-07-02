@@ -774,8 +774,18 @@ h(PreziStage, {
 })
 ```
 
-See [examples/prezi](./examples/prezi) for a full presentation with a
-toolbar, progress dots, and keyboard navigation.
+Frames can legitimately overlap in world space — an "overview" frame that
+zooms out to show the whole canvas is, by definition, as big as every other
+frame combined. `PreziStage` renders frames sorted by descending area
+(`w * h`), so larger frames paint *behind* smaller ones automatically; you
+don't need to manage `z-index` for this.
+
+Once a deck has more than a couple of frame kinds (title, bullets, code, …),
+give each kind its own component under `components/` with a small
+dispatcher for `data.kind`, rather than inlining every frame's rendering in
+`app.js` — see [examples/prezi](./examples/prezi) for the pattern
+(`components/FrameContent.js`) and a full presentation with a toolbar,
+progress dots, and keyboard navigation.
 
 ### `FullCodeEditor`
 
