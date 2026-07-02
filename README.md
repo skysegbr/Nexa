@@ -103,7 +103,7 @@ Minimal page:
 tag and pin the CDN URL to it, for example:
 
 ```text
-https://cdn.jsdelivr.net/gh/skysegbr/Nexa@v0.1.0/dist/nexa.js
+https://cdn.jsdelivr.net/gh/skysegbr/Nexa@v0.4.0/dist/nexa.js
 ```
 
 ## Using Locally

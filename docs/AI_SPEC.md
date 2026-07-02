@@ -23,8 +23,9 @@ Core ideas:
 
 ```
 /dist/nexa.js              ← core framework  (h, render, hooks, context)
-/dist/nexa-components.js   ← UI component library (~38 components)
+/dist/nexa-components.js   ← UI component library (~40 components)
 /dist/nexa-ui.css          ← design system CSS (required for components to look right)
+/dist/nexa-bootstrap.css   ← optional Bootstrap 5 visual skin (opt-in, see §9)
 /dist/nexa-hmr.js          ← HMR client (dev only — injected by server.py)
 /dist/nexa-canvas.js       ← SVG pipeline canvas (PipelineCanvasController)
 /dist/nexa-canvas.css      ← styles for nexa-canvas
@@ -44,7 +45,7 @@ https://cdn.jsdelivr.net/gh/skysegbr/Nexa@main/dist/nexa-ui.css
 ```
 
 Use `@main` for the latest code during development. For production, pin a
-release tag such as `@v0.1.0`.
+release tag such as `@v0.4.0`.
 
 Typical HTML entry point:
 
@@ -600,7 +601,7 @@ h('input', { required: true })
 
 ## 9. UI Components (`/dist/nexa-components.js`)
 
-~38 components + CSS-only primitives. Import only what you use:
+~40 components + CSS-only primitives. Import only what you use:
 
 ```js
 import { Button, Card, TextField } from '/dist/nexa-components.js';
