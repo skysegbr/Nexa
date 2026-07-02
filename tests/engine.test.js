@@ -289,6 +289,34 @@ test("removing a keyed item unmounts only that item and leaves the others alone"
   assertEqual([...container.querySelectorAll("li")].map((li) => li.textContent).join(","), "a,c");
 });
 
+test("patch() keeps a reused ref pointed at the new DOM node when an element's tag changes", async () => {
+  // A single ref object bound across a type change (div -> span at the same
+  // position) exercises patch()'s "type changed" branch: it creates the new
+  // DOM node (which sets ref.current to it) and then clears the OLD vnode's
+  // ref — but since both vnodes share the same ref object, an unconditional
+  // clear would wipe out the value that was just correctly set.
+  const ref = { current: null };
+  let setWhich;
+
+  function Widget() {
+    const [which, setter] = useState("a");
+    setWhich = setter;
+    return which === "a" ? h("div", { ref, id: "el-a" }) : h("span", { ref, id: "el-b" });
+  }
+
+  const container = mountPoint();
+  render(Widget, container);
+  await flush();
+  assertEqual(ref.current.id, "el-a");
+
+  setWhich("b");
+  await flush();
+
+  assert(ref.current !== null, "expected the ref to still point at an element after the tag changed");
+  assertEqual(ref.current.id, "el-b", "expected the ref to point at the newly-created element");
+  assertEqual(ref.current, container.querySelector("#el-b"), "expected the ref to be the actual mounted DOM node");
+});
+
 test("a component discards its hook state when conditional rendering unmounts and remounts it", async () => {
   let toggle;
   let bump;

@@ -883,7 +883,14 @@ function patch(parent, oldVNode, newVNode) {
   if (oldVNode.type !== newVNode.type) {
     const dom = createDom(newVNode, parent);
     parent.replaceChild(dom, oldVNode._dom);
-    clearRef(oldVNode.props.ref);
+    // createDom() above already ran setRef(newVNode.props.ref, dom) for the
+    // new element. If the same ref object is bound to both the old and new
+    // vnode (a common pattern when the element's tag changes but the ref
+    // stays put), clearing it unconditionally here would wipe out the value
+    // createDom just set — only clear when it's actually a different ref.
+    if (oldVNode.props.ref !== newVNode.props.ref) {
+      clearRef(oldVNode.props.ref);
+    }
     return newVNode;
   }
 
@@ -1360,7 +1367,16 @@ export function useSwipe(ref, { onSwipeLeft, onSwipeRight, onSwipeUp, onSwipeDow
       el.removeEventListener("touchstart", onTouchStart);
       el.removeEventListener("touchend", onTouchEnd);
     };
-  }, [ref.current]);
+    // No dependency array — deliberately re-runs after every render (cleans
+    // up and reattaches every time). A `[ref.current]` dep looks equivalent
+    // but isn't: the array is evaluated during THIS render's tree-building
+    // phase, before this same render's patch has updated `ref.current` — so
+    // it always compares the value against itself and never detects a
+    // change. A ref reconnecting later (conditional mount, key/type swap)
+    // would silently never reattach. Re-running unconditionally also means
+    // onSwipeLeft/Right/Up/Down and threshold never go stale, which the old
+    // dependency array didn't cover either.
+  });
 }
 
 export function useLongPress(ref, { onLongPress, delay = 500 } = {}) {
@@ -1400,7 +1416,9 @@ export function useLongPress(ref, { onLongPress, delay = 500 } = {}) {
       el.removeEventListener("mouseup", cancel);
       el.removeEventListener("mouseleave", cancel);
     };
-  }, [ref.current]);
+    // No dependency array — see the comment in useSwipe above for why
+    // `[ref.current]` doesn't actually detect the ref's target changing.
+  });
 }
 
 export function useNetworkStatus() {
@@ -2136,7 +2154,11 @@ export function useVirtualList(items, { itemHeight, overscan = 3 } = {}) {
     const handler = () => setScrollTop(el.scrollTop);
     el.addEventListener("scroll", handler, { passive: true });
     return () => el.removeEventListener("scroll", handler);
-  }, [containerRef.current]);
+    // No dependency array — see the comment in useSwipe above for why
+    // `[containerRef.current]` doesn't actually detect the ref's target
+    // changing (e.g. if the scrollable element is conditionally rendered
+    // and mounts on a later render).
+  });
 
   const containerHeight = containerRef.current?.clientHeight ?? 0;
   const totalHeight = items.length * itemHeight;

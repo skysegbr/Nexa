@@ -22,6 +22,7 @@ import {
   useWebSocket,
   useVirtualList,
   useRouter,
+  useSwipe,
 } from "../dist/nexa.js";
 import { test, assert, assertEqual, mountPoint, flush } from "./runner.js";
 
@@ -769,4 +770,83 @@ test("useRouter (history mode) does not intercept a same-page fragment link", as
     assertEqual(observedEvent.defaultPrevented, false, "expected same-page fragment links to keep their native behavior");
     assertEqual(router.path, "/page", "expected path to stay the same for a same-page fragment link");
   });
+});
+
+// ── useSwipe / useVirtualList: ref reconnects after its target changes ─────
+//
+// Both hooks used to key their listener-attaching effect off `[ref.current]`.
+// That looks like it detects the ref's target changing, but it doesn't: the
+// dependency array is evaluated during THIS render's tree-building phase,
+// before THIS render's patch has updated ref.current — so it always compares
+// the old value against itself. A ref whose target mounts later (conditional
+// rendering) or gets replaced (tag/key change) would silently never get its
+// listener (re)attached. Fixed by dropping the dependency array so the effect
+// re-runs (cleanup + reattach) after every render instead.
+
+function fireSwipeLeft(el) {
+  const start = new Touch({ identifier: 1, target: el, clientX: 200, clientY: 100 });
+  const end = new Touch({ identifier: 1, target: el, clientX: 100, clientY: 100 });
+  el.dispatchEvent(new TouchEvent("touchstart", { touches: [start], bubbles: true }));
+  el.dispatchEvent(new TouchEvent("touchend", { changedTouches: [end], bubbles: true }));
+}
+
+test("useSwipe attaches its listener once the ref's target mounts on a later render", async () => {
+  let setShow;
+  let swipes = 0;
+  const ref = { current: null };
+
+  function Widget() {
+    const [show, setShowState] = useState(false);
+    setShow = setShowState;
+    useSwipe(ref, { onSwipeLeft: () => { swipes += 1; } });
+    return show ? h("div", { ref, id: "swipe-target" }) : h("p", null, "hidden");
+  }
+
+  const container = mountPoint();
+  render(Widget, container);
+  await flush();
+
+  setShow(true);
+  await flush();
+
+  fireSwipeLeft(container.querySelector("#swipe-target"));
+  await flush();
+  assertEqual(swipes, 1, "expected the swipe listener to be attached to the element mounted on the second render");
+});
+
+test("useVirtualList's own scroll listener attaches once the ref's target mounts on a later render", async () => {
+  let setShow;
+  let listState;
+  const items = Array.from({ length: 50 }, (_, i) => ({ id: i }));
+
+  function Widget() {
+    const [show, setShowState] = useState(false);
+    setShow = setShowState;
+    listState = useVirtualList(items, { itemHeight: 40, overscan: 2 });
+    return show
+      ? h("div", { ref: listState.containerRef, id: "list-container" })
+      : h("p", null, "hidden");
+  }
+
+  const container = mountPoint();
+  render(Widget, container);
+  await flush();
+
+  setShow(true);
+  await flush();
+
+  const el = container.querySelector("#list-container");
+  // The test sandbox positions containers far off-screen, where headless
+  // Chromium doesn't compute real scrollable overflow geometry — stub
+  // scrollTop directly instead. This test is only about whether the
+  // listener (re)attaches, not about real scroll layout.
+  Object.defineProperty(el, "scrollTop", { value: 400, configurable: true });
+  el.dispatchEvent(new Event("scroll"));
+  await flush();
+
+  assertEqual(
+    listState.startIndex,
+    Math.max(0, Math.floor(400 / 40) - 2),
+    "expected useVirtualList's internal scroll listener to be attached to the element mounted on the second render",
+  );
 });
