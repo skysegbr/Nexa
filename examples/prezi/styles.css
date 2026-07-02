@@ -1,0 +1,23 @@
+@import "./components/FrameContent.css";
+@import "./components/PreziToolbar.css";
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: var(--m-font);
+  background: var(--m-bg);
+  color: var(--m-text);
+}
+
+.pz-app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.pz-stage {
+  flex: 1;
+  min-height: 0;
+}

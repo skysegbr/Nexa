@@ -10,10 +10,13 @@ Its core ships in three files:
 - `dist/nexa-ui.css` — mobile-first CSS framework with a 12-column grid,
   responsive utilities, dark mode, and mobile shell components.
 
-Two optional add-ons build on top of that core:
+Three optional add-ons build on top of that core:
 
 - `dist/nexa-canvas.js` + `dist/nexa-canvas.css` — `PipelineCanvas`, an
   SVG node editor with drag, pan, zoom, mini-map, and undo/redo.
+- `dist/nexa-prezi.js` + `dist/nexa-prezi.css` — `PreziStage`, a Prezi-style
+  zooming presentation canvas with animated camera pan/zoom/rotate between
+  frames.
 - `dist/nexa-editor.js` + `dist/nexa-editor.css` (+ `dist/nexa-editor-snippets.js`)
   — `FullCodeEditor`, a [CodeMirror](https://codemirror.net/5/) wrapper with a
   toolbar, snippet browser, and autocomplete. Requires the local CodeMirror
@@ -51,6 +54,8 @@ https://cdn.jsdelivr.net/gh/skysegbr/Nexa@main/dist/nexa-components.js
 https://cdn.jsdelivr.net/gh/skysegbr/Nexa@main/dist/nexa-ui.css
 https://cdn.jsdelivr.net/gh/skysegbr/Nexa@main/dist/nexa-canvas.js
 https://cdn.jsdelivr.net/gh/skysegbr/Nexa@main/dist/nexa-canvas.css
+https://cdn.jsdelivr.net/gh/skysegbr/Nexa@main/dist/nexa-prezi.js
+https://cdn.jsdelivr.net/gh/skysegbr/Nexa@main/dist/nexa-prezi.css
 https://cdn.jsdelivr.net/gh/skysegbr/Nexa@main/dist/nexa-editor.js
 https://cdn.jsdelivr.net/gh/skysegbr/Nexa@main/dist/nexa-editor.css
 ```
@@ -713,8 +718,8 @@ h(FAB, { label: "New", aboveNav: true, onClick: openSheet }, "+")
 
 ## Canvas & Editor
 
-Two optional add-ons, each with its own dist files and stylesheet. They are not
-included in `nexa-components.js` — import them directly when you need them.
+Three optional add-ons, each with its own dist files and stylesheet. They are
+not included in `nexa-components.js` — import them directly when you need them.
 
 ### `PipelineCanvas`
 
@@ -741,6 +746,36 @@ h(PipelineCanvas, {
 
 See [examples/pipeline-canvas](./examples/pipeline-canvas) for a full pipeline
 editor with node editing, JSON export/import, and a mini-map.
+
+### `PreziStage`
+
+`dist/nexa-prezi.js` + `dist/nexa-prezi.css`. A Prezi-style zooming
+presentation: frame content is normal Nexa vdom positioned on one large
+canvas, and a single animated camera pans/zooms/rotates between frames.
+
+| Prop | Description |
+|---|---|
+| `frames` | Array of `{ id, x, y, w, h, rotate?, content }` — world-px geometry plus vdom content |
+| `path` | Array of frame ids for navigation order — defaults to `frames` order |
+| `index` / `defaultIndex` / `onIndexChange` | Controlled/uncontrolled current frame |
+| `duration` / `easing` | Camera animation duration (ms) and easing function |
+| `controllerRef` | ref, set to `{ next, prev, goTo, index, frames }` every render |
+| `keyboardNav` | Arrow keys / Space navigate (default `true`) |
+| `advanceOnClick` | Click the stage background to advance (default `true`) |
+
+```js
+import { PreziStage } from "./dist/nexa-prezi.js";
+
+h(PreziStage, {
+  frames,
+  index,
+  onIndexChange: setIndex,
+  controllerRef,
+})
+```
+
+See [examples/prezi](./examples/prezi) for a full presentation with a
+toolbar, progress dots, and keyboard navigation.
 
 ### `FullCodeEditor`
 
@@ -932,6 +967,8 @@ Nexa `0.3.0` covers:
 **Canvas & Editor add-ons**
 - `PipelineCanvas` — SVG node editor with drag, pan, zoom, mini-map, undo/redo
   (`nexa-canvas.js` / `nexa-canvas.css`)
+- `PreziStage` — Prezi-style zooming presentation canvas with animated camera
+  pan/zoom/rotate (`nexa-prezi.js` / `nexa-prezi.css`)
 - `FullCodeEditor` — CodeMirror 5 wrapper with toolbar, snippet browser, and
   autocomplete (`nexa-editor.js` / `nexa-editor.css` / `nexa-editor-snippets.js`)
 

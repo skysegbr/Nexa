@@ -28,6 +28,8 @@ Core ideas:
 /dist/nexa-hmr.js          ← HMR client (dev only — injected by server.py)
 /dist/nexa-canvas.js       ← SVG pipeline canvas (PipelineCanvasController)
 /dist/nexa-canvas.css      ← styles for nexa-canvas
+/dist/nexa-prezi.js        ← Prezi-style zooming presentation canvas (PreziStage)
+/dist/nexa-prezi.css       ← styles for nexa-prezi
 /dist/nexa-editor.js       ← full-featured code editor component
 /dist/nexa-editor.css      ← styles for nexa-editor
 /dist/nexa-editor-snippets.js ← boilerplate snippet catalog for nexa-editor
