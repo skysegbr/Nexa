@@ -1,5 +1,6 @@
 import { h, render, useState, useEffect } from '/dist/nexa.js';
-import { createItem, CATALOG, generatePreviewCSS } from './data.js';
+import { createItem, CATALOG } from './data.js';
+import { generatePreviewCSS } from './codegen.js';
 import { Palette } from './components/Palette.js';
 import { Canvas } from './components/Canvas.js';
 import { Inspector } from './components/Inspector.js';

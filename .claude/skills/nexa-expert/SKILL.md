@@ -10,7 +10,7 @@ Full reference lives in [docs/AI_SPEC.md](../../../docs/AI_SPEC.md) in this repo
 ## Non-negotiable rules (memorize before reading further)
 
 1. **`render(App, container)`** — pass the function reference, never `h(App)`. Calling `h(App)` before mount throws "App can only be used during rendering."
-2. **No `<Context.Provider>` component, ever — not even one that takes `children` as a prop.** `h(type, props, ...children)` evaluates `...children` as normal JS arguments, so `h(App)` inside `h(ThemeProvider, null, h(App))` already ran *before* `ThemeProvider`'s body starts — wrapping that already-evaluated `children` in `() => children` does not defer it. A provider must construct what it wraps *inside* the `ctx.provide(value, () => h(...))` thunk it returns. To combine several contexts, nest `.provide()` calls directly in the root component passed to `render()` — see "Composing multiple contexts" / "Domain-owned context" in AI_SPEC §7 and §11.
+2. **No `<Context.Provider>` component, ever — not even one that takes `children` as a prop.** `h(type, props, ...children)` evaluates `...children` as normal JS arguments, so `h(App)` inside `h(ThemeProvider, null, h(App))` already ran *before* `ThemeProvider`'s body starts — wrapping that already-evaluated `children` in `() => children` does not defer it. A provider must construct what it wraps *inside* the `ctx.provide(value, () => h(...))` thunk it returns. To combine several contexts, nest `.provide()` calls directly in the root component passed to `render()` — see "Composing multiple contexts" / "Domain-owned context" in AI_SPEC §7 and §12.
 3. **Every list item needs a stable `key` prop**, or re-renders lose state.
 4. **Hooks are called unconditionally** at the top of the component — same rule as React.
 5. Real apps (more than a quick demo) use the **domain-componentized layout**: `app.js` (orchestrator only), `data.js` (UPPER_CASE exports), `components/<Name>.js` + paired `<Name>.css`, CSS collected centrally in `styles.css` via `@import` — components never import their own CSS. Group by feature/domain, not by type (no `forms/`, `ui/`, `shared/`). A domain whose components share state owns its own `createContext` + state hook in its own folder (`cart/CartContext.js` exporting `CartContext` + `useCartState()`); `app.js` is the only place that composes domain providers together.
@@ -18,6 +18,6 @@ Full reference lives in [docs/AI_SPEC.md](../../../docs/AI_SPEC.md) in this repo
 
 ## Workflow
 
-- Before generating Nexa code: open `docs/AI_SPEC.md` (this repo) and check the relevant section — §6 hooks, §9 components, §10 CSS tokens, §11 patterns, §13 multi-file structure.
+- Before generating Nexa code: open `docs/AI_SPEC.md` (this repo) and check the relevant section — §6 hooks, §9 components, §10 canvas/editor add-ons, §11 CSS tokens, §12 patterns, §14 multi-file structure.
 - When reviewing Nexa code: check it against the 6 rules above first; they catch the most common breakages.
-- If asked to scaffold a new app, default to the domain-componentized structure (§11/§13), not the single-file demo (§12).
+- If asked to scaffold a new app, default to the domain-componentized structure (§12/§14), not the single-file demo (§13).

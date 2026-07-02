@@ -198,13 +198,16 @@ python -m http.server 8080
 | [examples/new-components](./examples/new-components) | `Switch`, `Collapse`, `Combobox`, `ContextMenu`, `FileDropZone`, `CodeEditor`, toasts |
 | [examples/task-manager](./examples/task-manager) | Full CRUD with Python API, filters, pagination, and drawer editing |
 | [examples/mobile](./examples/mobile) | Mobile shell: `AppBar`, `BottomNav`, `BottomSheet`, `FAB`, swipe, long press |
-| [examples/pipeline-canvas](./examples/pipeline-canvas) | `PipelineCanvas` + `FullCodeEditor`: drag/connect nodes, edit code per node, undo/redo, export/import JSON |
 | [examples/charts](./examples/charts) | SVG donut chart drawn with raw `h("svg", ...)`, plus `useErrorBoundary` catching a corrupted dataset and recovering |
 | [examples/landing](./examples/landing) | SaaS landing page: sticky nav with mobile menu, SVG hero chart, testimonial carousel, pricing toggle |
 | [examples/gallery](./examples/gallery) | Photo gallery: category filter, masonry grid with lazy-load fade-in, keyboard/swipe lightbox with focus trap |
 | [examples/mindmap](./examples/mindmap) | Draggable mindmap: free-form card positioning, double-click inline editing, SVG bezier connectors that track card size, branch coloring |
 | [examples/drug-recalls](./examples/drug-recalls) | Live dashboard over the openFDA drug recall API: debounced search, classification/status filters, donut + bar charts, sortable table, recall detail dialog |
 | [examples/storefront](./examples/storefront) | Domain-componentized architecture: `catalog/`, `cart/`, `auth/` each own their own `createContext` + state hook, composed once in `app.js`, integrated through `Shell.js`. Products fetched live from fakestoreapi.com |
+| [examples/designer](./examples/designer) | Visual UI builder: drag components from a palette onto a canvas, edit props/styles/states in an inspector, live CSS + code export |
+| [examples/prezi](./examples/prezi) | `PreziStage` basics: per-kind frame components behind a `FrameContent` dispatcher, toolbar with progress dots, keyboard navigation |
+| [examples/nexa-prezi](./examples/nexa-prezi) | Full `PreziStage` presentation about Nexa: five frame kinds, rotated frames, a zoomed-out overview frame, `nexa-components` toolbar |
+| [examples/nexa-atlas](./examples/nexa-atlas) | Atlas-themed `PreziStage` tour of Nexa: click any background frame to zoom straight to it, plus a live demo frame running real `useState`/`useTheme` mid-presentation |
 
 The task manager requires its own backend:
 
@@ -744,8 +747,8 @@ h(PipelineCanvas, {
 })
 ```
 
-See [examples/pipeline-canvas](./examples/pipeline-canvas) for a full pipeline
-editor with node editing, JSON export/import, and a mini-map.
+Drag, pan/zoom, connection drawing, selection, undo/redo, and a mini-map are
+all built into the controller — see [dist/nexa-canvas.js](./dist/nexa-canvas.js).
 
 ### `PreziStage`
 
@@ -814,7 +817,7 @@ h(FullCodeEditor, {
 ```
 
 Requires the local CodeMirror assets (`assets/codemirror/`, vendored — no CDN);
-see [examples/pipeline-canvas/index.html](./examples/pipeline-canvas/index.html)
+see [examples/new-components/index.html](./examples/new-components/index.html)
 for the full list of `<script>`/`<link>` tags to include.
 
 ## CSS Framework
