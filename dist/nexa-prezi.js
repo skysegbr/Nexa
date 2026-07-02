@@ -18,6 +18,9 @@ import { h, useEffect, useRef, useState } from "./nexa.js";
 //   index / defaultIndex / onIndexChange  — controlled/uncontrolled current step
 //   duration      ms per camera animation (default 900)
 //   easing        (t) => t easing function (default cubicEaseInOut)
+//   padding       fraction (0–0.45) of the viewport reserved as margin around
+//                 every framed frame, so frames don't touch the stage edges
+//                 edge-to-edge (default 0.06). 0 = fill the viewport exactly.
 //   controllerRef ref — set to { next, prev, goTo, index, frames } every render
 //   keyboardNav   bool, default true — ArrowRight/Space = next, ArrowLeft = prev
 //   advanceOnClick bool, default true — click on stage background advances
@@ -26,11 +29,14 @@ function cubicEaseInOut(t) {
   return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 }
 
-function cameraFor(frame, vw, vh) {
+function cameraFor(frame, vw, vh, padding = 0) {
+  const pad = Math.min(Math.max(padding, 0), 0.45);
+  const effVw = vw * (1 - pad * 2);
+  const effVh = vh * (1 - pad * 2);
   return {
     cx: frame.x + frame.w / 2,
     cy: frame.y + frame.h / 2,
-    scale: Math.min(vw / frame.w, vh / frame.h),
+    scale: Math.min(effVw / frame.w, effVh / frame.h),
     rotate: frame.rotate || 0,
   };
 }
@@ -41,12 +47,14 @@ function applyCamera(worldEl, cam, vw, vh) {
 }
 
 class PreziCameraController {
-  constructor(wrapEl, worldEl) {
-    this.wrap  = wrapEl;
-    this.world = worldEl;
-    this.vw    = 0;
-    this.vh    = 0;
-    this.cam   = { cx: 0, cy: 0, scale: 1, rotate: 0 };
+  constructor(wrapEl, worldEl, { padding = 0 } = {}) {
+    this.wrap    = wrapEl;
+    this.world   = worldEl;
+    this.padding = padding;
+    this.vw      = 0;
+    this.vh      = 0;
+    this.cam     = { cx: 0, cy: 0, scale: 1, rotate: 0 };
+    this._activeFrame = null;
 
     this._raf = null;
     this._ro = new ResizeObserver(() => this._onResize());
@@ -54,26 +62,37 @@ class PreziCameraController {
     this._onResize();
   }
 
+  setPadding(padding) {
+    this.padding = padding;
+  }
+
   _onResize() {
     const rect = this.wrap.getBoundingClientRect();
     this.vw = rect.width;
     this.vh = rect.height;
+    // Re-fit (not just re-center) the active frame — the viewport's own
+    // dimensions changed, so the previous `scale` is stale.
+    if (this._activeFrame) {
+      this.cam = cameraFor(this._activeFrame, this.vw, this.vh, this.padding);
+    }
     applyCamera(this.world, this.cam, this.vw, this.vh);
   }
 
   jumpTo(frame) {
     if (!frame) return;
     this._cancel();
-    this.cam = cameraFor(frame, this.vw, this.vh);
+    this._activeFrame = frame;
+    this.cam = cameraFor(frame, this.vw, this.vh, this.padding);
     applyCamera(this.world, this.cam, this.vw, this.vh);
   }
 
   animateTo(frame, { duration = 900, easing = cubicEaseInOut } = {}) {
     if (!frame) return;
     this._cancel();
+    this._activeFrame = frame;
 
     const from = this.cam;
-    const to   = cameraFor(frame, this.vw, this.vh);
+    const to   = cameraFor(frame, this.vw, this.vh, this.padding);
     const start = performance.now();
 
     const tick = (now) => {
@@ -115,6 +134,7 @@ export function PreziStage({
   onIndexChange,
   duration = 900,
   easing,
+  padding = 0.06,
   controllerRef,
   keyboardNav = true,
   advanceOnClick = true,
@@ -155,12 +175,16 @@ export function PreziStage({
   // Mount: build the imperative camera controller once.
   useEffect(() => {
     if (!wrapRef.current || !worldRef.current) return undefined;
-    const ctrl = new PreziCameraController(wrapRef.current, worldRef.current);
+    const ctrl = new PreziCameraController(wrapRef.current, worldRef.current, { padding });
     ctrlRef.current = ctrl;
     ctrl.jumpTo(seq[curIndex]);
     return () => { ctrl.destroy(); ctrlRef.current = null; };
     // eslint-disable-next-line
   }, []);
+
+  useEffect(() => {
+    ctrlRef.current?.setPadding(padding);
+  }, [padding]);
 
   // Keyboard navigation.
   useEffect(() => {
