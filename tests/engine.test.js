@@ -387,6 +387,57 @@ test("patching an SVG tree updates attributes in place without recreating elemen
   assertEqual(circleAfter.namespaceURI, SVG_NS, "expected the patched <circle> to remain in the SVG namespace");
 });
 
+test("<select value> selects the matching <option> on first mount even when it isn't the first option", async () => {
+  function Form() {
+    return h(
+      "select",
+      { value: "b" },
+      h("option", { value: "a" }, "A"),
+      h("option", { value: "b" }, "B"),
+      h("option", { value: "c" }, "C"),
+    );
+  }
+
+  const container = mountPoint();
+  render(Form, container);
+  await flush();
+
+  const select = container.querySelector("select");
+  assertEqual(
+    select.value,
+    "b",
+    "expected the select's value to match the requested option even though option elements didn't exist yet when value was first set",
+  );
+});
+
+test("<select value> re-selects correctly when a patch adds new options and a value pointing at one of them", async () => {
+  let setState;
+
+  function Form() {
+    const [state, setter] = useState({ value: "a", options: ["a"] });
+    setState = setter;
+    return h(
+      "select",
+      { value: state.value },
+      state.options.map((opt) => h("option", { key: opt, value: opt }, opt.toUpperCase())),
+    );
+  }
+
+  const container = mountPoint();
+  render(Form, container);
+  await flush();
+
+  setState({ value: "c", options: ["a", "b", "c"] });
+  await flush();
+
+  const select = container.querySelector("select");
+  assertEqual(
+    select.value,
+    "c",
+    "expected the select to land on the newly-added option even though it didn't exist in the DOM when value was patched",
+  );
+});
+
 // Render and effect errors are reported through console.error by design (see
 // runSafely / scheduleRender in dist/nexa.js) — these tests trigger them on
 // purpose, so we capture console.error instead of letting it spam the run.

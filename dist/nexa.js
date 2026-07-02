@@ -836,6 +836,14 @@ function createDom(vnode, parentDom) {
     dom.appendChild(createDom(child, dom));
   }
 
+  // A <select>'s `value` can only take effect once its <option> children
+  // exist in the DOM — setting it above, before they're appended, is
+  // silently ignored by the browser (it falls back to the first option).
+  // Re-apply now that the options are in place.
+  if (vnode.type === "select" && "value" in vnode.props) {
+    dom.value = vnode.props.value;
+  }
+
   return dom;
 }
 
@@ -895,6 +903,14 @@ function patch(parent, oldVNode, newVNode) {
     oldVNode.props.children,
     newVNode.props.children,
   );
+
+  // Same reasoning as in createDom: if this patch is what adds the <option>
+  // matching the new value (e.g. options and value change together), the
+  // `.value` assignment above ran before patchChildren created it and was
+  // ignored. Re-apply now that the options reflect this render.
+  if (newVNode.type === "select" && "value" in newVNode.props) {
+    newVNode._dom.value = newVNode.props.value;
+  }
 
   return newVNode;
 }
