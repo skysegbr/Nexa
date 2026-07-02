@@ -512,11 +512,19 @@ test("useMediaQuery returns true for 'all' and false for 'not all'", async () =>
 // ── useIntersectionObserver ────────────────────────────────
 
 test("useIntersectionObserver returns null before the first observation fires", async () => {
-  let entry;
+  // Capture the FIRST render's value only: the real IntersectionObserver may
+  // legitimately fire (and re-render with an entry) before flush() resolves,
+  // so asserting on the latest value races against the browser.
+  let firstRenderEntry;
+  let firstRenderSeen = false;
 
   function Widget() {
     const ref = useRef(null);
-    entry = useIntersectionObserver(ref);
+    const entry = useIntersectionObserver(ref);
+    if (!firstRenderSeen) {
+      firstRenderSeen = true;
+      firstRenderEntry = entry;
+    }
     return h("div", { ref }, "observe me");
   }
 
@@ -524,7 +532,7 @@ test("useIntersectionObserver returns null before the first observation fires", 
   render(Widget, container);
   await flush();
 
-  assertEqual(entry, null, "expected useIntersectionObserver to return null synchronously before the observer fires");
+  assertEqual(firstRenderEntry, null, "expected useIntersectionObserver to return null on the first render, before the observer fires");
 });
 
 // ── useWebSocket ───────────────────────────────────────────
