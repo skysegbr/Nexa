@@ -9,11 +9,16 @@ Extra checks added later:
 - Required example directories must exist.
 - Dist files referenced in README.md must exist.
 - Example component files must not exceed a line-count threshold (monolith guard).
+- Local markdown links in README.md (e.g. `](./examples/foo)`) must resolve.
+- `src:`-keyed asset references inside .js source (e.g. `h("img", { src: "..." })`)
+  must resolve, same as the existing HTML asset check.
+- package.json's version must have a matching `## [x.y.z]` heading in CHANGELOG.md.
 """
 
 from __future__ import annotations
 
 import argparse
+import json
 import re
 import sys
 from dataclasses import dataclass
@@ -47,6 +52,19 @@ MONOLITH_LINE_LIMIT = 250
 
 # Markdown inline-code fence pattern to find dist/ paths in README.
 README_PATH_RE = re.compile(r"`(dist/[^`]+)`")
+
+# Markdown link targets: `[text](target)`. Filtered to local paths afterward —
+# this also matches external URLs and pure `#anchor` fragments, which
+# is_local_ref() correctly excludes.
+MARKDOWN_LINK_RE = re.compile(r"\]\(([^)\s]+)\)")
+
+# `src: "..."` / `src: '...'` inside .js source — how h("img", { src }) and
+# similar asset references look in Nexa's no-JSX call syntax. Deliberately
+# narrow (string literals only) to avoid false positives on dynamic values.
+JS_SRC_RE = re.compile(r"""\bsrc\s*:\s*["']([^"']+)["']""")
+
+# `## [x.y.z]` release headings in CHANGELOG.md.
+CHANGELOG_VERSION_RE = re.compile(r"^## \[(\d+\.\d+\.\d+)\]", re.MULTILINE)
 
 
 @dataclass(frozen=True)
@@ -94,7 +112,10 @@ def main() -> int:
 
     issues.extend(validate_required_examples(root))
     issues.extend(validate_readme_dist_files(root))
+    issues.extend(validate_readme_local_links(root))
     issues.extend(validate_no_monoliths(root))
+    issues.extend(validate_js_asset_srcs(root))
+    issues.extend(validate_version_sync(root))
 
     if issues:
         print("Nexa static validation failed:\n")
@@ -187,6 +208,95 @@ def validate_readme_dist_files(root: Path) -> list[Issue]:
 
         if not target.exists():
             issues.append(Issue(readme, f"referenced file not found: {rel_path}"))
+
+    return issues
+
+
+def validate_readme_local_links(root: Path) -> list[Issue]:
+    """Check that local markdown links in README.md (e.g. `](./examples/foo)`) resolve.
+
+    Complements validate_readme_dist_files, which only looks at backtick-fenced
+    `dist/...` mentions (prose, not necessarily a link). This instead walks
+    every `[text](target)` link and resolves the ones that look local —
+    external URLs and `#anchor` fragments are filtered out by is_local_ref.
+    """
+    issues: list[Issue] = []
+    readme = root / "README.md"
+
+    if not readme.exists():
+        return issues
+
+    text = readme.read_text(encoding="utf-8")
+
+    for match in MARKDOWN_LINK_RE.finditer(text):
+        target = match.group(1)
+
+        if not is_local_ref(target):
+            continue
+
+        resolved = resolve_ref(root, readme.parent, target)
+
+        if not resolved.exists():
+            issues.append(Issue(readme, f"broken link target: {target!r}"))
+
+    return issues
+
+
+def validate_js_asset_srcs(root: Path) -> list[Issue]:
+    """Check that `src: "..."` asset references inside .js files resolve.
+
+    HTML's <img src> etc. are already covered by validate_html_file, but Nexa
+    apps build markup via h("img", { src }) calls in plain JS, which the HTML
+    parser never sees.
+    """
+    issues: list[Issue] = []
+
+    for js_file in find_files(root, "*.js"):
+        source = js_file.read_text(encoding="utf-8")
+
+        for match in JS_SRC_RE.finditer(source):
+            value = match.group(1)
+
+            if not is_local_ref(value):
+                continue
+
+            resolved = resolve_ref(root, js_file.parent, value)
+
+            if not resolved.exists():
+                issues.append(Issue(js_file, f"missing local src {value!r}"))
+
+    return issues
+
+
+def validate_version_sync(root: Path) -> list[Issue]:
+    """Check that package.json's version has a matching CHANGELOG.md heading.
+
+    Doesn't require it to be the *top* heading — an "[Unreleased]" section
+    documenting in-progress work above the last released version is normal.
+    It only catches the version being bumped (or the changelog entry added)
+    without the other half following along.
+    """
+    issues: list[Issue] = []
+    package_json = root / "package.json"
+    changelog = root / "CHANGELOG.md"
+
+    if not package_json.exists() or not changelog.exists():
+        return issues
+
+    version = json.loads(package_json.read_text(encoding="utf-8")).get("version")
+
+    if not version:
+        return issues
+
+    changelog_versions = CHANGELOG_VERSION_RE.findall(changelog.read_text(encoding="utf-8"))
+
+    if version not in changelog_versions:
+        issues.append(
+            Issue(
+                package_json,
+                f"version {version!r} has no matching \"## [{version}]\" heading in CHANGELOG.md",
+            )
+        )
 
     return issues
 
