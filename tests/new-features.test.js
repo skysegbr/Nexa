@@ -9,6 +9,8 @@ import {
   useState,
   useEffect,
   useRef,
+  createContext,
+  useContext,
   memo,
   createPortal,
   createLazy,
@@ -138,6 +140,79 @@ test("memo custom compare function controls when re-rendering happens", async ()
   await flush();
   assertEqual(childRenders, 2, "expected custom compare to allow re-render when id changes");
   assertEqual(container.querySelector("span").textContent, "2");
+});
+
+test("memo re-renders when a context value it consumes changes", async () => {
+  const ThemeContext = createContext("light");
+  let setTheme;
+
+  const Label = memo(function Label() {
+    const theme = useContext(ThemeContext);
+    return h("span", null, theme);
+  });
+
+  function App() {
+    const [theme, setThemeState] = useState("light");
+    setTheme = setThemeState;
+    return ThemeContext.provide(theme, () => h("div", null, h(Label, { fixed: 1 })));
+  }
+
+  const container = mountPoint();
+  render(App, container);
+  await flush();
+  assertEqual(container.querySelector("span").textContent, "light");
+
+  setTheme("dark");
+  await flush();
+  assertEqual(
+    container.querySelector("span").textContent,
+    "dark",
+    "expected memo to re-render when a context value read inside it changed",
+  );
+});
+
+test("memo re-renders when a descendant of the memoized tree consumes a changed context", async () => {
+  const CountContext = createContext(0);
+  let setCount;
+  let wrapperRenders = 0;
+
+  function Leaf() {
+    const count = useContext(CountContext);
+    return h("em", null, String(count));
+  }
+
+  // The memoized component itself never reads the context — only its child
+  // does, so the staleness check must walk the owner subtree.
+  const Wrapper = memo(function Wrapper() {
+    wrapperRenders += 1;
+    return h("div", null, h(Leaf, { fixed: 1 }));
+  });
+
+  function App() {
+    const [count, setCountState] = useState(0);
+    setCount = setCountState;
+    return CountContext.provide(count, () => h("section", null, h(Wrapper, { fixed: 1 })));
+  }
+
+  const container = mountPoint();
+  render(App, container);
+  await flush();
+  assertEqual(container.querySelector("em").textContent, "0");
+  assertEqual(wrapperRenders, 1);
+
+  setCount(41);
+  await flush();
+  assertEqual(
+    container.querySelector("em").textContent,
+    "41",
+    "expected memo to re-render when a descendant's context read went stale",
+  );
+
+  // And with nothing changed, the memo skip must still work.
+  const rendersAfterUpdate = wrapperRenders;
+  setCount(41); // Object.is-equal — no re-render at all
+  await flush();
+  assertEqual(wrapperRenders, rendersAfterUpdate, "expected memo to keep skipping when context is unchanged");
 });
 
 // ── createPortal ───────────────────────────────────────────

@@ -408,6 +408,10 @@ const { menu, openMenu, closeMenu } = useContextMenu();
 
 ```js
 // memo — skip re-render when props are shallowly equal (or pass custom compare fn)
+// Also re-renders when a descendant calls setState or when a context value
+// read (useContext) anywhere inside the memoized subtree changes. Context
+// values compare with Object.is — providers should useMemo their value
+// object, or memo boundaries below them will never skip.
 const MemoRow = memo(Row);
 const MemoRow = memo(Row, (prev, next) => prev.id === next.id);
 

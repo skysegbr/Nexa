@@ -579,12 +579,16 @@ function renderComponent(type, props) {
   // memo's Memoized wrapper calls component(props) in the same owner context,
   // the component's own useState/useReducer marks this owner as dirty).
   // `hasDirtyDescendant` covers state changes in child components.
+  // `hasStaleContextRead` covers context values: skipping must not freeze a
+  // subtree whose useContext reads would now return something different.
+  // (Note this compares with Object.is — a provider that rebuilds its value
+  // object every render defeats memo below it; wrap the value in useMemo.)
   if (type._isMemo && owner.memoizedOutput !== undefined) {
     const compare = type._memoCompare;
     const equal = compare
       ? compare(owner.memoizedProps, props)
       : !shallowPropsChanged(owner.memoizedProps, props);
-    if (equal && !owner.dirty && !hasDirtyDescendant(owner)) {
+    if (equal && !owner.dirty && !hasDirtyDescendant(owner) && !hasStaleContextRead(owner)) {
       return owner.memoizedOutput;
     }
   }
@@ -612,6 +616,7 @@ function prepareHookOwner(owner) {
   owner.childCursor = 0;
   owner.nextChildren = new Set();
   owner.dirty = false;
+  owner.contextReads = null;
 }
 
 function cleanupUnusedChildren(owner) {
@@ -664,6 +669,26 @@ function touchAll(values) {
 function hasDirtyDescendant(owner) {
   for (const child of owner.children.values()) {
     if (child.dirty || hasDirtyDescendant(child)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+// Returns true if any component in the owner's subtree read a context value
+// (via useContext) that differs from what the context would provide right
+// now. Used by memo: a skipped subtree keeps its last output, so it must not
+// be skipped when a provider above it changed the value its consumers read.
+function hasStaleContextRead(owner) {
+  if (owner.contextReads) {
+    for (const [context, seenValue] of owner.contextReads) {
+      if (!Object.is(context._value, seenValue)) {
+        return true;
+      }
+    }
+  }
+  for (const child of owner.children.values()) {
+    if (hasStaleContextRead(child)) {
       return true;
     }
   }
@@ -1267,7 +1292,16 @@ export function createContext(defaultValue) {
 }
 
 export function useContext(context) {
-  requireHookOwner("useContext");
+  const owner = requireHookOwner("useContext");
+
+  // Record what this owner read so memo boundaries can tell whether a
+  // skipped subtree would observe a different context value (see the
+  // hasStaleContextRead check in renderComponent).
+  if (!owner.contextReads) {
+    owner.contextReads = new Map();
+  }
+  owner.contextReads.set(context, context._value);
+
   return context._value;
 }
 
