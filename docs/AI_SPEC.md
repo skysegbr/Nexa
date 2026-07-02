@@ -303,7 +303,22 @@ const { toasts, toast } = useToast();
 ### `useRouter`
 
 ```js
+// Default: mode: 'hash' — "#/path?query". Works on any static host, no
+// server configuration. Plain `<a href="#/dashboard">` navigates for free
+// (a hash-only href never triggers a real page load).
 const { path, navigate, params } = useRouter();
+navigate('/dashboard');
+
+// mode: 'history' — clean URLs via pushState/popstate. Same-origin
+// `<a href="/dashboard">` clicks are intercepted automatically (no onClick
+// needed), except modified clicks (ctrl/cmd/shift/alt, target!="_self",
+// download) and same-page fragment links ("#section"), which keep native
+// browser behavior.
+// Requires the server to serve index.html for every app route — a direct
+// load or refresh of e.g. /dashboard must not 404. A plain static file
+// server (python -m http.server) does NOT do this; you need a server with
+// SPA-fallback/rewrite configured, or stick to hash mode.
+const { path, navigate, params } = useRouter({ mode: 'history' });
 navigate('/dashboard');
 ```
 

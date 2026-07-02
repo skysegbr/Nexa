@@ -1508,15 +1508,31 @@ export function useToast() {
 }
 
 // ── useRouter ──────────────────────────────────────────────
+//
+// mode: "hash" (default) — `#/path?query`, works on any static host, no
+//       server configuration needed.
+// mode: "history" — clean URLs via the History API (pushState/popstate).
+//       Requires the server to serve index.html for every app route (a
+//       direct load or refresh of e.g. /settings must not 404) — a static
+//       file server alone won't do this; see server.py or your host's
+//       "SPA fallback" / rewrite setting.
 
-export function useRouter() {
+export function useRouter({ mode = "hash" } = {}) {
+  const isHistory = mode === "history";
+
   const getPath = () => {
+    if (isHistory) {
+      return window.location.pathname || "/";
+    }
     const hash = window.location.hash.slice(1) || "/";
     const q = hash.indexOf("?");
     return q === -1 ? hash : hash.slice(0, q);
   };
 
   const getParams = () => {
+    if (isHistory) {
+      return Object.fromEntries(new URLSearchParams(window.location.search));
+    }
     const hash = window.location.hash.slice(1) || "";
     const q = hash.indexOf("?");
     return q === -1 ? {} : Object.fromEntries(new URLSearchParams(hash.slice(q + 1)));
@@ -1525,18 +1541,62 @@ export function useRouter() {
   const [path, setPath] = useState(getPath);
   const [params, setParams] = useState(getParams);
 
-  useEffect(() => {
-    const handler = () => {
-      setPath(getPath());
-      setParams(getParams());
-    };
-    window.addEventListener("hashchange", handler);
-    return () => window.removeEventListener("hashchange", handler);
-  }, []);
+  const sync = useCallback(() => {
+    setPath(getPath());
+    setParams(getParams());
+  }, [isHistory]);
 
-  const navigate = useCallback((to) => {
-    window.location.hash = to;
-  }, []);
+  useEffect(() => {
+    const eventName = isHistory ? "popstate" : "hashchange";
+    window.addEventListener(eventName, sync);
+    return () => window.removeEventListener(eventName, sync);
+  }, [isHistory, sync]);
+
+  // History mode only: pushState() never fires popstate (browsers only fire
+  // it for back/forward and other history-stack navigation), so navigate()
+  // below must call sync() itself. It also doesn't intercept plain <a href>
+  // clicks the way a "#/path" href naturally does in hash mode — without
+  // this listener, every anchor would trigger a full page reload. Skips
+  // modified clicks (new-tab/download intent), cross-origin links, and
+  // same-page fragment links (so native #anchor scrolling still works).
+  useEffect(() => {
+    if (!isHistory) return undefined;
+
+    const onClick = (e) => {
+      if (e.defaultPrevented || e.button !== 0) return;
+      if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+
+      const anchor = e.target.closest?.("a[href]");
+      if (!anchor || (anchor.target && anchor.target !== "_self") || anchor.hasAttribute("download")) {
+        return;
+      }
+
+      const url = new URL(anchor.href);
+      if (url.origin !== window.location.origin) return;
+
+      const samePage = url.pathname === window.location.pathname && url.search === window.location.search;
+      if (samePage && url.hash) return;
+
+      e.preventDefault();
+      window.history.pushState(null, "", url.pathname + url.search + url.hash);
+      sync();
+    };
+
+    document.addEventListener("click", onClick);
+    return () => document.removeEventListener("click", onClick);
+  }, [isHistory, sync]);
+
+  const navigate = useCallback(
+    (to) => {
+      if (isHistory) {
+        window.history.pushState(null, "", to);
+        sync();
+        return;
+      }
+      window.location.hash = to;
+    },
+    [isHistory, sync],
+  );
 
   return { path, params, navigate };
 }

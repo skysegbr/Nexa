@@ -21,6 +21,7 @@ import {
   useIntersectionObserver,
   useWebSocket,
   useVirtualList,
+  useRouter,
 } from "../dist/nexa.js";
 import { test, assert, assertEqual, mountPoint, flush } from "./runner.js";
 
@@ -616,4 +617,156 @@ test("useVirtualList clamps virtualItems to the end of the items array", async (
   // overscan*2=20 but only 3 items exist — endIndex must be clamped to 3
   assertEqual(listState.endIndex, 3, "expected endIndex to be clamped to items.length");
   assertEqual(listState.virtualItems.length, 3);
+});
+
+// ── useRouter ────────────────────────────────────────────────
+
+// history-mode tests mutate the real page's URL via the History API.
+// Restore it afterward so later tests (and repeated suite runs) start clean.
+async function withRestoredLocation(fn) {
+  const originalUrl = window.location.pathname + window.location.search + window.location.hash;
+  try {
+    await fn();
+  } finally {
+    window.history.replaceState(null, "", originalUrl);
+  }
+}
+
+test("useRouter (hash mode) reads the initial path/params and updates on hashchange", async () => {
+  window.location.hash = "#/initial";
+  let router;
+
+  function Widget() {
+    router = useRouter();
+    return h("span", null, router.path);
+  }
+
+  const container = mountPoint();
+  render(Widget, container);
+  await flush();
+  assertEqual(router.path, "/initial");
+
+  window.location.hash = "#/next?tab=profile";
+  await flush();
+  assertEqual(router.path, "/next");
+  assertEqual(router.params.tab, "profile");
+
+  window.location.hash = "";
+});
+
+test("useRouter (hash mode) navigate() sets window.location.hash", async () => {
+  window.location.hash = "#/start";
+  let router;
+
+  function Widget() {
+    router = useRouter();
+    return h("span", null, router.path);
+  }
+
+  const container = mountPoint();
+  render(Widget, container);
+  await flush();
+
+  router.navigate("/settings?tab=security");
+  await flush();
+  assertEqual(window.location.hash, "#/settings?tab=security");
+  assertEqual(router.path, "/settings");
+  assertEqual(router.params.tab, "security");
+
+  window.location.hash = "";
+});
+
+test("useRouter (history mode) reads path/params from pathname/search and updates on popstate", async () => {
+  await withRestoredLocation(async () => {
+    window.history.replaceState(null, "", "/initial?x=1");
+    let router;
+
+    function Widget() {
+      router = useRouter({ mode: "history" });
+      return h("span", null, router.path);
+    }
+
+    const container = mountPoint();
+    render(Widget, container);
+    await flush();
+    assertEqual(router.path, "/initial");
+    assertEqual(router.params.x, "1");
+
+    // pushState alone never fires popstate — only real history-stack
+    // navigation (back/forward) does. Simulate that navigation explicitly.
+    window.history.pushState(null, "", "/next?y=2");
+    window.dispatchEvent(new PopStateEvent("popstate"));
+    await flush();
+    assertEqual(router.path, "/next");
+    assertEqual(router.params.y, "2");
+  });
+});
+
+test("useRouter (history mode) navigate() pushes state and updates path without a popstate event", async () => {
+  await withRestoredLocation(async () => {
+    window.history.replaceState(null, "", "/start");
+    let router;
+
+    function Widget() {
+      router = useRouter({ mode: "history" });
+      return h("span", null, router.path);
+    }
+
+    const container = mountPoint();
+    render(Widget, container);
+    await flush();
+
+    router.navigate("/dashboard?tab=x");
+    await flush();
+    assertEqual(window.location.pathname, "/dashboard");
+    assertEqual(router.path, "/dashboard");
+    assertEqual(router.params.tab, "x");
+  });
+});
+
+test("useRouter (history mode) intercepts a same-origin <a href> click instead of reloading the page", async () => {
+  await withRestoredLocation(async () => {
+    window.history.replaceState(null, "", "/start");
+    let router;
+
+    function Widget() {
+      router = useRouter({ mode: "history" });
+      return h("a", { href: "/clicked", id: "rt-link" }, "go");
+    }
+
+    const container = mountPoint();
+    render(Widget, container);
+    await flush();
+
+    container.querySelector("#rt-link").click();
+    await flush();
+
+    assertEqual(window.location.pathname, "/clicked", "expected the click to be intercepted via pushState instead of a real navigation");
+    assertEqual(router.path, "/clicked");
+  });
+});
+
+test("useRouter (history mode) does not intercept a same-page fragment link", async () => {
+  await withRestoredLocation(async () => {
+    window.history.replaceState(null, "", "/page");
+    let router;
+    let observedEvent;
+
+    function Widget() {
+      router = useRouter({ mode: "history" });
+      return h("a", { href: "#section", id: "rt-frag-link" }, "jump");
+    }
+
+    const container = mountPoint();
+    render(Widget, container);
+    await flush();
+
+    const link = container.querySelector("#rt-frag-link");
+    link.addEventListener("click", (e) => { observedEvent = e; });
+    link.click();
+    await flush();
+
+    assertEqual(observedEvent.defaultPrevented, false, "expected same-page fragment links to keep their native behavior");
+    assertEqual(router.path, "/page", "expected path to stay the same for a same-page fragment link");
+  });
 });

@@ -462,7 +462,7 @@ vibrate([100, 50, 100]); // pattern
 |---|---|
 | `useLocalStorage(key, initialValue)` | `[value, setValue]` persisted to `localStorage`, JSON-encoded |
 | `useToast()` | `{ toasts, toast, dismiss }` — `toast.success/error/warning/info(msg, opts)` queues a toast for `ToastStack` |
-| `useRouter()` | `{ path, params, navigate }` — minimal hash-based router |
+| `useRouter(options?)` | `{ path, params, navigate }` — router. `{ mode: 'hash' }` (default) or `{ mode: 'history' }` for clean URLs via the History API |
 | `useTranslation(dict)` | `{ t }` — `t(key, vars)` looks up `dict[key]` and interpolates `{var}` placeholders |
 | `useContextMenu()` | `{ menu, openMenu, closeMenu }` — wires a right-click handler to `ContextMenu` |
 | `useHistory(initial, options)` | `{ state, set, undo, redo, canUndo, canRedo }` — undo/redo wrapper around a state value |
@@ -489,9 +489,14 @@ canUndo && h(Button, { onClick: undo }, "Undo")
 // useFetch — data fetching with abort + refetch
 const { data, loading, error, refetch } = useFetch(`/api/items/${id}`);
 
-// useRouter — hash-based routing
+// useRouter — hash-based routing (default)
 const { path, params, navigate } = useRouter();
 navigate("/settings?tab=profile");
+
+// useRouter — history mode: clean URLs, same-origin <a href> clicks are
+// intercepted automatically. Requires server-side SPA fallback (serve
+// index.html for every route) — see docs/AI_SPEC.md §6.
+const router = useRouter({ mode: "history" });
 
 // useDebounce — delay value update
 const query = useDebounce(inputValue, 300);
