@@ -10,10 +10,13 @@ Its core ships in three files:
 - `dist/nexa-ui.css` — mobile-first CSS framework with a 12-column grid,
   responsive utilities, dark mode, and mobile shell components.
 
-Two optional add-ons build on top of that core:
+Three optional add-ons build on top of that core:
 
 - `dist/nexa-canvas.js` + `dist/nexa-canvas.css` — `PipelineCanvas`, an
   SVG node editor with drag, pan, zoom, mini-map, and undo/redo.
+- `dist/nexa-prezi.js` + `dist/nexa-prezi.css` — `PreziStage`, a Prezi-style
+  zooming presentation canvas with animated camera pan/zoom/rotate between
+  frames.
 - `dist/nexa-editor.js` + `dist/nexa-editor.css` (+ `dist/nexa-editor-snippets.js`)
   — `FullCodeEditor`, a [CodeMirror](https://codemirror.net/5/) wrapper with a
   toolbar, snippet browser, and autocomplete. Requires the local CodeMirror
@@ -51,6 +54,8 @@ https://cdn.jsdelivr.net/gh/skysegbr/Nexa@main/dist/nexa-components.js
 https://cdn.jsdelivr.net/gh/skysegbr/Nexa@main/dist/nexa-ui.css
 https://cdn.jsdelivr.net/gh/skysegbr/Nexa@main/dist/nexa-canvas.js
 https://cdn.jsdelivr.net/gh/skysegbr/Nexa@main/dist/nexa-canvas.css
+https://cdn.jsdelivr.net/gh/skysegbr/Nexa@main/dist/nexa-prezi.js
+https://cdn.jsdelivr.net/gh/skysegbr/Nexa@main/dist/nexa-prezi.css
 https://cdn.jsdelivr.net/gh/skysegbr/Nexa@main/dist/nexa-editor.js
 https://cdn.jsdelivr.net/gh/skysegbr/Nexa@main/dist/nexa-editor.css
 ```
@@ -193,13 +198,16 @@ python -m http.server 8080
 | [examples/new-components](./examples/new-components) | `Switch`, `Collapse`, `Combobox`, `ContextMenu`, `FileDropZone`, `CodeEditor`, toasts |
 | [examples/task-manager](./examples/task-manager) | Full CRUD with Python API, filters, pagination, and drawer editing |
 | [examples/mobile](./examples/mobile) | Mobile shell: `AppBar`, `BottomNav`, `BottomSheet`, `FAB`, swipe, long press |
-| [examples/pipeline-canvas](./examples/pipeline-canvas) | `PipelineCanvas` + `FullCodeEditor`: drag/connect nodes, edit code per node, undo/redo, export/import JSON |
 | [examples/charts](./examples/charts) | SVG donut chart drawn with raw `h("svg", ...)`, plus `useErrorBoundary` catching a corrupted dataset and recovering |
 | [examples/landing](./examples/landing) | SaaS landing page: sticky nav with mobile menu, SVG hero chart, testimonial carousel, pricing toggle |
 | [examples/gallery](./examples/gallery) | Photo gallery: category filter, masonry grid with lazy-load fade-in, keyboard/swipe lightbox with focus trap |
 | [examples/mindmap](./examples/mindmap) | Draggable mindmap: free-form card positioning, double-click inline editing, SVG bezier connectors that track card size, branch coloring |
 | [examples/drug-recalls](./examples/drug-recalls) | Live dashboard over the openFDA drug recall API: debounced search, classification/status filters, donut + bar charts, sortable table, recall detail dialog |
 | [examples/storefront](./examples/storefront) | Domain-componentized architecture: `catalog/`, `cart/`, `auth/` each own their own `createContext` + state hook, composed once in `app.js`, integrated through `Shell.js`. Products fetched live from fakestoreapi.com |
+| [examples/designer](./examples/designer) | Visual UI builder: drag components from a palette onto a canvas, edit props/styles/states in an inspector, live CSS + code export |
+| [examples/prezi](./examples/prezi) | `PreziStage` basics: per-kind frame components behind a `FrameContent` dispatcher, toolbar with progress dots, keyboard navigation |
+| [examples/nexa-prezi](./examples/nexa-prezi) | Full `PreziStage` presentation about Nexa: five frame kinds, rotated frames, a zoomed-out overview frame, `nexa-components` toolbar |
+| [examples/nexa-atlas](./examples/nexa-atlas) | Atlas-themed `PreziStage` tour of Nexa: click any background frame to zoom straight to it, plus a live demo frame running real `useState`/`useTheme` mid-presentation |
 
 The task manager requires its own backend:
 
@@ -713,8 +721,8 @@ h(FAB, { label: "New", aboveNav: true, onClick: openSheet }, "+")
 
 ## Canvas & Editor
 
-Two optional add-ons, each with its own dist files and stylesheet. They are not
-included in `nexa-components.js` — import them directly when you need them.
+Three optional add-ons, each with its own dist files and stylesheet. They are
+not included in `nexa-components.js` — import them directly when you need them.
 
 ### `PipelineCanvas`
 
@@ -739,8 +747,48 @@ h(PipelineCanvas, {
 })
 ```
 
-See [examples/pipeline-canvas](./examples/pipeline-canvas) for a full pipeline
-editor with node editing, JSON export/import, and a mini-map.
+Drag, pan/zoom, connection drawing, selection, undo/redo, and a mini-map are
+all built into the controller — see [dist/nexa-canvas.js](./dist/nexa-canvas.js).
+
+### `PreziStage`
+
+`dist/nexa-prezi.js` + `dist/nexa-prezi.css`. A Prezi-style zooming
+presentation: frame content is normal Nexa vdom positioned on one large
+canvas, and a single animated camera pans/zooms/rotates between frames.
+
+| Prop | Description |
+|---|---|
+| `frames` | Array of `{ id, x, y, w, h, rotate?, content }` — world-px geometry plus vdom content |
+| `path` | Array of frame ids for navigation order — defaults to `frames` order |
+| `index` / `defaultIndex` / `onIndexChange` | Controlled/uncontrolled current frame |
+| `duration` / `easing` | Camera animation duration (ms) and easing function |
+| `controllerRef` | ref, set to `{ next, prev, goTo, index, frames }` every render |
+| `keyboardNav` | Arrow keys / Space navigate (default `true`) |
+| `advanceOnClick` | Click the stage background to advance (default `true`) |
+
+```js
+import { PreziStage } from "./dist/nexa-prezi.js";
+
+h(PreziStage, {
+  frames,
+  index,
+  onIndexChange: setIndex,
+  controllerRef,
+})
+```
+
+Frames can legitimately overlap in world space — an "overview" frame that
+zooms out to show the whole canvas is, by definition, as big as every other
+frame combined. `PreziStage` renders frames sorted by descending area
+(`w * h`), so larger frames paint *behind* smaller ones automatically; you
+don't need to manage `z-index` for this.
+
+Once a deck has more than a couple of frame kinds (title, bullets, code, …),
+give each kind its own component under `components/` with a small
+dispatcher for `data.kind`, rather than inlining every frame's rendering in
+`app.js` — see [examples/prezi](./examples/prezi) for the pattern
+(`components/FrameContent.js`) and a full presentation with a toolbar,
+progress dots, and keyboard navigation.
 
 ### `FullCodeEditor`
 
@@ -769,7 +817,7 @@ h(FullCodeEditor, {
 ```
 
 Requires the local CodeMirror assets (`assets/codemirror/`, vendored — no CDN);
-see [examples/pipeline-canvas/index.html](./examples/pipeline-canvas/index.html)
+see [examples/new-components/index.html](./examples/new-components/index.html)
 for the full list of `<script>`/`<link>` tags to include.
 
 ## CSS Framework
@@ -932,6 +980,8 @@ Nexa `0.3.0` covers:
 **Canvas & Editor add-ons**
 - `PipelineCanvas` — SVG node editor with drag, pan, zoom, mini-map, undo/redo
   (`nexa-canvas.js` / `nexa-canvas.css`)
+- `PreziStage` — Prezi-style zooming presentation canvas with animated camera
+  pan/zoom/rotate (`nexa-prezi.js` / `nexa-prezi.css`)
 - `FullCodeEditor` — CodeMirror 5 wrapper with toolbar, snippet browser, and
   autocomplete (`nexa-editor.js` / `nexa-editor.css` / `nexa-editor-snippets.js`)
 

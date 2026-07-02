@@ -1,5 +1,5 @@
 import { h, useState } from '/dist/nexa.js';
-import { generateCode, generateItemCode, generateCSSCode } from '../data.js';
+import { generateCode, generateItemCode, generateCSSCode } from '../codegen.js';
 
 export function CodePanel({ items, selectedId }) {
   const [tab, setTab] = useState('all');

@@ -5,6 +5,18 @@ All notable changes to this project are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.4.0] - 2026-07-02
+
+### Added
+- `PreziStage` (`dist/nexa-prezi.js` + `dist/nexa-prezi.css`) — Prezi-style zooming presentation add-on. Frame content is plain Nexa vdom positioned on one large shared canvas (every frame stays mounted); only the camera — a single transform tweened with `requestAnimationFrame` — is imperative. Supports controlled/uncontrolled `index`, a `path` navigation order, `controllerRef` (`{ next, prev, goTo, index, frames }`), keyboard navigation, click-to-advance, a viewport `padding` fraction, and automatic paint ordering (larger frames render behind smaller ones, so an overview frame never covers its nested frames).
+- `examples/prezi` — minimal `PreziStage` deck: per-kind frame components behind a `FrameContent` dispatcher, plus a toolbar with progress dots.
+- `examples/nexa-prezi` — full presentation about Nexa built with `PreziStage` and `nexa-components`, with rotated frames and a zoomed-out overview frame.
+- `examples/nexa-atlas` — atlas-themed `PreziStage` tour of Nexa: clicking any background frame zooms straight to it (overriding the default click-to-advance), and a live demo frame runs real `useState`/`useTheme` mid-presentation.
+- `docs/AI_SPEC.md` §10 "Canvas & Editor Add-ons" — documents `PipelineCanvas` and `PreziStage`. This renumbers the later sections: CSS tokens is now §11, component patterns §12, single-file demo §13, multi-file app §14, gotcha checklist §15.
+
+### Fixed
+- `examples/charts` — smart quotes inside a string literal broke module parsing.
+
 ## [0.3.0] - 2026-07-01
 
 ### Added

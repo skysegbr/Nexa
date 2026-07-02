@@ -1,0 +1,15 @@
+.atl-tree {
+  margin: 4px 0 0;
+  padding: 16px 18px;
+  border-radius: 8px;
+  background: #101a22;
+  color: #d5e9f2;
+  font-size: 14px;
+  line-height: 1.7;
+  overflow: auto;
+}
+
+.atl-tree-row { white-space: pre; }
+.atl-tree-branch { color: rgba(213, 233, 242, 0.4); }
+.atl-tree-label { color: #f6eed8; }
+.atl-tree-note { color: rgba(213, 233, 242, 0.55); font-style: italic; }

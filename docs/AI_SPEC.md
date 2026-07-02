@@ -28,6 +28,8 @@ Core ideas:
 /dist/nexa-hmr.js          ← HMR client (dev only — injected by server.py)
 /dist/nexa-canvas.js       ← SVG pipeline canvas (PipelineCanvasController)
 /dist/nexa-canvas.css      ← styles for nexa-canvas
+/dist/nexa-prezi.js        ← Prezi-style zooming presentation canvas (PreziStage)
+/dist/nexa-prezi.css       ← styles for nexa-prezi
 /dist/nexa-editor.js       ← full-featured code editor component
 /dist/nexa-editor.css      ← styles for nexa-editor
 /dist/nexa-editor-snippets.js ← boilerplate snippet catalog for nexa-editor
@@ -480,7 +482,7 @@ composition-root component — typically the function passed to `render()`:
 
 ```js
 function App() {
-  const auth = useAuthState();  // plain hooks, not components — see §11
+  const auth = useAuthState();  // plain hooks, not components — see §12
   const cart = useCartState();
 
   return AuthCtx.provide(auth, () =>
@@ -494,7 +496,7 @@ render(App, document.getElementById('app'));
 ```
 
 `useAuthState()`/`useCartState()` hold each domain's state and return the
-value object for that domain's context. See §11 for where these hooks live
+value object for that domain's context. See §12 for where these hooks live
 in a domain-componentized project.
 
 ---
@@ -529,6 +531,16 @@ in a domain-componentized project.
 Any prop starting with `on` + uppercase letter is treated as an event listener.
 `eventName` is derived as `propName.slice(2).toLowerCase()` — so `onClick` → `click`,
 `onMouseDown` → `mousedown`, `onInput` → `input`.
+
+`aria*` props are reflected IDL string properties, not booleans — pass the
+literal string `"true"` / `"false"`, not a JS boolean:
+
+```js
+h('span', { ariaHidden: 'true' })              // CORRECT
+h('button', { ariaExpanded: isOpen ? 'true' : 'false' })
+
+h('span', { ariaHidden: true })                 // WRONG — sets aria-hidden=""
+```
 
 ### `style` prop
 
@@ -973,7 +985,109 @@ h('div', { onContextMenu: openMenu },
 
 ---
 
-## 10. CSS Design Tokens
+## 10. Canvas & Editor Add-ons
+
+Three optional add-ons, each its own `dist/nexa-<name>.js` + `.css` pair —
+**not** part of `nexa-components.js`, import them directly. Full prop tables
+and a longer walkthrough live in the README's "Canvas & Editor" section;
+this is the quick-reference version so an agent that only loads this file
+still knows the API exists and how to call it.
+
+### `PipelineCanvas`
+
+`dist/nexa-canvas.js` + `dist/nexa-canvas.css`. An SVG-based node/pipeline
+editor: drag nodes, draw connections, pan and zoom, mini-map, undo/redo.
+
+| Prop | Description |
+|---|---|
+| `nodes` | Array of node descriptors to render |
+| `onNodeEdit` / `onNodeDelete` / `onNodeMove` | Node lifecycle callbacks |
+| `onNodeConnect` / `onConnectionDelete` | Edge lifecycle callbacks |
+| `onContextMenu` | Right-click handler — pair with `useContextMenu` + `ContextMenu` |
+
+```js
+import { PipelineCanvas } from "/dist/nexa-canvas.js";
+
+h(PipelineCanvas, {
+  nodes,
+  onNodeMove: (id, x, y) => moveNode(id, x, y),
+  onNodeConnect: (fromId, toId) => connect(fromId, toId),
+})
+```
+
+### `PreziStage`
+
+`dist/nexa-prezi.js` + `dist/nexa-prezi.css`. A Prezi-style zooming
+presentation: every frame's `content` is normal Nexa vdom, positioned with
+plain CSS on one large shared canvas (all frames are mounted at once) — only
+the *camera* is imperative, easing pan/zoom/rotate between frames via
+`requestAnimationFrame`.
+
+| Prop | Description |
+|---|---|
+| `frames` | Array of `{ id, x, y, w, h, rotate?, content }` — world-px geometry plus vdom content |
+| `path` | Array of frame ids for navigation order — defaults to `frames` order |
+| `index` / `defaultIndex` / `onIndexChange` | Controlled/uncontrolled current frame |
+| `duration` / `easing` | Camera animation duration (ms) and easing function |
+| `controllerRef` | ref, set to `{ next, prev, goTo, index, frames }` every render |
+| `keyboardNav` | Arrow keys / Space navigate (default `true`) |
+| `advanceOnClick` | Click the stage background to advance (default `true`) |
+
+```js
+import { PreziStage } from "/dist/nexa-prezi.js";
+
+h(PreziStage, {
+  frames,
+  index,
+  onIndexChange: setIndex,
+  controllerRef,
+})
+```
+
+**Frames can legitimately overlap in world space** — an "overview" frame
+that zooms out to show the whole canvas is, by definition, as big as every
+other frame combined. `PreziStage` renders frames sorted by descending area
+(`w * h`), so larger frames paint *behind* smaller ones automatically. You
+don't need to manage `z-index` yourself, but keep it in mind when authoring
+geometry: a frame that's smaller than something it overlaps will always be
+the one left visible on top.
+
+**Structuring a multi-frame deck:** once a presentation has more than a
+couple of frame *kinds* (title slide, bullet list, code sample, …), give
+each kind its own component under `components/` (e.g.
+`components/TitleFrame.js`, `components/CodeFrame.js`), with a small
+dispatcher component that maps `data.kind` to the right one — the same
+domain-componentized rule from §12 applies here. Keep `data.js` holding
+plain geometry + content *descriptors* (`{ kind: "title", heading, body }`),
+and build the actual `content: h(...)` vdom in `app.js` right before passing
+`frames` to `PreziStage`. See [examples/prezi](../examples/prezi) for the
+full pattern (`components/FrameContent.js` dispatches on `data.kind`).
+
+### `FullCodeEditor`
+
+`dist/nexa-editor.js` + `dist/nexa-editor.css` (+ `dist/nexa-editor-snippets.js`
+for the snippet browser). A CodeMirror 5 wrapper with a toolbar, language
+switcher, snippet browser, and autocomplete. Requires the local CodeMirror
+assets in `assets/codemirror/` (no CDN).
+
+| Prop | Description |
+|---|---|
+| `value`, `onChange` | Controlled source code |
+| `language`, `onLanguageChange` | Active language (`python`, `cython`, `go`, `rust`, `kotlin`, …) |
+| `snippets` | Snippet catalog — see `BOILERPLATES` in `nexa-editor-snippets.js` |
+| `onCheckSyntax` | Async `(code) => { ok, message }` — wired to the toolbar's "check" action |
+| `showToolbar`, `showSnippets`, `height` | Layout toggles |
+
+```js
+import { FullCodeEditor } from "/dist/nexa-editor.js";
+import { BOILERPLATES } from "/dist/nexa-editor-snippets.js";
+
+h(FullCodeEditor, { value: code, onChange: setCode, language: "python", snippets: BOILERPLATES })
+```
+
+---
+
+## 11. CSS Design Tokens
 
 All tokens are CSS custom properties set on `:root` by `nexa-ui.css`.
 
@@ -1057,7 +1171,7 @@ Override tokens on a scoped element or globally:
 
 ---
 
-## 11. Component Patterns
+## 12. Component Patterns
 
 ### Basic component
 
@@ -1525,11 +1639,11 @@ export function useProducts() {
 
 ---
 
-## 12. Complete minimal app (single-file demo only)
+## 13. Complete minimal app (single-file demo only)
 
 > **Single-file apps are for quick demos and prototypes.**
 > For any real project — landing page, dashboard, form flow — use the
-> domain-componentized structure from §11. Never generate a multi-section
+> domain-componentized structure from §12. Never generate a multi-section
 > UI in a single `app.js`.
 
 A working counter with a Navbar, Tabs, and form:
@@ -1615,7 +1729,7 @@ render(App, document.getElementById('app'));
 
 ---
 
-## 13. Complete multi-file app (domain-componentized)
+## 14. Complete multi-file app (domain-componentized)
 
 A landing page split across `data.js` + two components + paired CSS.
 This is the structure to use for any real app.
@@ -1751,7 +1865,7 @@ render(App, document.getElementById('app'));
 
 ---
 
-## 14. Quick gotcha checklist
+## 15. Quick gotcha checklist
 
 Before submitting any Nexa code, verify:
 
@@ -1764,6 +1878,7 @@ Before submitting any Nexa code, verify:
 - [ ] CSS classes use `className`, not `class`
 - [ ] `for` attribute uses `htmlFor`
 - [ ] aria-* attributes use camelCase: `ariaLabel`, `ariaHidden`, etc.
+- [ ] aria-* boolean-ish values are the string `"true"`/`"false"`, not a JS boolean
 - [ ] Style is a camelCase object: `{ fontSize: '1rem' }` not `{ 'font-size': '1rem' }`
 - [ ] `useEffect` cleanup returns a function (not a Promise)
 - [ ] Conditional rendering uses `&&` or ternary — no returning `undefined` without `null`

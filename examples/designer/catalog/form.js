@@ -1,0 +1,96 @@
+export const FORM_ENTRIES = [
+  {
+    name: 'TextField',
+    label: 'TextField',
+    icon: 'bi-input-cursor',
+    category: 'Form',
+    defaultProps: { label: 'Name', placeholder: 'Type here...', value: '' },
+    propDefs: [
+      { key: 'label', label: 'Label', type: 'text' },
+      { key: 'placeholder', label: 'Placeholder', type: 'text' },
+      { key: 'type', label: 'Input type', type: 'select', options: ['text', 'email', 'password', 'number', 'search', 'tel'] },
+      { key: 'disabled', label: 'Disabled', type: 'boolean' },
+      { key: 'required', label: 'Required', type: 'boolean' },
+      { key: 'help', label: 'Help text', type: 'text' },
+      { key: 'error', label: 'Error message', type: 'text' },
+    ],
+  },
+  {
+    name: 'Textarea',
+    label: 'Textarea',
+    icon: 'bi-text-paragraph',
+    category: 'Form',
+    defaultProps: { label: 'Description', placeholder: 'Type here...', rows: 4 },
+    propDefs: [
+      { key: 'label', label: 'Label', type: 'text' },
+      { key: 'placeholder', label: 'Placeholder', type: 'text' },
+      { key: 'rows', label: 'Number of rows', type: 'number', min: 2, max: 20, step: 1 },
+      { key: 'disabled', label: 'Disabled', type: 'boolean' },
+    ],
+  },
+  {
+    name: 'Select',
+    label: 'Select',
+    icon: 'bi-chevron-down',
+    category: 'Form',
+    defaultProps: {
+      label: 'Choose an option',
+      value: 'a',
+      options: [
+        { value: 'a', label: 'Option A' },
+        { value: 'b', label: 'Option B' },
+        { value: 'c', label: 'Option C' },
+      ],
+    },
+    propDefs: [
+      { key: 'label', label: 'Label', type: 'text' },
+      { key: 'disabled', label: 'Disabled', type: 'boolean' },
+    ],
+  },
+  {
+    name: 'Checkbox',
+    label: 'Checkbox',
+    icon: 'bi-check-square',
+    category: 'Form',
+    defaultProps: { label: 'I accept the terms of use', checked: false },
+    propDefs: [
+      { key: 'label', label: 'Label', type: 'text' },
+      { key: 'checked', label: 'Checked', type: 'boolean' },
+      { key: 'disabled', label: 'Disabled', type: 'boolean' },
+    ],
+  },
+  {
+    name: 'Switch',
+    label: 'Switch',
+    icon: 'bi-toggle-on',
+    category: 'Form',
+    defaultProps: { label: 'Enable notifications', checked: false },
+    propDefs: [
+      { key: 'label', label: 'Label', type: 'text' },
+      { key: 'checked', label: 'On', type: 'boolean' },
+      { key: 'disabled', label: 'Disabled', type: 'boolean' },
+    ],
+  },
+  {
+    name: 'Combobox',
+    label: 'Combobox',
+    icon: 'bi-ui-checks',
+    category: 'Form',
+    defaultProps: {
+      label: 'Country',
+      placeholder: 'Select...',
+      value: 'br',
+      options: [
+        { value: 'br', label: 'Brazil' },
+        { value: 'pt', label: 'Portugal' },
+        { value: 'ar', label: 'Argentina' },
+        { value: 'us', label: 'United States' },
+      ],
+    },
+    propDefs: [
+      { key: 'label', label: 'Label', type: 'text' },
+      { key: 'placeholder', label: 'Placeholder', type: 'text' },
+      { key: 'disabled', label: 'Disabled', type: 'boolean' },
+    ],
+  },
+];

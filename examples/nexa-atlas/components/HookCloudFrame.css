@@ -1,0 +1,22 @@
+.atl-frame-hooks { align-items: center; text-align: center; justify-content: center; }
+
+.atl-cloud {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: center;
+  gap: 10px 16px;
+  max-width: 720px;
+  margin: 4px 0;
+}
+
+.atl-word {
+  font-family: ui-monospace, monospace;
+  color: var(--atl-ink);
+  opacity: 0.85;
+}
+
+.atl-word-xl { font-size: 30px; font-weight: 700; color: var(--atl-gold); opacity: 1; }
+.atl-word-lg { font-size: 23px; font-weight: 600; }
+.atl-word-md { font-size: 18px; }
+.atl-word-sm { font-size: 14px; opacity: 0.6; }
