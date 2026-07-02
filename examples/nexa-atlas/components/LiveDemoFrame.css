@@ -1,0 +1,23 @@
+.atl-live-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 6px;
+}
+
+.atl-live-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-start;
+  padding: 16px;
+  border-radius: 8px;
+  border: 1px dashed rgba(46, 35, 19, 0.3);
+  background: rgba(255, 255, 255, 0.45);
+}
+
+.atl-live-card-wide { grid-column: 1 / -1; }
+
+.atl-live-card strong { font-size: 13px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--atl-ink-soft); }
+
+.atl-live-note { font-size: 13px; font-style: italic; color: var(--atl-ink-soft); }

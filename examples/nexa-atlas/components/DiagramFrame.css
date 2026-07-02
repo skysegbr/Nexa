@@ -1,0 +1,83 @@
+.atl-frame-diagram { align-items: flex-start; }
+
+.atl-steps {
+  display: grid;
+  gap: 10px;
+  margin: 4px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.atl-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 6px;
+  background: rgba(46, 35, 19, 0.05);
+}
+
+.atl-step-index {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--atl-gold);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.atl-step code {
+  display: block;
+  font-size: 15px;
+  color: var(--atl-ink);
+  background: rgba(46, 35, 19, 0.08);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.atl-step p { margin: 4px 0 0; font-size: 14px; color: var(--atl-ink-soft); }
+
+.atl-strait {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.atl-route {
+  border-radius: 8px;
+  padding: 14px;
+  border: 1px solid rgba(46, 35, 19, 0.18);
+}
+
+.atl-route strong {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.atl-route pre {
+  margin: 0;
+  overflow: auto;
+  font-size: 13px;
+  line-height: 1.45;
+  background: #101a22;
+  color: #d5e9f2;
+  border-radius: 6px;
+  padding: 10px 12px;
+}
+
+.atl-route-wrong { border-color: rgba(146, 49, 31, 0.35); background: rgba(146, 49, 31, 0.06); }
+.atl-route-wrong strong { color: var(--atl-danger); }
+.atl-route-right { border-color: rgba(40, 94, 66, 0.35); background: rgba(40, 94, 66, 0.06); }
+.atl-route-right strong { color: var(--atl-success); }
+
+.atl-strait-arrow { font-size: 30px; color: var(--atl-gold); }
