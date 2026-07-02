@@ -289,6 +289,34 @@ test("removing a keyed item unmounts only that item and leaves the others alone"
   assertEqual([...container.querySelectorAll("li")].map((li) => li.textContent).join(","), "a,c");
 });
 
+test("patch() keeps a reused ref pointed at the new DOM node when an element's tag changes", async () => {
+  // A single ref object bound across a type change (div -> span at the same
+  // position) exercises patch()'s "type changed" branch: it creates the new
+  // DOM node (which sets ref.current to it) and then clears the OLD vnode's
+  // ref — but since both vnodes share the same ref object, an unconditional
+  // clear would wipe out the value that was just correctly set.
+  const ref = { current: null };
+  let setWhich;
+
+  function Widget() {
+    const [which, setter] = useState("a");
+    setWhich = setter;
+    return which === "a" ? h("div", { ref, id: "el-a" }) : h("span", { ref, id: "el-b" });
+  }
+
+  const container = mountPoint();
+  render(Widget, container);
+  await flush();
+  assertEqual(ref.current.id, "el-a");
+
+  setWhich("b");
+  await flush();
+
+  assert(ref.current !== null, "expected the ref to still point at an element after the tag changed");
+  assertEqual(ref.current.id, "el-b", "expected the ref to point at the newly-created element");
+  assertEqual(ref.current, container.querySelector("#el-b"), "expected the ref to be the actual mounted DOM node");
+});
+
 test("a component discards its hook state when conditional rendering unmounts and remounts it", async () => {
   let toggle;
   let bump;
@@ -385,6 +413,57 @@ test("patching an SVG tree updates attributes in place without recreating elemen
   assert(circleBefore === circleAfter, "expected the patcher to reuse the existing <circle> DOM node");
   assertEqual(circleAfter.getAttribute("r"), "25");
   assertEqual(circleAfter.namespaceURI, SVG_NS, "expected the patched <circle> to remain in the SVG namespace");
+});
+
+test("<select value> selects the matching <option> on first mount even when it isn't the first option", async () => {
+  function Form() {
+    return h(
+      "select",
+      { value: "b" },
+      h("option", { value: "a" }, "A"),
+      h("option", { value: "b" }, "B"),
+      h("option", { value: "c" }, "C"),
+    );
+  }
+
+  const container = mountPoint();
+  render(Form, container);
+  await flush();
+
+  const select = container.querySelector("select");
+  assertEqual(
+    select.value,
+    "b",
+    "expected the select's value to match the requested option even though option elements didn't exist yet when value was first set",
+  );
+});
+
+test("<select value> re-selects correctly when a patch adds new options and a value pointing at one of them", async () => {
+  let setState;
+
+  function Form() {
+    const [state, setter] = useState({ value: "a", options: ["a"] });
+    setState = setter;
+    return h(
+      "select",
+      { value: state.value },
+      state.options.map((opt) => h("option", { key: opt, value: opt }, opt.toUpperCase())),
+    );
+  }
+
+  const container = mountPoint();
+  render(Form, container);
+  await flush();
+
+  setState({ value: "c", options: ["a", "b", "c"] });
+  await flush();
+
+  const select = container.querySelector("select");
+  assertEqual(
+    select.value,
+    "c",
+    "expected the select to land on the newly-added option even though it didn't exist in the DOM when value was patched",
+  );
 });
 
 // Render and effect errors are reported through console.error by design (see

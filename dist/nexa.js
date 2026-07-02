@@ -579,12 +579,16 @@ function renderComponent(type, props) {
   // memo's Memoized wrapper calls component(props) in the same owner context,
   // the component's own useState/useReducer marks this owner as dirty).
   // `hasDirtyDescendant` covers state changes in child components.
+  // `hasStaleContextRead` covers context values: skipping must not freeze a
+  // subtree whose useContext reads would now return something different.
+  // (Note this compares with Object.is — a provider that rebuilds its value
+  // object every render defeats memo below it; wrap the value in useMemo.)
   if (type._isMemo && owner.memoizedOutput !== undefined) {
     const compare = type._memoCompare;
     const equal = compare
       ? compare(owner.memoizedProps, props)
       : !shallowPropsChanged(owner.memoizedProps, props);
-    if (equal && !owner.dirty && !hasDirtyDescendant(owner)) {
+    if (equal && !owner.dirty && !hasDirtyDescendant(owner) && !hasStaleContextRead(owner)) {
       return owner.memoizedOutput;
     }
   }
@@ -612,6 +616,7 @@ function prepareHookOwner(owner) {
   owner.childCursor = 0;
   owner.nextChildren = new Set();
   owner.dirty = false;
+  owner.contextReads = null;
 }
 
 function cleanupUnusedChildren(owner) {
@@ -664,6 +669,26 @@ function touchAll(values) {
 function hasDirtyDescendant(owner) {
   for (const child of owner.children.values()) {
     if (child.dirty || hasDirtyDescendant(child)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+// Returns true if any component in the owner's subtree read a context value
+// (via useContext) that differs from what the context would provide right
+// now. Used by memo: a skipped subtree keeps its last output, so it must not
+// be skipped when a provider above it changed the value its consumers read.
+function hasStaleContextRead(owner) {
+  if (owner.contextReads) {
+    for (const [context, seenValue] of owner.contextReads) {
+      if (!Object.is(context._value, seenValue)) {
+        return true;
+      }
+    }
+  }
+  for (const child of owner.children.values()) {
+    if (hasStaleContextRead(child)) {
       return true;
     }
   }
@@ -811,6 +836,14 @@ function createDom(vnode, parentDom) {
     dom.appendChild(createDom(child, dom));
   }
 
+  // A <select>'s `value` can only take effect once its <option> children
+  // exist in the DOM — setting it above, before they're appended, is
+  // silently ignored by the browser (it falls back to the first option).
+  // Re-apply now that the options are in place.
+  if (vnode.type === "select" && "value" in vnode.props) {
+    dom.value = vnode.props.value;
+  }
+
   return dom;
 }
 
@@ -850,7 +883,14 @@ function patch(parent, oldVNode, newVNode) {
   if (oldVNode.type !== newVNode.type) {
     const dom = createDom(newVNode, parent);
     parent.replaceChild(dom, oldVNode._dom);
-    clearRef(oldVNode.props.ref);
+    // createDom() above already ran setRef(newVNode.props.ref, dom) for the
+    // new element. If the same ref object is bound to both the old and new
+    // vnode (a common pattern when the element's tag changes but the ref
+    // stays put), clearing it unconditionally here would wipe out the value
+    // createDom just set — only clear when it's actually a different ref.
+    if (oldVNode.props.ref !== newVNode.props.ref) {
+      clearRef(oldVNode.props.ref);
+    }
     return newVNode;
   }
 
@@ -870,6 +910,14 @@ function patch(parent, oldVNode, newVNode) {
     oldVNode.props.children,
     newVNode.props.children,
   );
+
+  // Same reasoning as in createDom: if this patch is what adds the <option>
+  // matching the new value (e.g. options and value change together), the
+  // `.value` assignment above ran before patchChildren created it and was
+  // ignored. Re-apply now that the options reflect this render.
+  if (newVNode.type === "select" && "value" in newVNode.props) {
+    newVNode._dom.value = newVNode.props.value;
+  }
 
   return newVNode;
 }
@@ -1267,7 +1315,16 @@ export function createContext(defaultValue) {
 }
 
 export function useContext(context) {
-  requireHookOwner("useContext");
+  const owner = requireHookOwner("useContext");
+
+  // Record what this owner read so memo boundaries can tell whether a
+  // skipped subtree would observe a different context value (see the
+  // hasStaleContextRead check in renderComponent).
+  if (!owner.contextReads) {
+    owner.contextReads = new Map();
+  }
+  owner.contextReads.set(context, context._value);
+
   return context._value;
 }
 
@@ -1310,7 +1367,16 @@ export function useSwipe(ref, { onSwipeLeft, onSwipeRight, onSwipeUp, onSwipeDow
       el.removeEventListener("touchstart", onTouchStart);
       el.removeEventListener("touchend", onTouchEnd);
     };
-  }, [ref.current]);
+    // No dependency array — deliberately re-runs after every render (cleans
+    // up and reattaches every time). A `[ref.current]` dep looks equivalent
+    // but isn't: the array is evaluated during THIS render's tree-building
+    // phase, before this same render's patch has updated `ref.current` — so
+    // it always compares the value against itself and never detects a
+    // change. A ref reconnecting later (conditional mount, key/type swap)
+    // would silently never reattach. Re-running unconditionally also means
+    // onSwipeLeft/Right/Up/Down and threshold never go stale, which the old
+    // dependency array didn't cover either.
+  });
 }
 
 export function useLongPress(ref, { onLongPress, delay = 500 } = {}) {
@@ -1350,7 +1416,9 @@ export function useLongPress(ref, { onLongPress, delay = 500 } = {}) {
       el.removeEventListener("mouseup", cancel);
       el.removeEventListener("mouseleave", cancel);
     };
-  }, [ref.current]);
+    // No dependency array — see the comment in useSwipe above for why
+    // `[ref.current]` doesn't actually detect the ref's target changing.
+  });
 }
 
 export function useNetworkStatus() {
@@ -1458,15 +1526,31 @@ export function useToast() {
 }
 
 // ── useRouter ──────────────────────────────────────────────
+//
+// mode: "hash" (default) — `#/path?query`, works on any static host, no
+//       server configuration needed.
+// mode: "history" — clean URLs via the History API (pushState/popstate).
+//       Requires the server to serve index.html for every app route (a
+//       direct load or refresh of e.g. /settings must not 404) — a static
+//       file server alone won't do this; see server.py or your host's
+//       "SPA fallback" / rewrite setting.
 
-export function useRouter() {
+export function useRouter({ mode = "hash" } = {}) {
+  const isHistory = mode === "history";
+
   const getPath = () => {
+    if (isHistory) {
+      return window.location.pathname || "/";
+    }
     const hash = window.location.hash.slice(1) || "/";
     const q = hash.indexOf("?");
     return q === -1 ? hash : hash.slice(0, q);
   };
 
   const getParams = () => {
+    if (isHistory) {
+      return Object.fromEntries(new URLSearchParams(window.location.search));
+    }
     const hash = window.location.hash.slice(1) || "";
     const q = hash.indexOf("?");
     return q === -1 ? {} : Object.fromEntries(new URLSearchParams(hash.slice(q + 1)));
@@ -1475,18 +1559,62 @@ export function useRouter() {
   const [path, setPath] = useState(getPath);
   const [params, setParams] = useState(getParams);
 
-  useEffect(() => {
-    const handler = () => {
-      setPath(getPath());
-      setParams(getParams());
-    };
-    window.addEventListener("hashchange", handler);
-    return () => window.removeEventListener("hashchange", handler);
-  }, []);
+  const sync = useCallback(() => {
+    setPath(getPath());
+    setParams(getParams());
+  }, [isHistory]);
 
-  const navigate = useCallback((to) => {
-    window.location.hash = to;
-  }, []);
+  useEffect(() => {
+    const eventName = isHistory ? "popstate" : "hashchange";
+    window.addEventListener(eventName, sync);
+    return () => window.removeEventListener(eventName, sync);
+  }, [isHistory, sync]);
+
+  // History mode only: pushState() never fires popstate (browsers only fire
+  // it for back/forward and other history-stack navigation), so navigate()
+  // below must call sync() itself. It also doesn't intercept plain <a href>
+  // clicks the way a "#/path" href naturally does in hash mode — without
+  // this listener, every anchor would trigger a full page reload. Skips
+  // modified clicks (new-tab/download intent), cross-origin links, and
+  // same-page fragment links (so native #anchor scrolling still works).
+  useEffect(() => {
+    if (!isHistory) return undefined;
+
+    const onClick = (e) => {
+      if (e.defaultPrevented || e.button !== 0) return;
+      if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+
+      const anchor = e.target.closest?.("a[href]");
+      if (!anchor || (anchor.target && anchor.target !== "_self") || anchor.hasAttribute("download")) {
+        return;
+      }
+
+      const url = new URL(anchor.href);
+      if (url.origin !== window.location.origin) return;
+
+      const samePage = url.pathname === window.location.pathname && url.search === window.location.search;
+      if (samePage && url.hash) return;
+
+      e.preventDefault();
+      window.history.pushState(null, "", url.pathname + url.search + url.hash);
+      sync();
+    };
+
+    document.addEventListener("click", onClick);
+    return () => document.removeEventListener("click", onClick);
+  }, [isHistory, sync]);
+
+  const navigate = useCallback(
+    (to) => {
+      if (isHistory) {
+        window.history.pushState(null, "", to);
+        sync();
+        return;
+      }
+      window.location.hash = to;
+    },
+    [isHistory, sync],
+  );
 
   return { path, params, navigate };
 }
@@ -2026,7 +2154,11 @@ export function useVirtualList(items, { itemHeight, overscan = 3 } = {}) {
     const handler = () => setScrollTop(el.scrollTop);
     el.addEventListener("scroll", handler, { passive: true });
     return () => el.removeEventListener("scroll", handler);
-  }, [containerRef.current]);
+    // No dependency array — see the comment in useSwipe above for why
+    // `[containerRef.current]` doesn't actually detect the ref's target
+    // changing (e.g. if the scrollable element is conditionally rendered
+    // and mounts on a later render).
+  });
 
   const containerHeight = containerRef.current?.clientHeight ?? 0;
   const totalHeight = items.length * itemHeight;

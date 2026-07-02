@@ -5,6 +5,20 @@ All notable changes to this project are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.5.0] - 2026-07-02
+
+### Fixed
+- `memo` — a memoized subtree no longer freezes stale context values. The skip check compared props and state dirty flags but never context: when a provider above changed its value, `useContext` consumers under an unchanged-props `memo` kept rendering the old value. `useContext` now records what each component read, and `memo` re-renders when any read in the subtree would return a different value (`Object.is`). Note: a provider that rebuilds its value object every render defeats `memo` below it — wrap the provided value in `useMemo`.
+- `<select value>` now selects the correct `<option>` on first mount, and when a patch adds new options alongside a new value. Both `createDom` and `patch` applied `value` to the `<select>` element before its `<option>` children existed in the DOM, so the browser silently ignored it and fell back to whichever option ended up first — this made every freshly-mounted `<select>` whose bound value wasn't its first option display the wrong choice (`examples/designer`'s Properties panel was the reported symptom, but any app is affected).
+- `useSwipe`, `useLongPress`, `useVirtualList` — the listener-attaching effect no longer silently fails to reconnect when its `ref`'s target mounts on a later render (conditional rendering) or gets replaced (tag/key change). A `[ref.current]` dependency looks like it detects that, but doesn't: the array is evaluated during the same render's tree-building phase, before that render's patch updates `ref.current` — so it always compares the old value against itself. Fixed by dropping the dependency array so the effect re-runs after every render instead (cheap: it's just an addEventListener/removeEventListener pair).
+- `patch()` — when an element's tag changes (e.g. `div` → `span`) and the *same* `ref` object is bound to both the old and new vnode, the ref is no longer incorrectly cleared back to `null` right after being set to the new DOM node. The "type changed" branch called `createDom` (which sets the ref to the new element) and then unconditionally cleared the old vnode's ref — clobbering it when both vnodes share the same ref object.
+
+### Added
+- `useRouter({ mode })` — new `"history"` mode alongside the existing (default) `"hash"` mode: clean URLs via `pushState`/`popstate` instead of `#/path`. Same-origin `<a href>` clicks are intercepted automatically (matching the ergonomics hash mode gets for free), skipping modified clicks, `target != "_self"`, `download` links, cross-origin links, and same-page fragment links (`#section` keeps native scroll behavior). Requires the server to serve `index.html` for every app route — see the `useRouter` docs in `docs/AI_SPEC.md` §6.
+- `scripts/run_browser_tests.py` — headless runner for the browser test suite: serves the repo root, opens `tests/` in headless Chromium via playwright-python, and reports pass/fail with a proper exit code. The suite itself is unchanged (no test framework, no Node); `tests/run.js` now also exposes the results on `window.__nexaTestResults` for the driver.
+- `.github/workflows/ci.yml` — GitHub Actions running `validate_nexa.py` and the headless test suite on every push to `main` and every pull request.
+- `scripts/validate_nexa.py` — three new checks: local markdown links in README.md (e.g. `](./examples/foo)`), not just backtick-fenced `dist/...` mentions; `src: "..."` asset references inside .js files (`h("img", { src })` and similar, which the existing HTML asset check never sees since it only parses `.html`); and that `package.json`'s version has a matching `## [x.y.z]` heading in `CHANGELOG.md`.
+
 ## [0.4.0] - 2026-07-02
 
 ### Added

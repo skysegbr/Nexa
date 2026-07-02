@@ -9,6 +9,8 @@ import {
   useState,
   useEffect,
   useRef,
+  createContext,
+  useContext,
   memo,
   createPortal,
   createLazy,
@@ -19,6 +21,8 @@ import {
   useIntersectionObserver,
   useWebSocket,
   useVirtualList,
+  useRouter,
+  useSwipe,
 } from "../dist/nexa.js";
 import { test, assert, assertEqual, mountPoint, flush } from "./runner.js";
 
@@ -138,6 +142,79 @@ test("memo custom compare function controls when re-rendering happens", async ()
   await flush();
   assertEqual(childRenders, 2, "expected custom compare to allow re-render when id changes");
   assertEqual(container.querySelector("span").textContent, "2");
+});
+
+test("memo re-renders when a context value it consumes changes", async () => {
+  const ThemeContext = createContext("light");
+  let setTheme;
+
+  const Label = memo(function Label() {
+    const theme = useContext(ThemeContext);
+    return h("span", null, theme);
+  });
+
+  function App() {
+    const [theme, setThemeState] = useState("light");
+    setTheme = setThemeState;
+    return ThemeContext.provide(theme, () => h("div", null, h(Label, { fixed: 1 })));
+  }
+
+  const container = mountPoint();
+  render(App, container);
+  await flush();
+  assertEqual(container.querySelector("span").textContent, "light");
+
+  setTheme("dark");
+  await flush();
+  assertEqual(
+    container.querySelector("span").textContent,
+    "dark",
+    "expected memo to re-render when a context value read inside it changed",
+  );
+});
+
+test("memo re-renders when a descendant of the memoized tree consumes a changed context", async () => {
+  const CountContext = createContext(0);
+  let setCount;
+  let wrapperRenders = 0;
+
+  function Leaf() {
+    const count = useContext(CountContext);
+    return h("em", null, String(count));
+  }
+
+  // The memoized component itself never reads the context — only its child
+  // does, so the staleness check must walk the owner subtree.
+  const Wrapper = memo(function Wrapper() {
+    wrapperRenders += 1;
+    return h("div", null, h(Leaf, { fixed: 1 }));
+  });
+
+  function App() {
+    const [count, setCountState] = useState(0);
+    setCount = setCountState;
+    return CountContext.provide(count, () => h("section", null, h(Wrapper, { fixed: 1 })));
+  }
+
+  const container = mountPoint();
+  render(App, container);
+  await flush();
+  assertEqual(container.querySelector("em").textContent, "0");
+  assertEqual(wrapperRenders, 1);
+
+  setCount(41);
+  await flush();
+  assertEqual(
+    container.querySelector("em").textContent,
+    "41",
+    "expected memo to re-render when a descendant's context read went stale",
+  );
+
+  // And with nothing changed, the memo skip must still work.
+  const rendersAfterUpdate = wrapperRenders;
+  setCount(41); // Object.is-equal — no re-render at all
+  await flush();
+  assertEqual(wrapperRenders, rendersAfterUpdate, "expected memo to keep skipping when context is unchanged");
 });
 
 // ── createPortal ───────────────────────────────────────────
@@ -437,11 +514,19 @@ test("useMediaQuery returns true for 'all' and false for 'not all'", async () =>
 // ── useIntersectionObserver ────────────────────────────────
 
 test("useIntersectionObserver returns null before the first observation fires", async () => {
-  let entry;
+  // Capture the FIRST render's value only: the real IntersectionObserver may
+  // legitimately fire (and re-render with an entry) before flush() resolves,
+  // so asserting on the latest value races against the browser.
+  let firstRenderEntry;
+  let firstRenderSeen = false;
 
   function Widget() {
     const ref = useRef(null);
-    entry = useIntersectionObserver(ref);
+    const entry = useIntersectionObserver(ref);
+    if (!firstRenderSeen) {
+      firstRenderSeen = true;
+      firstRenderEntry = entry;
+    }
     return h("div", { ref }, "observe me");
   }
 
@@ -449,7 +534,7 @@ test("useIntersectionObserver returns null before the first observation fires", 
   render(Widget, container);
   await flush();
 
-  assertEqual(entry, null, "expected useIntersectionObserver to return null synchronously before the observer fires");
+  assertEqual(firstRenderEntry, null, "expected useIntersectionObserver to return null on the first render, before the observer fires");
 });
 
 // ── useWebSocket ───────────────────────────────────────────
@@ -533,4 +618,235 @@ test("useVirtualList clamps virtualItems to the end of the items array", async (
   // overscan*2=20 but only 3 items exist — endIndex must be clamped to 3
   assertEqual(listState.endIndex, 3, "expected endIndex to be clamped to items.length");
   assertEqual(listState.virtualItems.length, 3);
+});
+
+// ── useRouter ────────────────────────────────────────────────
+
+// history-mode tests mutate the real page's URL via the History API.
+// Restore it afterward so later tests (and repeated suite runs) start clean.
+async function withRestoredLocation(fn) {
+  const originalUrl = window.location.pathname + window.location.search + window.location.hash;
+  try {
+    await fn();
+  } finally {
+    window.history.replaceState(null, "", originalUrl);
+  }
+}
+
+test("useRouter (hash mode) reads the initial path/params and updates on hashchange", async () => {
+  window.location.hash = "#/initial";
+  let router;
+
+  function Widget() {
+    router = useRouter();
+    return h("span", null, router.path);
+  }
+
+  const container = mountPoint();
+  render(Widget, container);
+  await flush();
+  assertEqual(router.path, "/initial");
+
+  window.location.hash = "#/next?tab=profile";
+  await flush();
+  assertEqual(router.path, "/next");
+  assertEqual(router.params.tab, "profile");
+
+  window.location.hash = "";
+});
+
+test("useRouter (hash mode) navigate() sets window.location.hash", async () => {
+  window.location.hash = "#/start";
+  let router;
+
+  function Widget() {
+    router = useRouter();
+    return h("span", null, router.path);
+  }
+
+  const container = mountPoint();
+  render(Widget, container);
+  await flush();
+
+  router.navigate("/settings?tab=security");
+  await flush();
+  assertEqual(window.location.hash, "#/settings?tab=security");
+  assertEqual(router.path, "/settings");
+  assertEqual(router.params.tab, "security");
+
+  window.location.hash = "";
+});
+
+test("useRouter (history mode) reads path/params from pathname/search and updates on popstate", async () => {
+  await withRestoredLocation(async () => {
+    window.history.replaceState(null, "", "/initial?x=1");
+    let router;
+
+    function Widget() {
+      router = useRouter({ mode: "history" });
+      return h("span", null, router.path);
+    }
+
+    const container = mountPoint();
+    render(Widget, container);
+    await flush();
+    assertEqual(router.path, "/initial");
+    assertEqual(router.params.x, "1");
+
+    // pushState alone never fires popstate — only real history-stack
+    // navigation (back/forward) does. Simulate that navigation explicitly.
+    window.history.pushState(null, "", "/next?y=2");
+    window.dispatchEvent(new PopStateEvent("popstate"));
+    await flush();
+    assertEqual(router.path, "/next");
+    assertEqual(router.params.y, "2");
+  });
+});
+
+test("useRouter (history mode) navigate() pushes state and updates path without a popstate event", async () => {
+  await withRestoredLocation(async () => {
+    window.history.replaceState(null, "", "/start");
+    let router;
+
+    function Widget() {
+      router = useRouter({ mode: "history" });
+      return h("span", null, router.path);
+    }
+
+    const container = mountPoint();
+    render(Widget, container);
+    await flush();
+
+    router.navigate("/dashboard?tab=x");
+    await flush();
+    assertEqual(window.location.pathname, "/dashboard");
+    assertEqual(router.path, "/dashboard");
+    assertEqual(router.params.tab, "x");
+  });
+});
+
+test("useRouter (history mode) intercepts a same-origin <a href> click instead of reloading the page", async () => {
+  await withRestoredLocation(async () => {
+    window.history.replaceState(null, "", "/start");
+    let router;
+
+    function Widget() {
+      router = useRouter({ mode: "history" });
+      return h("a", { href: "/clicked", id: "rt-link" }, "go");
+    }
+
+    const container = mountPoint();
+    render(Widget, container);
+    await flush();
+
+    container.querySelector("#rt-link").click();
+    await flush();
+
+    assertEqual(window.location.pathname, "/clicked", "expected the click to be intercepted via pushState instead of a real navigation");
+    assertEqual(router.path, "/clicked");
+  });
+});
+
+test("useRouter (history mode) does not intercept a same-page fragment link", async () => {
+  await withRestoredLocation(async () => {
+    window.history.replaceState(null, "", "/page");
+    let router;
+    let observedEvent;
+
+    function Widget() {
+      router = useRouter({ mode: "history" });
+      return h("a", { href: "#section", id: "rt-frag-link" }, "jump");
+    }
+
+    const container = mountPoint();
+    render(Widget, container);
+    await flush();
+
+    const link = container.querySelector("#rt-frag-link");
+    link.addEventListener("click", (e) => { observedEvent = e; });
+    link.click();
+    await flush();
+
+    assertEqual(observedEvent.defaultPrevented, false, "expected same-page fragment links to keep their native behavior");
+    assertEqual(router.path, "/page", "expected path to stay the same for a same-page fragment link");
+  });
+});
+
+// ── useSwipe / useVirtualList: ref reconnects after its target changes ─────
+//
+// Both hooks used to key their listener-attaching effect off `[ref.current]`.
+// That looks like it detects the ref's target changing, but it doesn't: the
+// dependency array is evaluated during THIS render's tree-building phase,
+// before THIS render's patch has updated ref.current — so it always compares
+// the old value against itself. A ref whose target mounts later (conditional
+// rendering) or gets replaced (tag/key change) would silently never get its
+// listener (re)attached. Fixed by dropping the dependency array so the effect
+// re-runs (cleanup + reattach) after every render instead.
+
+function fireSwipeLeft(el) {
+  const start = new Touch({ identifier: 1, target: el, clientX: 200, clientY: 100 });
+  const end = new Touch({ identifier: 1, target: el, clientX: 100, clientY: 100 });
+  el.dispatchEvent(new TouchEvent("touchstart", { touches: [start], bubbles: true }));
+  el.dispatchEvent(new TouchEvent("touchend", { changedTouches: [end], bubbles: true }));
+}
+
+test("useSwipe attaches its listener once the ref's target mounts on a later render", async () => {
+  let setShow;
+  let swipes = 0;
+  const ref = { current: null };
+
+  function Widget() {
+    const [show, setShowState] = useState(false);
+    setShow = setShowState;
+    useSwipe(ref, { onSwipeLeft: () => { swipes += 1; } });
+    return show ? h("div", { ref, id: "swipe-target" }) : h("p", null, "hidden");
+  }
+
+  const container = mountPoint();
+  render(Widget, container);
+  await flush();
+
+  setShow(true);
+  await flush();
+
+  fireSwipeLeft(container.querySelector("#swipe-target"));
+  await flush();
+  assertEqual(swipes, 1, "expected the swipe listener to be attached to the element mounted on the second render");
+});
+
+test("useVirtualList's own scroll listener attaches once the ref's target mounts on a later render", async () => {
+  let setShow;
+  let listState;
+  const items = Array.from({ length: 50 }, (_, i) => ({ id: i }));
+
+  function Widget() {
+    const [show, setShowState] = useState(false);
+    setShow = setShowState;
+    listState = useVirtualList(items, { itemHeight: 40, overscan: 2 });
+    return show
+      ? h("div", { ref: listState.containerRef, id: "list-container" })
+      : h("p", null, "hidden");
+  }
+
+  const container = mountPoint();
+  render(Widget, container);
+  await flush();
+
+  setShow(true);
+  await flush();
+
+  const el = container.querySelector("#list-container");
+  // The test sandbox positions containers far off-screen, where headless
+  // Chromium doesn't compute real scrollable overflow geometry — stub
+  // scrollTop directly instead. This test is only about whether the
+  // listener (re)attaches, not about real scroll layout.
+  Object.defineProperty(el, "scrollTop", { value: 400, configurable: true });
+  el.dispatchEvent(new Event("scroll"));
+  await flush();
+
+  assertEqual(
+    listState.startIndex,
+    Math.max(0, Math.floor(400 / 40) - 2),
+    "expected useVirtualList's internal scroll listener to be attached to the element mounted on the second render",
+  );
 });
