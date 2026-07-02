@@ -227,6 +227,14 @@ python -m http.server 8080
 # Open: http://localhost:8080/tests/
 ```
 
+The same suite also runs headlessly (used by CI — see
+`.github/workflows/ci.yml`), driven by Python to keep Node out of the loop:
+
+```bash
+pip install playwright && playwright install chromium   # once
+python3 scripts/run_browser_tests.py
+```
+
 The suite covers state updates, effect ordering/cleanup, memoization, keyed
 reconciliation, SVG/HTML namespace switching, `useErrorBoundary`, and all new
 APIs: `memo` (including the dirty-descendant heuristic), `createPortal`
