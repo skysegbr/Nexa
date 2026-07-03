@@ -1,0 +1,57 @@
+/* ── category tabs ── */
+.cat-bar {
+  display: flex;
+  gap: 0.5rem;
+  padding: 1rem 1.5rem 0;
+  max-width: 1200px;
+  margin: 0 auto;
+  flex-wrap: wrap;
+}
+
+/* ── produto card ── */
+.produto-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1.25rem;
+  padding: 1.5rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.produto-card {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px #0001;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.15s, box-shadow 0.15s;
+  cursor: pointer;
+}
+.produto-card:hover { transform: translateY(-3px); box-shadow: 0 6px 20px #d4400a22; }
+.produto-card img   { width: 100%; height: 190px; object-fit: cover; }
+
+.produto-card-body {
+  padding: 1rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.produto-nome   { font-weight: 700; font-size: 1rem; color: #1a0a00; }
+.produto-desc   { font-size: 0.82rem; color: #666; flex: 1; line-height: 1.4; }
+.produto-footer { display: flex; align-items: center; justify-content: space-between; margin-top: 0.75rem; }
+.produto-preco  { font-weight: 700; color: #d4400a; font-size: 1.1rem; }
+
+.btn-add {
+  background: #d4400a;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.45rem 1rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.15s;
+}
+.btn-add:hover { background: #b33509; }

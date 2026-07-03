@@ -1,0 +1,21 @@
+/* ── Component CSS — @import deve vir ANTES de qualquer outra regra (CSS spec) ── */
+@import './components/TopBar.css';
+@import './components/CardapioPage.css';
+@import './components/PedidoPage.css';
+@import './components/EmptyMessage.css';
+@import './components/StatusBadge.css';
+@import './components/admin/AdminPage.css';
+@import './components/admin/AdminProdutos.css';
+
+/* ── Design tokens: sobrescreve paleta padrão do Nexa ── */
+:root {
+  --m-primary:   #d4400a;
+  --m-secondary: #8b2500;
+  --m-bg:        #fff8f5;
+}
+
+/* ── Base ── */
+body { margin: 0; font-family: system-ui, sans-serif; background: var(--m-bg); }
+
+/* ── Layout compartilhado entre páginas (PedidoPage, AcompanharPage) ── */
+.page-wrap { max-width: 560px; margin: 2rem auto; padding: 0 1rem; }

@@ -1,0 +1,46 @@
+/* ── hero topbar ── */
+.burguer-topbar {
+  background: linear-gradient(135deg, #d4400a 0%, #8b2500 100%);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 1.5rem;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 2px 8px #0003;
+}
+.burguer-topbar .logo    { font-size: 1.75rem; }
+.burguer-topbar .brand   { font-size: 1.25rem; font-weight: 700; letter-spacing: 0.02em; }
+.burguer-topbar .tagline { font-size: 0.8rem; opacity: 0.85; }
+.burguer-topbar .spacer  { flex: 1; }
+
+.topbar-nav { display: flex; gap: 0.5rem; }
+.topbar-nav button {
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.3);
+  color: #fff;
+  border-radius: var(--m-radius, 8px);
+  padding: 0.45rem 1rem;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background 0.15s;
+}
+.topbar-nav button:hover  { background: rgba(255,255,255,0.28); }
+.topbar-nav button.active { background: rgba(255,255,255,0.35); font-weight: 700; }
+
+/* ── cart badge ── */
+.cart-btn-wrap { position: relative; }
+.cart-badge {
+  position: absolute; top: -6px; right: -6px;
+  background: #fbbf24; color: #1a0a00;
+  border-radius: 50%; width: 20px; height: 20px;
+  font-size: 0.7rem; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+
+@media (max-width: 600px) {
+  .topbar-nav button { padding: 0.4rem 0.6rem; font-size: 0.8rem; }
+  .brand, .tagline   { display: none; }
+}

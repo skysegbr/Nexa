@@ -2,3 +2,6 @@
 node_modules/
 dist/*.map
 
+examples/burger-shop/uploads/*
+!examples/burger-shop/uploads/.gitkeep
+

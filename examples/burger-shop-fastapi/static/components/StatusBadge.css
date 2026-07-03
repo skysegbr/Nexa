@@ -1,0 +1,12 @@
+.status-pill {
+  display: inline-block;
+  border-radius: 20px;
+  padding: 0.2rem 0.75rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+.status-recebido  { background: #fef3c7; color: #92400e; }
+.status-preparo   { background: #dbeafe; color: #1e40af; }
+.status-pronto    { background: #d1fae5; color: #065f46; }
+.status-entregue  { background: #e9d5ff; color: #5b21b6; }
+.status-cancelado { background: #fee2e2; color: #991b1b; }
