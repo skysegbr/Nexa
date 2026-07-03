@@ -7,8 +7,8 @@ export const FRAMES = [
     data: {
       kind: "title",
       eyebrow: "Nexa framework",
-      heading: "Build Prezi-style presentations",
-      body: "PreziStage turns a big freeform canvas into a zooming, camera-driven slideshow — no build step required.",
+      heading: "Build pan/zoom presentations",
+      body: "ZoomStage turns a big freeform canvas into a zooming, camera-driven slideshow — no build step required.",
       cta: "Click anywhere or press → to begin",
     },
   },
@@ -49,9 +49,9 @@ export const FRAMES = [
       kind: "code",
       heading: "This slide is real markup",
       code:
-`import { PreziStage } from "/dist/nexa-prezi.js";
+`import { ZoomStage } from "/dist/nexa-zoom.js";
 
-h(PreziStage, {
+h(ZoomStage, {
   frames,
   onIndexChange: setIndex,
   controllerRef,
@@ -63,7 +63,7 @@ h(PreziStage, {
     x: -60, y: -210, w: 2500, h: 1550, rotate: 0,
     data: {
       kind: "overview",
-      heading: "That's PreziStage",
+      heading: "That's ZoomStage",
       bullets: [
         "One big world, positioned with plain CSS",
         "A single imperative camera transform, eased with requestAnimationFrame",

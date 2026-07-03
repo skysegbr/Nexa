@@ -28,7 +28,7 @@ body {
   min-height: 0;
 }
 
-.nx-stage.m-prezi-stage {
+.nx-stage.m-zoom-stage {
   background:
     linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
     linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
@@ -37,7 +37,7 @@ body {
   background-size: 72px 72px, 72px 72px, auto, auto;
 }
 
-.nx-stage .m-prezi-frame {
+.nx-stage .m-zoom-frame {
   --nx-panel: rgba(248, 250, 252, 0.96);
   --nx-panel-border: rgba(148, 163, 184, 0.48);
   --nx-text: #111827;
@@ -52,7 +52,7 @@ body {
   padding: 0;
 }
 
-.nx-stage .m-prezi-frame-active {
+.nx-stage .m-zoom-frame-active {
   border-color: rgba(34, 211, 238, 0.8);
   box-shadow: 0 30px 100px rgba(8, 145, 178, 0.28);
   z-index: 4;
@@ -250,7 +250,7 @@ body {
    card background it would read as a flat "light wall" filling every gap
    around every other frame. Drop it so the dark stage shows through, and
    let the other (smaller, opaque) cards float on top as usual. */
-.nx-stage .m-prezi-frame:has(.nx-frame-overview) {
+.nx-stage .m-zoom-frame:has(.nx-frame-overview) {
   background: transparent;
   border-color: transparent;
   box-shadow: none;
@@ -261,12 +261,12 @@ body {
    fragments of that text bleed through at a huge scale behind/around it.
    Dim it to an ambient watermark except when the overview itself is the
    focused frame. */
-.nx-stage .m-prezi-frame:has(.nx-frame-overview) .nx-frame-overview {
+.nx-stage .m-zoom-frame:has(.nx-frame-overview) .nx-frame-overview {
   opacity: 0.35;
   transition: opacity var(--m-transition-base);
 }
 
-.nx-stage .m-prezi-frame-active:has(.nx-frame-overview) .nx-frame-overview {
+.nx-stage .m-zoom-frame-active:has(.nx-frame-overview) .nx-frame-overview {
   opacity: 1;
 }
 

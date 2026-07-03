@@ -1,8 +1,8 @@
 import { h, render, useRef, useState } from "/dist/nexa.js";
-import { PreziStage } from "/dist/nexa-prezi.js";
+import { ZoomStage } from "/dist/nexa-zoom.js";
 import { FRAMES } from "./data.js";
 import { FrameContent } from "./components/FrameContent.js";
-import { PreziToolbar } from "./components/PreziToolbar.js";
+import { ZoomToolbar } from "./components/ZoomToolbar.js";
 
 function App() {
   const [index, setIndex] = useState(0);
@@ -13,14 +13,14 @@ function App() {
   return h(
     "div",
     { className: "pz-app" },
-    h(PreziStage, {
+    h(ZoomStage, {
       frames,
       index,
       onIndexChange: setIndex,
       controllerRef,
       className: "pz-stage",
     }),
-    h(PreziToolbar, { index, total: frames.length, controllerRef }),
+    h(ZoomToolbar, { index, total: frames.length, controllerRef }),
   );
 }
 

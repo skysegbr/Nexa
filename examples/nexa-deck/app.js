@@ -1,6 +1,6 @@
 import { h, render, useRef, useState } from "/dist/nexa.js";
 import { Badge, Button, IconButton } from "/dist/nexa-components.js";
-import { PreziStage } from "/dist/nexa-prezi.js";
+import { ZoomStage } from "/dist/nexa-zoom.js";
 import { FRAMES } from "./data.js";
 
 function SplitList({ title, items }) {
@@ -144,7 +144,7 @@ function App() {
   return h(
     "main",
     { className: "nx-app" },
-    h(PreziStage, {
+    h(ZoomStage, {
       frames,
       index,
       onIndexChange: setIndex,

@@ -29,8 +29,8 @@ Core ideas:
 /dist/nexa-hmr.js          ← HMR client (dev only — injected by server.py)
 /dist/nexa-canvas.js       ← SVG pipeline canvas (PipelineCanvasController)
 /dist/nexa-canvas.css      ← styles for nexa-canvas
-/dist/nexa-prezi.js        ← Prezi-style zooming presentation canvas (PreziStage)
-/dist/nexa-prezi.css       ← styles for nexa-prezi
+/dist/nexa-zoom.js         ← pan/zoom presentation canvas (ZoomStage)
+/dist/nexa-zoom.css        ← styles for nexa-zoom
 /dist/nexa-editor.js       ← full-featured code editor component
 /dist/nexa-editor.css      ← styles for nexa-editor
 /dist/nexa-editor-snippets.js ← boilerplate snippet catalog for nexa-editor
@@ -1035,13 +1035,13 @@ h(PipelineCanvas, {
 })
 ```
 
-### `PreziStage`
+### `ZoomStage`
 
-`dist/nexa-prezi.js` + `dist/nexa-prezi.css`. A Prezi-style zooming
-presentation: every frame's `content` is normal Nexa vdom, positioned with
-plain CSS on one large shared canvas (all frames are mounted at once) — only
-the *camera* is imperative, easing pan/zoom/rotate between frames via
-`requestAnimationFrame`.
+`dist/nexa-zoom.js` + `dist/nexa-zoom.css`. A pan/zoom presentation, in the
+style of non-linear zooming presentation tools: every frame's `content` is
+normal Nexa vdom, positioned with plain CSS on one large shared canvas (all
+frames are mounted at once) — only the *camera* is imperative, easing
+pan/zoom/rotate between frames via `requestAnimationFrame`.
 
 | Prop | Description |
 |---|---|
@@ -1054,9 +1054,9 @@ the *camera* is imperative, easing pan/zoom/rotate between frames via
 | `advanceOnClick` | Click the stage background to advance (default `true`) |
 
 ```js
-import { PreziStage } from "/dist/nexa-prezi.js";
+import { ZoomStage } from "/dist/nexa-zoom.js";
 
-h(PreziStage, {
+h(ZoomStage, {
   frames,
   index,
   onIndexChange: setIndex,
@@ -1066,7 +1066,7 @@ h(PreziStage, {
 
 **Frames can legitimately overlap in world space** — an "overview" frame
 that zooms out to show the whole canvas is, by definition, as big as every
-other frame combined. `PreziStage` renders frames sorted by descending area
+other frame combined. `ZoomStage` renders frames sorted by descending area
 (`w * h`), so larger frames paint *behind* smaller ones automatically. You
 don't need to manage `z-index` yourself, but keep it in mind when authoring
 geometry: a frame that's smaller than something it overlaps will always be
@@ -1080,8 +1080,8 @@ dispatcher component that maps `data.kind` to the right one — the same
 domain-componentized rule from §12 applies here. Keep `data.js` holding
 plain geometry + content *descriptors* (`{ kind: "title", heading, body }`),
 and build the actual `content: h(...)` vdom in `app.js` right before passing
-`frames` to `PreziStage`. See [examples/prezi](../examples/prezi) for the
-full pattern (`components/FrameContent.js` dispatches on `data.kind`).
+`frames` to `ZoomStage`. See [examples/zoom-stage](../examples/zoom-stage) for
+the full pattern (`components/FrameContent.js` dispatches on `data.kind`).
 
 ### `FullCodeEditor`
 

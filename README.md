@@ -14,9 +14,8 @@ Three optional add-ons build on top of that core:
 
 - `dist/nexa-canvas.js` + `dist/nexa-canvas.css` — `PipelineCanvas`, an
   SVG node editor with drag, pan, zoom, mini-map, and undo/redo.
-- `dist/nexa-prezi.js` + `dist/nexa-prezi.css` — `PreziStage`, a Prezi-style
-  zooming presentation canvas with animated camera pan/zoom/rotate between
-  frames.
+- `dist/nexa-zoom.js` + `dist/nexa-zoom.css` — `ZoomStage`, a pan/zoom
+  presentation canvas with animated camera pan/zoom/rotate between frames.
 - `dist/nexa-editor.js` + `dist/nexa-editor.css` (+ `dist/nexa-editor-snippets.js`)
   — `FullCodeEditor`, a [CodeMirror](https://codemirror.net/5/) wrapper with a
   toolbar, snippet browser, and autocomplete. Requires the local CodeMirror
@@ -54,8 +53,8 @@ https://cdn.jsdelivr.net/gh/skysegbr/Nexa@main/dist/nexa-components.js
 https://cdn.jsdelivr.net/gh/skysegbr/Nexa@main/dist/nexa-ui.css
 https://cdn.jsdelivr.net/gh/skysegbr/Nexa@main/dist/nexa-canvas.js
 https://cdn.jsdelivr.net/gh/skysegbr/Nexa@main/dist/nexa-canvas.css
-https://cdn.jsdelivr.net/gh/skysegbr/Nexa@main/dist/nexa-prezi.js
-https://cdn.jsdelivr.net/gh/skysegbr/Nexa@main/dist/nexa-prezi.css
+https://cdn.jsdelivr.net/gh/skysegbr/Nexa@main/dist/nexa-zoom.js
+https://cdn.jsdelivr.net/gh/skysegbr/Nexa@main/dist/nexa-zoom.css
 https://cdn.jsdelivr.net/gh/skysegbr/Nexa@main/dist/nexa-editor.js
 https://cdn.jsdelivr.net/gh/skysegbr/Nexa@main/dist/nexa-editor.css
 ```
@@ -205,9 +204,9 @@ python -m http.server 8080
 | [examples/drug-recalls](./examples/drug-recalls) | Live dashboard over the openFDA drug recall API: debounced search, classification/status filters, donut + bar charts, sortable table, recall detail dialog |
 | [examples/storefront](./examples/storefront) | Domain-componentized architecture: `catalog/`, `cart/`, `auth/` each own their own `createContext` + state hook, composed once in `app.js`, integrated through `Shell.js`. Products fetched live from fakestoreapi.com |
 | [examples/designer](./examples/designer) | Visual UI builder: drag components from a palette onto a canvas, edit props/styles/states in an inspector, live CSS + code export |
-| [examples/prezi](./examples/prezi) | `PreziStage` basics: per-kind frame components behind a `FrameContent` dispatcher, toolbar with progress dots, keyboard navigation |
-| [examples/nexa-prezi](./examples/nexa-prezi) | Full `PreziStage` presentation about Nexa: five frame kinds, rotated frames, a zoomed-out overview frame, `nexa-components` toolbar |
-| [examples/nexa-atlas](./examples/nexa-atlas) | Atlas-themed `PreziStage` tour of Nexa: click any background frame to zoom straight to it, plus a live demo frame running real `useState`/`useTheme` mid-presentation |
+| [examples/zoom-stage](./examples/zoom-stage) | `ZoomStage` basics: per-kind frame components behind a `FrameContent` dispatcher, toolbar with progress dots, keyboard navigation |
+| [examples/nexa-deck](./examples/nexa-deck) | Full `ZoomStage` presentation about Nexa: five frame kinds, rotated frames, a zoomed-out overview frame, `nexa-components` toolbar |
+| [examples/nexa-atlas](./examples/nexa-atlas) | Atlas-themed `ZoomStage` tour of Nexa: click any background frame to zoom straight to it, plus a live demo frame running real `useState`/`useTheme` mid-presentation |
 
 The task manager requires its own backend:
 
@@ -763,11 +762,12 @@ h(PipelineCanvas, {
 Drag, pan/zoom, connection drawing, selection, undo/redo, and a mini-map are
 all built into the controller — see [dist/nexa-canvas.js](./dist/nexa-canvas.js).
 
-### `PreziStage`
+### `ZoomStage`
 
-`dist/nexa-prezi.js` + `dist/nexa-prezi.css`. A Prezi-style zooming
-presentation: frame content is normal Nexa vdom positioned on one large
-canvas, and a single animated camera pans/zooms/rotates between frames.
+`dist/nexa-zoom.js` + `dist/nexa-zoom.css`. A pan/zoom presentation, in the
+style of non-linear zooming presentation tools: frame content is normal Nexa
+vdom positioned on one large canvas, and a single animated camera
+pans/zooms/rotates between frames.
 
 | Prop | Description |
 |---|---|
@@ -780,9 +780,9 @@ canvas, and a single animated camera pans/zooms/rotates between frames.
 | `advanceOnClick` | Click the stage background to advance (default `true`) |
 
 ```js
-import { PreziStage } from "./dist/nexa-prezi.js";
+import { ZoomStage } from "./dist/nexa-zoom.js";
 
-h(PreziStage, {
+h(ZoomStage, {
   frames,
   index,
   onIndexChange: setIndex,
@@ -792,14 +792,14 @@ h(PreziStage, {
 
 Frames can legitimately overlap in world space — an "overview" frame that
 zooms out to show the whole canvas is, by definition, as big as every other
-frame combined. `PreziStage` renders frames sorted by descending area
+frame combined. `ZoomStage` renders frames sorted by descending area
 (`w * h`), so larger frames paint *behind* smaller ones automatically; you
 don't need to manage `z-index` for this.
 
 Once a deck has more than a couple of frame kinds (title, bullets, code, …),
 give each kind its own component under `components/` with a small
 dispatcher for `data.kind`, rather than inlining every frame's rendering in
-`app.js` — see [examples/prezi](./examples/prezi) for the pattern
+`app.js` — see [examples/zoom-stage](./examples/zoom-stage) for the pattern
 (`components/FrameContent.js`) and a full presentation with a toolbar,
 progress dots, and keyboard navigation.
 
@@ -982,7 +982,7 @@ Nexa `0.3.0` covers:
 - `useWebSocket` — managed WebSocket connection with auto-reconnect
 - `useVirtualList` — windowed rendering for large lists
 
-**Components (38)**
+**Components (40)**
 - General UI: `Alert`, `Badge`, `Button`, `Card`, `Checkbox`, `Chip`, `CodeEditor`,
   `Collapse`, `Combobox`, `ContextMenu`, `Dialog`, `Drawer`, `Dropdown`, `EmptyState`,
   `FileDropZone`, `FormField`, `IconButton`, `Navbar`, `Pagination`, `Progress`,
@@ -993,8 +993,8 @@ Nexa `0.3.0` covers:
 **Canvas & Editor add-ons**
 - `PipelineCanvas` — SVG node editor with drag, pan, zoom, mini-map, undo/redo
   (`nexa-canvas.js` / `nexa-canvas.css`)
-- `PreziStage` — Prezi-style zooming presentation canvas with animated camera
-  pan/zoom/rotate (`nexa-prezi.js` / `nexa-prezi.css`)
+- `ZoomStage` — pan/zoom presentation canvas with animated camera
+  pan/zoom/rotate (`nexa-zoom.js` / `nexa-zoom.css`)
 - `FullCodeEditor` — CodeMirror 5 wrapper with toolbar, snippet browser, and
   autocomplete (`nexa-editor.js` / `nexa-editor.css` / `nexa-editor-snippets.js`)
 

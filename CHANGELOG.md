@@ -5,6 +5,17 @@ All notable changes to this project are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.6.0] - 2026-07-02
+
+### Changed — BREAKING
+- Renamed the `PreziStage` add-on to `ZoomStage` to drop the reference to Prezi, a commercial presentation product's trademark — the component only ever shared the pan/zoom presentation *style*, not any code or affiliation with that product.
+  - `dist/nexa-prezi.js` → `dist/nexa-zoom.js`, `dist/nexa-prezi.css` → `dist/nexa-zoom.css`
+  - `PreziStage` → `ZoomStage` (same props, same behavior — import path and name only)
+  - CSS classes `.m-prezi-stage`, `.m-prezi-world`, `.m-prezi-frame`, `.m-prezi-frame-active` → `.m-zoom-stage`, `.m-zoom-world`, `.m-zoom-frame`, `.m-zoom-frame-active`
+  - `examples/prezi` → `examples/zoom-stage`, `examples/nexa-prezi` → `examples/nexa-deck` (its `PreziToolbar` component → `ZoomToolbar`)
+  - `examples/nexa-atlas` updated to the new import and CSS classes
+  - No change to `PipelineCanvas` or `FullCodeEditor` — only the Prezi-named add-on was affected.
+
 ## [0.5.0] - 2026-07-02
 
 ### Fixed

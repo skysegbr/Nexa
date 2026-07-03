@@ -143,7 +143,7 @@ export const FRAMES = [
       heading: "Três extensões, fora do núcleo, no mesmo arquipélago",
       addons: [
         { icon: "bi-diagram-3", name: "PipelineCanvas", desc: "editor SVG de nós e conexões — drag, zoom, mini-mapa, undo/redo." },
-        { icon: "bi-compass", name: "PreziStage", desc: "câmera animada sobre um canvas gigante — é exatamente o motor deste atlas.", wink: true },
+        { icon: "bi-compass", name: "ZoomStage", desc: "câmera animada sobre um canvas gigante — é exatamente o motor deste atlas.", wink: true },
         { icon: "bi-code-slash", name: "FullCodeEditor", desc: "CodeMirror com toolbar, snippets e troca de linguagem." },
       ],
     },
@@ -228,7 +228,7 @@ render(App, document.getElementById("app"));`,
         },
         {
           title: "Para expandir",
-          items: ["39 componentes prontos em nexa-components.js", "Canvas, Prezi e editor como add-ons", "Tudo sobre os mesmos tokens --m-*"],
+          items: ["39 componentes prontos em nexa-components.js", "Canvas, Zoom e editor como add-ons", "Tudo sobre os mesmos tokens --m-*"],
         },
       ],
     },
