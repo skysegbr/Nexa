@@ -5,7 +5,7 @@ import { Badge, Button, Progress, Switch, TextField } from "/dist/nexa-component
 // Its useState/useTheme calls are real hooks, owned by this component's own
 // position in the tree (see dist/nexa.js renderComponent/componentIdentity),
 // so the counter, the toggle and the typed text all survive camera moves —
-// PreziStage keeps every frame mounted, it only animates the viewport.
+// ZoomStage keeps every frame mounted, it only animates the viewport.
 export function LiveDemoFrame({ data }) {
   const [flags, setFlags] = useState(0);
   const [message, setMessage] = useState("");

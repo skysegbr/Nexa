@@ -1,9 +1,11 @@
 import { h, useEffect, useRef, useState } from "./nexa.js";
 
-// ── PreziStage ───────────────────────────────────────────────────────────────
+// ── ZoomStage ────────────────────────────────────────────────────────────────
 //
-// A Prezi-style zooming presentation. All frame content is normal Nexa
-// vdom, positioned with plain CSS on one large "world" div — every frame is
+// A pan/zoom presentation: a camera glides between "frames" scattered across
+// one large canvas, in the style of non-linear zooming presentation tools.
+// All frame content is normal Nexa vdom, positioned with plain CSS on one
+// large "world" div — every frame is
 // mounted on screen simultaneously, same as the real canvas. Only the
 // *camera* (a single transform on that world div) is imperative: a small
 // requestAnimationFrame tween eases pan/zoom/rotate between frames at 60fps,
@@ -46,7 +48,7 @@ function applyCamera(worldEl, cam, vw, vh) {
     `translate(${vw / 2}px, ${vh / 2}px) scale(${cam.scale}) rotate(${-cam.rotate}deg) translate(${-cam.cx}px, ${-cam.cy}px)`;
 }
 
-class PreziCameraController {
+class ZoomCameraController {
   constructor(wrapEl, worldEl, { padding = 0 } = {}) {
     this.wrap    = wrapEl;
     this.world   = worldEl;
@@ -126,7 +128,7 @@ class PreziCameraController {
 
 function jc(...c) { return c.filter(Boolean).join(" "); }
 
-export function PreziStage({
+export function ZoomStage({
   frames = [],
   path,
   index,
@@ -175,7 +177,7 @@ export function PreziStage({
   // Mount: build the imperative camera controller once.
   useEffect(() => {
     if (!wrapRef.current || !worldRef.current) return undefined;
-    const ctrl = new PreziCameraController(wrapRef.current, worldRef.current, { padding });
+    const ctrl = new ZoomCameraController(wrapRef.current, worldRef.current, { padding });
     ctrlRef.current = ctrl;
     ctrl.jumpTo(seq[curIndex]);
     return () => { ctrl.destroy(); ctrlRef.current = null; };
@@ -210,14 +212,14 @@ export function PreziStage({
     "div",
     {
       ref: wrapRef,
-      className: jc("m-prezi-stage", className),
+      className: jc("m-zoom-stage", className),
       style,
       tabIndex: 0,
       onClick: () => { if (advanceOnClick) next(); },
     },
     h(
       "div",
-      { ref: worldRef, className: "m-prezi-world" },
+      { ref: worldRef, className: "m-zoom-world" },
       // Frames can legitimately overlap in world space (an "overview" frame
       // is, by definition, as big as the whole canvas). Paint largest-area
       // frames first so they sit behind smaller nested frames instead of
@@ -227,7 +229,7 @@ export function PreziStage({
           "div",
           {
             key: frame.id,
-            className: jc("m-prezi-frame", frame.id === seq[curIndex]?.id && "m-prezi-frame-active"),
+            className: jc("m-zoom-frame", frame.id === seq[curIndex]?.id && "m-zoom-frame-active"),
             style: {
               left: `${frame.x}px`,
               top: `${frame.y}px`,

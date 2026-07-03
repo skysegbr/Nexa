@@ -1,5 +1,5 @@
 @import "./components/FrameContent.css";
-@import "./components/PreziToolbar.css";
+@import "./components/ZoomToolbar.css";
 
 * { box-sizing: border-box; }
 

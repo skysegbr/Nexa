@@ -1,5 +1,5 @@
 import { h, render, useRef, useState } from "/dist/nexa.js";
-import { PreziStage } from "/dist/nexa-prezi.js";
+import { ZoomStage } from "/dist/nexa-zoom.js";
 import { FRAMES } from "./data.js";
 import { FrameContent } from "./components/FrameContent.js";
 import { Compass } from "./components/Compass.js";
@@ -11,10 +11,10 @@ function App() {
   const activeId = FRAMES[index]?.id;
 
   // Clicking a background (non-active) frame should zoom straight to it,
-  // not just fall through to PreziStage's default "click = advance one
+  // not just fall through to ZoomStage's default "click = advance one
   // step" — controllerRef.current is read lazily inside the handler
   // (never destructured here), so it's always the fresh value set by
-  // THIS render's h(PreziStage, ...) call below by the time a click fires.
+  // THIS render's h(ZoomStage, ...) call below by the time a click fires.
   const frames = FRAMES.map((f) => ({
     ...f,
     content: h(
@@ -34,7 +34,7 @@ function App() {
   return h(
     "div",
     { className: "atl-app" },
-    h(PreziStage, {
+    h(ZoomStage, {
       frames,
       index,
       onIndexChange: setIndex,

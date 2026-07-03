@@ -1,6 +1,6 @@
-/* ── Prezi Stage ────────────────────────────────────────────────────────────── */
+/* ── Zoom Stage ────────────────────────────────────────────────────────────── */
 
-.m-prezi-stage {
+.m-zoom-stage {
   position: relative;
   overflow: hidden;
   width: 100%;
@@ -10,12 +10,12 @@
   outline: none;
 }
 
-.m-prezi-stage:focus-visible {
+.m-zoom-stage:focus-visible {
   outline: 2px solid var(--m-focus);
   outline-offset: -2px;
 }
 
-.m-prezi-world {
+.m-zoom-world {
   position: absolute;
   top: 0;
   left: 0;
@@ -25,7 +25,7 @@
 
 /* ── Frames ────────────────────────────────────────────────────────────────── */
 
-.m-prezi-frame {
+.m-zoom-frame {
   position: absolute;
   box-sizing: border-box;
   background: var(--m-surface);
@@ -39,7 +39,7 @@
   transition: box-shadow var(--m-transition-base), border-color var(--m-transition-base);
 }
 
-.m-prezi-frame-active {
+.m-zoom-frame-active {
   border-color: var(--m-primary);
   box-shadow: var(--m-shadow-2);
 }

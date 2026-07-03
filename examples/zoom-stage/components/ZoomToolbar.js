@@ -1,7 +1,7 @@
 import { h } from "/dist/nexa.js";
 import { IconButton } from "/dist/nexa-components.js";
 
-export function PreziToolbar({ index, total, controllerRef }) {
+export function ZoomToolbar({ index, total, controllerRef }) {
   const nav = controllerRef.current;
 
   return h(

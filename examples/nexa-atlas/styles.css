@@ -41,14 +41,14 @@ body {
 
 .atl-stage { flex: 1; min-height: 0; }
 
-.atl-stage.m-prezi-stage {
+.atl-stage.m-zoom-stage {
   background-image:
     linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
     linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
   background-size: 80px 80px, 80px 80px;
 }
 
-.atl-stage .m-prezi-frame {
+.atl-stage .m-zoom-frame {
   background: linear-gradient(165deg, var(--atl-parchment) 0%, var(--atl-parchment-2) 100%);
   color: var(--atl-ink);
   border: 1px solid rgba(120, 92, 47, 0.4);
@@ -57,7 +57,7 @@ body {
   padding: 0;
 }
 
-.atl-stage .m-prezi-frame-active {
+.atl-stage .m-zoom-frame-active {
   border-color: var(--atl-gold);
   box-shadow: 0 34px 90px rgba(177, 129, 15, 0.3), inset 0 0 0 6px rgba(255, 255, 255, 0.35);
   z-index: 4;
@@ -66,7 +66,7 @@ body {
 /* A background frame is a territory you haven't visited yet — invite the
    click by lifting it slightly and glowing gold on hover, same accent the
    active frame already uses once you land on it. */
-.atl-stage .m-prezi-frame:not(.m-prezi-frame-active):hover {
+.atl-stage .m-zoom-frame:not(.m-zoom-frame-active):hover {
   border-color: var(--atl-gold);
   box-shadow: 0 34px 80px rgba(177, 129, 15, 0.24), inset 0 0 0 6px rgba(255, 255, 255, 0.3);
 }

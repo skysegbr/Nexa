@@ -118,18 +118,18 @@
 
 .atl-frame-overview h2 { max-width: 1200px; font-size: 56px; color: var(--atl-parchment); }
 
-.atl-stage .m-prezi-frame:has(.atl-frame-overview) {
+.atl-stage .m-zoom-frame:has(.atl-frame-overview) {
   background: transparent;
   border-color: transparent;
   box-shadow: none;
 }
 
-.atl-stage .m-prezi-frame:has(.atl-frame-overview) .atl-frame-overview {
+.atl-stage .m-zoom-frame:has(.atl-frame-overview) .atl-frame-overview {
   opacity: 0.4;
   transition: opacity var(--m-transition-base);
 }
 
-.atl-stage .m-prezi-frame-active:has(.atl-frame-overview) .atl-frame-overview {
+.atl-stage .m-zoom-frame-active:has(.atl-frame-overview) .atl-frame-overview {
   opacity: 1;
 }
 
