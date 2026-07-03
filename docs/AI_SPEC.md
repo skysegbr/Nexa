@@ -85,6 +85,30 @@ something the user will keep building on. When in doubt, use the
 domain-componentized structure: it costs nothing extra on a small app and
 saves a rewrite on a growing one.
 
+### ❌ NEVER put CSS in a separate `styles/` folder, and NEVER wrap in `src/`
+
+A component's CSS is a **sibling file in the same folder**, not a file
+living in a parallel styles tree — and the project root has no `src/`
+wrapper around it:
+
+```
+// WRONG — CSS separated from its component, extra src/ wrapper
+src/
+  components/
+    ProductCard.js
+  styles/
+    product-card.css
+
+// CORRECT — CSS lives right next to the component that owns it
+components/
+  ProductCard.js
+  ProductCard.css
+```
+
+`styles.css` at the project root still `@import`s every component's CSS to
+load it — that's the only thing centralized. The files themselves stay
+paired, same base name, same folder as the `.js`.
+
 ### ❌ NEVER pass `h(App)` to `render`
 
 ```js
