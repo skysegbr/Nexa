@@ -71,6 +71,20 @@ Typical HTML entry point:
 
 These are the most common mistakes an AI can make with Nexa:
 
+### ❌ NEVER put a real app in one `app.js`
+
+Domain-componentized structure (§12) is **mandatory** for any real app —
+landing page, dashboard, form flow, admin panel, anything with more than a
+couple of visual sections. Split by feature into `components/`, one
+component per file, each with a paired `.css` file, static data in
+`data.js`. `app.js` only imports and orchestrates.
+
+A single monolithic `app.js` with every screen, helper, and API call
+inlined is **only** acceptable for a quick demo/prototype (§13) — never for
+something the user will keep building on. When in doubt, use the
+domain-componentized structure: it costs nothing extra on a small app and
+saves a rewrite on a growing one.
+
 ### ❌ NEVER pass `h(App)` to `render`
 
 ```js
