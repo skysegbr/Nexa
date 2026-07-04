@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+- `package.json` `"scripts"` block: `dev` (`python server.py`), `test` (`python scripts/run_browser_tests.py`), `validate` (`python scripts/validate_nexa.py`).
+
 ## [0.7.2] - 2026-07-04
 
 ### Changed
