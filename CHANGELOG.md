@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 - `package.json` `"scripts"` block: `dev` (`python server.py`), `test` (`python scripts/run_browser_tests.py`), `validate` (`python scripts/validate_nexa.py`).
+- `tests/hooks.test.js` — test suite for `useForm` (initial values, `setValue`, `field.onChange`, validation error appear/disappear, `handleSubmit` blocking on invalid, `handleSubmit` calling `onSubmit` on valid) and `useRouter` hash mode (default `'/'` path, navigate + conditional re-render).
 
 ## [0.7.2] - 2026-07-04
 

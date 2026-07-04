@@ -1,5 +1,6 @@
 import "./engine.test.js";
 import "./new-features.test.js";
+import "./hooks.test.js";
 import { run } from "./runner.js";
 
 // Expose the outcome on window so a headless driver (scripts/
