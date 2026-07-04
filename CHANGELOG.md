@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - `dist/nexa-components.d.ts` — TypeScript declarations for all 41 components in `nexa-components.js`.
 - `"types": "dist/nexa.d.ts"` entry in `package.json`.
 - `Accordion` component in `nexa-components.js`: multiple panels, controlled/uncontrolled, `multiple` prop for simultaneous expansion, keyboard (Enter/Space via native `<button>`) and `aria-expanded` + `aria-controls`/`role="region"`. Animated with the same `grid-template-rows: 0fr → 1fr` technique as `Collapse`. CSS in `nexa-ui.css` (`.m-accordion`, `.m-accordion-item`, `.m-accordion-item-open`, `.m-accordion-header`, `.m-accordion-body-wrap`, etc.). TypeScript declaration in `dist/nexa-components.d.ts`. Documented in `docs/AI_SPEC.md` §9. Live demo at `examples/new-components` (`#/accordion`).
+- `scripts/minify.py` — safe, dependency-free JS/CSS minifier in pure Python (no Node, no bundler). Strips comments, indentation, blank lines, and redundant intra-line spaces while preserving every line break (so ASI can never change meaning); keeps string/template/regex literals byte-for-byte and does not rename identifiers. Rewrites local ESM import specifiers so minified modules import each other (`./nexa.js` → `./nexa.min.js`). Generates `dist/*.min.js` and `dist/*.min.css` (~25% smaller uncompressed overall). Supports `--check` mode to verify the committed minified outputs are up to date. New `npm run minify` script.
 
 ## [0.7.2] - 2026-07-04
 

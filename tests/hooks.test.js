@@ -6,6 +6,8 @@ import {
   useState,
   useForm,
   useRouter,
+  useRoutes,
+  matchPath,
 } from "../dist/nexa.js";
 import { test, assert, assertEqual, mountPoint, flush } from "./runner.js";
 

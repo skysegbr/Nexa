@@ -4,7 +4,8 @@
   "scripts": {
     "dev": "python server.py",
     "test": "python scripts/run_browser_tests.py",
-    "validate": "python scripts/validate_nexa.py"
+    "validate": "python scripts/validate_nexa.py",
+    "minify": "python scripts/minify.py"
   },
   "description": "Next-generation frontend framework in plain JavaScript, with no build step.",
   "type": "module",

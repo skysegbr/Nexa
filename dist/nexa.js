@@ -1619,6 +1619,107 @@ export function useRouter({ mode = "hash" } = {}) {
   return { path, params, navigate };
 }
 
+// ── matchPath / useRoutes ──────────────────────────────────
+//
+// matchPath(pattern, path, { end })  → { params, rest } | null
+//   Segment-based matcher. A `:name` segment captures one path segment
+//   (URL-decoded) into params. A trailing `*` segment captures the remaining
+//   segments into params["*"]. With { end: false } a prefix match succeeds and
+//   returns the still-encoded remainder in `rest` (used for nested routes).
+//
+//   matchPath("/users/:id", "/users/42")        → { params: { id: "42" }, rest: "" }
+//   matchPath("/users/:id", "/users/42/edit")   → null
+//   matchPath("/users", "/users/42", { end:false }) → { params:{}, rest: "42" }
+//   matchPath("/files/*", "/files/a/b.png")     → { params:{ "*": "a/b.png" }, rest:"" }
+//
+// useRoutes(routes, { mode, notFound })  → vnode
+//   Resolves the current router path against a nested route config and returns
+//   the element to render. Route objects:
+//     { path, component, element, lazy, children, index, fallback }
+//   - component: (props) => vnode, called with { params, outlet }.
+//   - element:   a vnode, or (params, outlet) => vnode.
+//   - lazy:      () => import(...) — resolved via createLazy, cached per route
+//                object so its load state survives re-renders. `fallback` is
+//                shown while loading.
+//   - children:  nested routes. The parent route's component renders its
+//                `outlet` prop where the matched child element belongs.
+//   - index:     matches the parent's exact path (empty remainder).
+//   First matching sibling wins, so define specific routes before catch-alls.
+//   A parent with children whose own path matches renders even if no child
+//   matches (outlet = null); add an index child or a `path: "*"` catch-all
+//   child to control that case.
+
+export function matchPath(pattern, path, { end = true } = {}) {
+  const patternSegments = String(pattern).split("/").filter(Boolean);
+  const pathSegments = String(path).split("/").filter(Boolean);
+  const params = {};
+
+  let i = 0;
+  for (; i < patternSegments.length; i += 1) {
+    const segment = patternSegments[i];
+    if (segment === "*") {
+      params["*"] = pathSegments.slice(i).map(decodeURIComponent).join("/");
+      return { params, rest: "" };
+    }
+    if (i >= pathSegments.length) return null;
+    if (segment[0] === ":") {
+      params[segment.slice(1)] = decodeURIComponent(pathSegments[i]);
+    } else if (segment !== pathSegments[i]) {
+      return null;
+    }
+  }
+
+  if (i < pathSegments.length) {
+    if (end) return null;
+    return { params, rest: pathSegments.slice(i).join("/") };
+  }
+  return { params, rest: "" };
+}
+
+// createLazy() holds internal load state, so a route's lazy component must be
+// created once and reused — keyed by the route object, which apps define as a
+// stable module constant.
+const lazyRouteCache = new WeakMap();
+
+function renderRouteElement(route, params, outlet) {
+  const props = { params, outlet };
+  if (route.lazy) {
+    let Lazy = lazyRouteCache.get(route);
+    if (!Lazy) {
+      Lazy = createLazy(route.lazy, route.fallback ?? null);
+      lazyRouteCache.set(route, Lazy);
+    }
+    return h(Lazy, props);
+  }
+  if (route.component) return h(route.component, props);
+  if (typeof route.element === "function") return route.element(params, outlet);
+  if (route.element !== undefined) return route.element;
+  return outlet;
+}
+
+function resolveRoutes(routes, path, parentParams) {
+  for (const route of routes) {
+    const hasChildren = Array.isArray(route.children) && route.children.length > 0;
+    const matched = route.index
+      ? matchPath("/", path, { end: true })
+      : matchPath(route.path ?? "/", path, { end: !hasChildren });
+    if (!matched) continue;
+
+    const params = { ...parentParams, ...matched.params };
+    const outlet = hasChildren
+      ? resolveRoutes(route.children, "/" + (matched.rest || ""), params)
+      : null;
+    return renderRouteElement(route, params, outlet);
+  }
+  return null;
+}
+
+export function useRoutes(routes, { mode = "hash", notFound = null } = {}) {
+  const { path } = useRouter({ mode });
+  const element = resolveRoutes(routes ?? [], path, {});
+  return element === null ? notFound : element;
+}
+
 // ── useTranslation ─────────────────────────────────────────
 
 export function useTranslation(dict = {}) {
