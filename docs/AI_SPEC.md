@@ -738,7 +738,10 @@ h(Card, { padded: true }, h('p', null, 'Content'))
 //   useState + an `is-active` class (not the CSS `:has()` trick), so it also
 //   expands on hover for free. Children: `.m-card-expand-img`,
 //   `.m-card-expand-shadow`, `.m-card-expand-data` (icon + title, fades in
-//   only while expanded/active).
+//   only while expanded/active — the fade is delayed 0.1s behind the 0.5s
+//   `flex` expansion so the text settles in after the strip has widened,
+//   instead of racing it). Hovering the already-active strip also zooms
+//   `.m-card-expand-img` slightly (`scale(1.1)`).
 //
 // m-card-pricing
 //   Adds a `.m-card-pricing-badge` (price tag with a clipped notch via

@@ -1126,7 +1126,7 @@ video {
   border-radius: var(--m-radius-xl);
   box-shadow: var(--m-shadow-2);
   cursor: pointer;
-  transition: flex var(--m-transition-slow) ease;
+  transition: flex 0.5s ease;
 }
 
 .m-card-expand-img {
@@ -1135,6 +1135,11 @@ video {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  transition: transform 0.4s;
+}
+
+.m-card-expand.is-active:hover .m-card-expand-img {
+  transform: scale(1.1);
 }
 
 .m-card-expand-shadow {
@@ -1156,7 +1161,7 @@ video {
   white-space: nowrap;
   opacity: 0;
   transform: translateY(1rem);
-  transition: opacity var(--m-transition-base), transform var(--m-transition-base);
+  transition: opacity 0.4s ease 0.1s, transform 0.4s ease 0.1s;
 }
 
 .m-card-expand-icon {
