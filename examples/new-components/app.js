@@ -1,14 +1,14 @@
 import { h, render, useToast, useRouter } from "/dist/nexa.js";
 import { Navbar, ThemeToggle, PaletteSwitcher, DesignSwitcher, ToastStack } from "/dist/nexa-components.js";
 
-import { PageSwitches }    from "./pages/PageSwitches.js";
-import { PageCombobox }    from "./pages/PageCombobox.js";
-import { PageContextMenu } from "./pages/PageContextMenu.js";
-import { PageFileDrop }    from "./pages/PageFileDrop.js";
-import { PageCodeEditor }  from "./pages/PageCodeEditor.js";
-import { PageToasts }      from "./pages/PageToasts.js";
-import { PageNewUI }       from "./pages/PageNewUI.js";
-import { PageCards }       from "./pages/PageCards.js";
+import { PageSwitches }    from "./components/switches/PageSwitches.js";
+import { PageCombobox }    from "./components/PageCombobox.js";
+import { PageContextMenu } from "./components/PageContextMenu.js";
+import { PageFileDrop }    from "./components/PageFileDrop.js";
+import { PageCodeEditor }  from "./components/PageCodeEditor.js";
+import { PageToasts }      from "./components/PageToasts.js";
+import { PageNewUI }       from "./components/new-ui/PageNewUI.js";
+import { PageCards }       from "./components/cards/PageCards.js";
 
 function App() {
   const { path, navigate } = useRouter();

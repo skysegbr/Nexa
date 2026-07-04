@@ -1,11 +1,7 @@
 import { h } from "/dist/nexa.js";
 import { SpeedDial } from "/dist/nexa-components.js";
-import { SectionCardMedia, SectionCardGlow, SectionCardFloat } from "./SectionCardMedia.js";
-import { SectionCardExpand, SectionCardPricing } from "./SectionCardExpandPricing.js";
 
-/* ── SpeedDial ─────────────────────────────────────────── */
-
-function SectionSpeedDial() {
+export function SpeedDialDemo() {
   return h(
     "div",
     { className: "demo-section" },
@@ -46,26 +42,5 @@ function SectionSpeedDial() {
         }),
       ),
     ),
-  );
-}
-
-/* ── Page root ─────────────────────────────────────────── */
-
-export function PageCards() {
-  return h(
-    "div",
-    { className: "m-stack" },
-    h("div", null,
-      h("h2", { className: "m-title", style: { fontSize: "1.5rem" } }, "Card variants & SpeedDial"),
-      h("p", { className: "m-body m-text-sm", style: { marginTop: "var(--m-space-2)" } },
-        "Card techniques adapted from CSS-only reference designs, rebuilt as composable m-card-* classes plus the new SpeedDial component.",
-      ),
-    ),
-    h(SectionCardMedia),
-    h(SectionCardFloat),
-    h(SectionCardGlow),
-    h(SectionCardExpand),
-    h(SectionCardPricing),
-    h(SectionSpeedDial),
   );
 }

@@ -1,6 +1,5 @@
 import { h, useState, useEffect } from "/dist/nexa.js";
-
-/* ── Skeleton demo ─────────────────────────────────────── */
+import { USERS } from "../../data.js";
 
 function SkeletonCard() {
   return h(
@@ -19,12 +18,6 @@ function SkeletonCard() {
   );
 }
 
-const USERS = [
-  { id: 1, name: "Ana Lima",    role: "Designer",  initials: "AL", color: "#d9f3ef" },
-  { id: 2, name: "Bruno Rios",  role: "Engineer",  initials: "BR", color: "#dbeafe" },
-  { id: 3, name: "Carla Mota",  role: "PM",        initials: "CM", color: "#fef0c7" },
-];
-
 function UserCard({ user }) {
   return h(
     "div",
@@ -42,7 +35,7 @@ function UserCard({ user }) {
   );
 }
 
-export function SectionSkeleton() {
+export function Skeleton() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

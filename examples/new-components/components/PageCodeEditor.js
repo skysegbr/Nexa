@@ -1,13 +1,6 @@
 import { h, useState } from "/dist/nexa.js";
 import { CodeEditor, Alert } from "/dist/nexa-components.js";
-
-const INITIAL_CODE = `def process_pipeline(nodes, docker=False):
-    results = []
-    for node in nodes:
-        result = node.run(docker=docker)
-        results.append(result)
-    return results
-`;
+import { INITIAL_CODE } from "../data.js";
 
 export function PageCodeEditor() {
   const [code, setCode] = useState(INITIAL_CODE);

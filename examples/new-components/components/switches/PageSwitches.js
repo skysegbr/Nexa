@@ -1,12 +1,6 @@
 import { h, useLocalStorage, useState } from "/dist/nexa.js";
 import { Switch, Collapse, Button, Badge, Table } from "/dist/nexa-components.js";
-
-const RUNS = [
-  { id: 1, pipeline: "Sales ETL",       status: "success", duration: "1m 23s", start: "2026-06-05 08:00" },
-  { id: 2, pipeline: "Daily report",    status: "running", duration: "-",      start: "2026-06-05 09:15" },
-  { id: 3, pipeline: "Inventory sync",  status: "error",   duration: "0m 12s", start: "2026-06-05 09:30" },
-  { id: 4, pipeline: "Sales ETL",       status: "success", duration: "1m 18s", start: "2026-06-05 10:00" },
-];
+import { RUNS } from "../../data.js";
 
 function StatusBadge({ status }) {
   return h("span", { className: `m-badge badge-${status}` }, status);

@@ -700,7 +700,7 @@ h(Card, { padded: true }, h('p', null, 'Content'))
 
 // Card variants — CSS-only modifier classes on top of Card/.m-card, combine
 // with a plain `<article className="...">` when you need children the Card()
-// helper doesn't pass through (see examples/new-components/pages/PageCards.js):
+// helper doesn't pass through (see examples/new-components/components/cards/PageCards.js):
 //
 // m-card-media (+ m-card-media-zoom)
 //   Image-backed card: absolutely-positioned `.m-card-media-img`,

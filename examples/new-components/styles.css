@@ -1,5 +1,5 @@
-@import "./pages/PageSwitches.css";
-@import "./pages/PageNewUI.css";
+@import "./components/switches/PageSwitches.css";
+@import "./components/new-ui/SidebarNav.css";
 
 .demo-section {
   padding: var(--m-space-6) 0;

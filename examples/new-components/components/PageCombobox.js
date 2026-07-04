@@ -1,13 +1,6 @@
 import { h, useState } from "/dist/nexa.js";
 import { Combobox, Alert } from "/dist/nexa-components.js";
-
-const PIPELINES = [
-  { value: "1", label: "Sales ETL" },
-  { value: "2", label: "Inventory sync" },
-  { value: "3", label: "Daily revenue report" },
-  { value: "4", label: "ERP to CRM integration" },
-  { value: "5", label: "Export to S3" },
-];
+import { PIPELINES } from "../data.js";
 
 export function PageCombobox() {
   const [pipeline, setPipeline] = useState("");
