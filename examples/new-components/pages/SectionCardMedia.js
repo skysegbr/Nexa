@@ -119,7 +119,7 @@ export function SectionCardFloat() {
         h(
           "article",
           { key: item.id, className: "m-card-float" },
-          h("div", { className: "m-card-float-img", style: { height: "220px", background: item.gradient } }),
+          h("div", { className: "m-card-float-img", style: { background: item.gradient } }),
           h(
             "div",
             { className: "m-card-float-panel" },

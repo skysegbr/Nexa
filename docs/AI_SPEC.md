@@ -716,24 +716,16 @@ h(Card, { padded: true }, h('p', null, 'Content'))
 // m-card-float
 //   Image (`.m-card-float-img`) with a `.m-card-float-panel` parked below
 //   it, clipped away by the card's own `overflow: hidden` at rest (genuinely
-//   hidden, not just transparent). On hover/focus-within it fades in *while*
-//   rising, with a rise-then-settle bounce (60% keyframe overshoots past the
-//   resting spot, 100% eases back down into it) — reading as "grows out of
-//   the card's base and stays outside". The fade is load-bearing, not
-//   cosmetic: `overflow: hidden` → `visible` flips instantly on `:hover`, so
-//   without it the fully-opaque panel would flash into view at its parked
-//   (lowest) position the instant the animation starts, then visibly slide
-//   up — looking like it "pops in below the card" rather than growing out of
-//   it. Fading in over the same keyframes hides that first frame.
-//   On exit it sinks straight back down out of view ("goes back into the
-//   card"). A keyframe holds `overflow: visible` through 90% of the (short)
-//   exit animation and only flips back to `hidden` at the very end (overflow
-//   isn't interpolable, but a keyframe can still time a hard switch), giving
-//   the panel time to sink out of view before it's clipped away. Entrance is
-//   slow (1.6s, ease-in-out) so the motion reads clearly; exit is quick
-//   (0.45s, ease-in) on purpose — each card's hover state is independent
-//   CSS, so a slow exit leaves previously-hovered cards' panels lingering
-//   open while you move across the row, and several end up visible at once.
+//   hidden, not just transparent). Defaults intentionally match the
+//   landscape reference card: 328px image width (348px at >=1120px), 1.5rem
+//   image radius, centered 280px panel (316px at >=1120px), `bottom: -9rem`,
+//   overshoot to `-10rem`, and settle at `-7rem`. Override with CSS variables
+//   such as `--m-card-float-width`, `--m-card-float-aspect`,
+//   `--m-card-float-panel-width`, `--m-card-float-panel-rest`, and
+//   `--m-card-float-panel-overshoot` when a different composition is needed.
+//   On hover/focus-within it uses the same overflow-toggling keyframe trick
+//   as the reference so the panel appears to grow out of the clipped card.
+//   On exit it rises once more, sinks below the image, then gets clipped.
 //
 // m-card-glow (+ m-card-glow-amber / -violet / -emerald)
 //   Standalone gradient-border card driven by --m-card-hue-1/--m-card-hue-2
