@@ -194,7 +194,7 @@ python -m http.server 8080
 | [examples/core](./examples/core) | Engine playground: `useMemo`, `useCallback`, `useRef`, `dataset`, keyed lists |
 | [examples/form](./examples/form) | Controlled fields, validation, loading submit, reset, `useForm` |
 | [examples/complete-page](./examples/complete-page) | App-shell with sidebar, table, dialog, tabs, and toast |
-| [examples/new-components](./examples/new-components) | `Switch`, `Collapse`, `Combobox`, `ContextMenu`, `FileDropZone`, `CodeEditor`, toasts |
+| [examples/new-components](./examples/new-components) | `Switch`, `Collapse`, `Combobox`, `ContextMenu`, `FileDropZone`, `CodeEditor`, toasts, and a `Cards` page showcasing the `m-card-*` variants + `SpeedDial` |
 | [examples/task-manager](./examples/task-manager) | Full CRUD with Python API, filters, pagination, and drawer editing |
 | [examples/mobile](./examples/mobile) | Mobile shell: `AppBar`, `BottomNav`, `BottomSheet`, `FAB`, swipe, long press |
 | [examples/charts](./examples/charts) | SVG donut chart drawn with raw `h("svg", ...)`, plus `useErrorBoundary` catching a corrupted dataset and recovering |
@@ -392,7 +392,7 @@ defines both a light and a dark variant of `--m-primary`, `--m-primary-hover`,
 
 ```js
 const { palette, palettes, setPalette, customColor, setCustomColor } = usePalette();
-// palette: "default" | "violet" | "rose" | "blue" | "custom"
+// palette: "default" | "violet" | "rose" | "blue" | "amber" | "emerald" | "custom"
 // palettes: the full list above, handy for building a picker
 // setPalette("violet")
 // setCustomColor("#7c3aed") — any hex color; switches palette to "custom"
@@ -670,7 +670,7 @@ version of Nexa.
 | `Alert` | `variant` (info · success · warning · danger), `title` |
 | `Badge` | — |
 | `Button` | `variant` (text · contained · tonal · danger), `type`, `disabled` |
-| `Card` | `padded` |
+| `Card` | `padded` — combine with `m-card-media`/`-zoom`, `m-card-reveal`, `m-card-float`, `m-card-glow` (+ `-amber`/`-violet`/`-emerald`), `m-card-expand-group`/`-expand`, or `m-card-pricing` for the CSS-only card variants (see `docs/AI_SPEC.md` §9) |
 | `Checkbox` | `id`, `label`, `checked`, `onChange` |
 | `Chip` | `active` |
 | `CodeEditor` | `value`, `onChange`, `mode`, `theme` — lightweight CodeMirror wrapper (see also `FullCodeEditor`) |
@@ -708,6 +708,7 @@ version of Nexa.
 | `BottomNav` | `items`, `value`, `onChange` | `items`: `{ value, label, icon, badge }` |
 | `BottomSheet` | `open`, `title`, `onClose` | Slides up from bottom; adapts to dialog on desktop |
 | `FAB` | `label`, `extended`, `aboveNav`, `onClick` | Floating action button; `aboveNav` shifts above `BottomNav` |
+| `SpeedDial` | `label`, `icon`, `items`, `orbit` | Trigger that expands a row of `IconButton`s (`orbit: true` stacks them upward); manages its own open/close state |
 | `SwipeableListItem` | `actions`, `actionWidth` | Swipe left to reveal action buttons |
 | `ThemeToggle` | — | `IconButton` that calls `useTheme().toggleTheme()` internally |
 | `PaletteSwitcher` | — | Row of color swatches; calls `usePalette().setPalette()` internally |
