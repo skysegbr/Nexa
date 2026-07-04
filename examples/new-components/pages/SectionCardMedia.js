@@ -95,3 +95,40 @@ export function SectionCardGlow() {
     ),
   );
 }
+
+/* ── Float (image with slide-up panel) ─────────────────── */
+
+const FLOAT_ITEMS = [
+  { id: "path",   place: "Vancouver Mountains, Canada", title: "The Great Path",  gradient: "linear-gradient(160deg, #93c5fd, #1e3a8a)" },
+  { id: "night",  place: "Poon Hill, Nepal",             title: "Starry Night",    gradient: "linear-gradient(160deg, #a78bfa, #312e81)" },
+  { id: "peace",  place: "Bojcin Forest, Serbia",        title: "Path Of Peace",   gradient: "linear-gradient(160deg, #86efac, #14532d)" },
+];
+
+export function SectionCardFloat() {
+  return h(
+    "div",
+    { className: "demo-section", style: { paddingBottom: "var(--m-space-12)" } },
+    h("p", { className: "demo-label" }, "m-card-float"),
+    h("p", { className: "m-text-sm m-text-muted", style: { marginBottom: "var(--m-space-6)" } },
+      "The info panel is clipped away below the image at rest. On hover it grows up out of the card's base with a rise-then-settle bounce; on exit it rises once more, then sinks back into the card.",
+    ),
+    h(
+      "div",
+      { className: "m-grid-3" },
+      FLOAT_ITEMS.map((item) =>
+        h(
+          "article",
+          { key: item.id, className: "m-card-float" },
+          h("div", { className: "m-card-float-img", style: { height: "220px", background: item.gradient } }),
+          h(
+            "div",
+            { className: "m-card-float-panel" },
+            h("span", { className: "m-text-xs m-text-muted" }, item.place),
+            h("h3", { className: "m-title", style: { margin: ".25rem 0 .75rem", fontSize: "var(--m-font-size-lg)" } }, item.title),
+            h("a", { href: "#", className: "m-text-sm", style: { color: "var(--m-primary)", fontWeight: 600 } }, "Read More"),
+          ),
+        ),
+      ),
+    ),
+  );
+}

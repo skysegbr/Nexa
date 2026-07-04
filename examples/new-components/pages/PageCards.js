@@ -1,6 +1,6 @@
 import { h } from "/dist/nexa.js";
 import { SpeedDial } from "/dist/nexa-components.js";
-import { SectionCardMedia, SectionCardGlow } from "./SectionCardMedia.js";
+import { SectionCardMedia, SectionCardGlow, SectionCardFloat } from "./SectionCardMedia.js";
 import { SectionCardExpand, SectionCardPricing } from "./SectionCardExpandPricing.js";
 
 /* ── SpeedDial ─────────────────────────────────────────── */
@@ -62,6 +62,7 @@ export function PageCards() {
       ),
     ),
     h(SectionCardMedia),
+    h(SectionCardFloat),
     h(SectionCardGlow),
     h(SectionCardExpand),
     h(SectionCardPricing),

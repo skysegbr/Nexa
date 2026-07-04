@@ -1230,6 +1230,91 @@ video {
   font-size: var(--m-font-size-xs);
 }
 
+/* ── Card: float (image with a slide-up floating info panel) ── */
+
+/*
+ * The panel is parked below the image, its top edge flush with the card's
+ * bottom edge, and the card clips it away (overflow: hidden) at idle — so it
+ * reads as truly hidden inside the card, not just transparent in empty
+ * space. On hover/focus-within it rises up and overlaps the bottom of the
+ * image with an overshoot-then-settle bounce (rises past its resting spot,
+ * then eases down into it — "grows out of the card and stays outside"); on
+ * exit it does the reverse (rises again, then sinks back down out of view —
+ * "goes back into the card"). `overflow` isn't interpolable, but a keyframe
+ * can still hold it at "visible" through 90% of the exit animation and only
+ * flip back to "hidden" right at the end, so the panel has time to sink back
+ * out of view before it's clipped away. Entrance is slow (1.6s, plain
+ * ease-in-out) so the grow-out motion is easy to follow; exit is much
+ * quicker (0.45s) on purpose — each card's reveal is independent CSS-only
+ * hover state, so a slow exit means panels from cards you've already left
+ * stay lingering on screen while a new one is opening as you move the mouse
+ * across the row, and several end up visibly open at once.
+ */
+
+.m-card-float {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--m-radius-lg);
+}
+
+.m-card-float:hover,
+.m-card-float:focus-within {
+  overflow: visible;
+}
+
+.m-card-float:not(:hover):not(:focus-within) {
+  animation: m-card-float-reclip 0.45s forwards;
+}
+
+@keyframes m-card-float-reclip {
+  0%, 90% { overflow: visible; }
+  100%    { overflow: hidden; }
+}
+
+.m-card-float-img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: var(--m-radius-lg);
+}
+
+.m-card-float-panel {
+  position: absolute;
+  left: var(--m-space-4);
+  right: var(--m-space-4);
+  bottom: -9rem;
+  background: var(--m-surface);
+  border-radius: var(--m-radius);
+  box-shadow: var(--m-shadow-2);
+  padding: var(--m-space-4) var(--m-space-5);
+  transform: translateY(0);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.m-card-float:hover .m-card-float-panel,
+.m-card-float:focus-within .m-card-float-panel {
+  animation: m-card-float-in 1.6s ease-in-out forwards;
+  pointer-events: auto;
+}
+
+.m-card-float:not(:hover):not(:focus-within) .m-card-float-panel {
+  animation: m-card-float-out 0.45s ease-in forwards;
+}
+
+@keyframes m-card-float-in {
+  0%   { transform: translateY(0);       opacity: 0; }
+  25%  { opacity: 1; }
+  60%  { transform: translateY(-5.5rem); }
+  100% { transform: translateY(-4.5rem); opacity: 1; }
+}
+
+@keyframes m-card-float-out {
+  0%   { transform: translateY(-4.5rem); opacity: 1; }
+  70%  { opacity: 0; }
+  100% { transform: translateY(0);       opacity: 0; }
+}
+
 /* ── Form ──────────────────────────────────────────────── */
 
 .m-form-field {
@@ -1643,7 +1728,9 @@ textarea.m-field {
   .m-bottom-sheet-backdrop,
   .m-bottom-sheet,
   .m-anim-fade-up,
-  .m-anim-pulse-glow {
+  .m-anim-pulse-glow,
+  .m-card-float:not(:hover):not(:focus-within),
+  .m-card-float-panel {
     animation: none;
   }
 }
