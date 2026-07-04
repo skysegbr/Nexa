@@ -1308,7 +1308,9 @@ video {
   bottom: var(--m-card-float-panel-bottom);
   width: min(calc(100% - 2rem), var(--m-card-float-panel-width));
   margin-inline: auto;
-  background: var(--m-surface);
+  background: color-mix(in srgb, var(--m-surface) 88%, transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border-radius: var(--m-card-float-panel-radius);
   box-shadow: var(--m-shadow-2);
   padding: 1.5rem 2rem;
@@ -1331,18 +1333,28 @@ video {
 }
 
 @keyframes m-card-float-in {
+  30% {
+    background: var(--m-surface);
+  }
+
   50% {
     transform: translateY(var(--m-card-float-panel-overshoot));
   }
 
   100% {
     transform: translateY(var(--m-card-float-panel-rest));
+    background: color-mix(in srgb, var(--m-surface) 88%, transparent);
   }
 }
 
 @keyframes m-card-float-out {
   0% {
     transform: translateY(var(--m-card-float-panel-rest));
+    background: color-mix(in srgb, var(--m-surface) 88%, transparent);
+  }
+
+  30% {
+    background: var(--m-surface);
   }
 
   50% {

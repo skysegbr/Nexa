@@ -725,6 +725,12 @@ h(Card, { padded: true }, h('p', null, 'Content'))
 //   `--m-card-float-panel-overshoot` when a different composition is needed.
 //   On hover/focus-within it uses the same overflow-toggling keyframe trick
 //   as the reference so the panel appears to grow out of the clipped card.
+//   The panel itself is a frosted-glass surface at rest (`color-mix(in srgb,
+//   var(--m-surface) 88%, transparent)` + `backdrop-filter: blur(12px)`) but
+//   solidifies to opaque `var(--m-surface)` for the 30%-50% stretch of each
+//   rise/sink keyframe — solid while it's actually moving, translucent once
+//   it settles — since a moving translucent panel over a busy photo is hard
+//   to read.
 //   On exit it rises once more, sinks below the image, then gets clipped.
 //
 // m-card-glow (+ m-card-glow-amber / -violet / -emerald)
