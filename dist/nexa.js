@@ -1709,7 +1709,7 @@ export function useTheme() {
 //   setPalette("violet");
 //   setCustomColor("#7c3aed"); // switches palette to "custom"
 
-const PALETTES = ["default", "violet", "rose", "blue", "custom"];
+const PALETTES = ["default", "violet", "rose", "blue", "amber", "emerald", "custom"];
 const HEX_COLOR_RE = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i;
 
 export function usePalette() {

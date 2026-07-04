@@ -5,6 +5,14 @@ All notable changes to this project are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+- Card variants — CSS-only modifier classes on top of `.m-card`, adapted from a set of CSS-only reference card designs (bedimcode): `m-card-media`/`m-card-media-zoom` (image-backed card with gradient shadow overlay), `m-card-reveal` (clip-path circle info panel on hover/focus, goes on top of `m-card-media`), `m-card-glow` (+ `-amber`/`-violet`/`-emerald`) (gradient-border card with a hover blur burst, driven by `--m-card-hue-1`/`--m-card-hue-2`), `m-card-expand-group`/`m-card-expand` (flex accordion of image strips — active card is `useState`-driven, not the CSS `:has()` trick the reference used), and `m-card-pricing` (price badge with a clipped-notch tail). See `docs/AI_SPEC.md` §9 and `examples/new-components/pages/PageCards.js` for a live showcase of all five.
+- `SpeedDial` — new component in `nexa-components.js`: a trigger button that expands a row of `IconButton`s (`orbit: true` stacks them upward instead of inline). Manages its own open/close state, closes on outside click or after an item is picked.
+- Two new `usePalette()` presets, `amber` and `emerald`, alongside the existing `violet`/`rose`/`blue` (light + dark variants, same derivation pattern).
+- `--m-transition-slow` (400ms) token for hover zoom/glow/expand effects, and two public animation utility classes: `.m-anim-fade-up` (entrance) and `.m-anim-pulse-glow` (looping glow pulse).
+
 ## [0.6.0] - 2026-07-02
 
 ### Changed — BREAKING

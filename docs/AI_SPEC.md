@@ -375,7 +375,7 @@ const { theme, setTheme, toggleTheme } = useTheme();
 
 ```js
 const { palette, palettes, setPalette, customColor, setCustomColor } = usePalette();
-// palette: 'default' | 'violet' | 'rose' | 'blue' | 'custom'
+// palette: 'default' | 'violet' | 'rose' | 'blue' | 'amber' | 'emerald' | 'custom'
 // palettes: the full list, for building a picker UI
 // Standalone, same pattern as useTheme — reads/writes localStorage('nexa-palette')
 // and sets data-palette on <html>. Independent of useTheme: nexa-ui.css pairs
@@ -676,6 +676,19 @@ h(FAB, {
   extended: false,        // true = shows label as text
   onClick: fn,
 }, '+')
+
+// SpeedDial — trigger that expands a row of IconButtons
+h(SpeedDial, {
+  label: 'Quick actions', // aria-label for the trigger
+  icon: h('i', { className: 'bi bi-plus-lg' }),
+  orbit: false,           // true = items stack upward above the trigger instead of inline
+  items: [
+    { label: 'Message', icon: h('i', { className: 'bi bi-chat-dots' }), onClick: fn },
+    { label: 'Share',   icon: h('i', { className: 'bi bi-share' }),     onClick: fn },
+  ],
+})
+// Manages its own open/close state (useState) and closes on outside click or
+// after an item is picked — no controlled-state prop needed.
 ```
 
 ### Layout
@@ -684,6 +697,39 @@ h(FAB, {
 // Card
 h(Card, { padded: true }, h('p', null, 'Content'))
 // CSS: add m-card-hover for a clickable card (pointer + hover border/shadow)
+
+// Card variants — CSS-only modifier classes on top of Card/.m-card, combine
+// with a plain `<article className="...">` when you need children the Card()
+// helper doesn't pass through (see examples/new-components/pages/PageCards.js):
+//
+// m-card-media (+ m-card-media-zoom)
+//   Image-backed card: absolutely-positioned `.m-card-media-img`,
+//   `.m-card-media-shadow` (gradient overlay) and `.m-card-media-body`
+//   (overlaid text), bottom-aligned. `-zoom` scales the image on hover.
+//
+// m-card-reveal (goes on top of m-card-media)
+//   Adds a `.m-card-reveal-trigger` (round corner button) and a
+//   `.m-card-reveal-panel` (full-bleed overlay) that expands from a
+//   clip-path circle on hover/focus. Trigger must come before the panel in
+//   the DOM (sibling selector).
+//
+// m-card-glow (+ m-card-glow-amber / -violet / -emerald)
+//   Standalone gradient-border card driven by --m-card-hue-1/--m-card-hue-2
+//   (default 210/265). Children: `.m-card-glow-blur-1` / `-blur-2` (decorative,
+//   empty divs), `.m-card-glow-icon`, and `.m-card-glow-body` wrapping the
+//   actual content — the blur discs sit behind it and bloom on hover.
+//
+// m-card-expand-group / m-card-expand
+//   Flex accordion of image strips; the active item is controlled with
+//   useState + an `is-active` class (not the CSS `:has()` trick), so it also
+//   expands on hover for free. Children: `.m-card-expand-img`,
+//   `.m-card-expand-shadow`, `.m-card-expand-data` (icon + title, fades in
+//   only while expanded/active).
+//
+// m-card-pricing
+//   Adds a `.m-card-pricing-badge` (price tag with a clipped notch via
+//   `::after`) positioned top-right of a regular Card; `.m-card-pricing-period`
+//   for the "/month" sublabel.
 
 // Divider — CSS-only, no JS component needed
 h('hr', { className: 'm-divider' })
@@ -1209,6 +1255,11 @@ All tokens are CSS custom properties set on `:root` by `nexa-ui.css`.
 /* Transitions */
 --m-transition-fast   /* 120ms ease */
 --m-transition-base   /* 200ms ease */
+--m-transition-slow   /* 400ms ease — hover zoom/glow/expand effects */
+
+/* Card: glow accent hues (see m-card-glow in §9) */
+--m-card-hue-1        /* 210 — default gradient-border hue 1 */
+--m-card-hue-2        /* 265 — default gradient-border hue 2 */
 
 /* Z-index layers */
 --m-z-dropdown  /* 30 */
@@ -1225,6 +1276,15 @@ Override tokens on a scoped element or globally:
 ```css
 :root { --m-primary: #7c3aed; } /* purple brand */
 .my-widget { --m-radius: 0; }   /* square corners for this widget */
+```
+
+Public animation utility classes (apply directly to any element — distinct
+from the internal `m-fade-in`/`m-scale-in`/`m-slide-up` keyframes used by
+Dialog/Toast/Drawer):
+
+```css
+.m-anim-fade-up     /* one-shot fade + translateY entrance, var(--m-transition-slow) */
+.m-anim-pulse-glow  /* looping soft box-shadow pulse in var(--m-primary), 2.2s */
 ```
 
 ---

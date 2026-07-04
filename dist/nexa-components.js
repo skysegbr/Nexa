@@ -1675,6 +1675,69 @@ export function FAB({
   );
 }
 
+// Trigger + expanding row of IconButtons. `orbit: true` stacks the items
+// upward above the trigger instead of inline to the side.
+export function SpeedDial({
+  icon,
+  label = "More actions",
+  items = [],
+  orbit = false,
+  className = "",
+  ...props
+} = {}) {
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onDocClick = (e) => {
+      if (rootRef.current && !rootRef.current.contains(e.target)) setOpen(false);
+    };
+    document.addEventListener("click", onDocClick);
+    return () => document.removeEventListener("click", onDocClick);
+  }, [open]);
+
+  return h(
+    "div",
+    {
+      ...props,
+      ref: rootRef,
+      className: joinClasses("m-speeddial", orbit && "m-speeddial-orbit", open && "is-open", className),
+    },
+    h(
+      IconButton,
+      {
+        label,
+        variant: "contained",
+        className: "m-speeddial-trigger",
+        onClick: () => setOpen((v) => !v),
+      },
+      icon,
+    ),
+    h(
+      "div",
+      { className: "m-speeddial-menu", role: "menu" },
+      items.map((item, i) =>
+        h(
+          IconButton,
+          {
+            key: item.key ?? i,
+            label: item.label,
+            variant: "tonal",
+            className: "m-speeddial-item",
+            style: { transitionDelay: open ? `${(items.length - i) * 40}ms` : "0ms" },
+            onClick: (e) => {
+              item.onClick?.(e);
+              setOpen(false);
+            },
+          },
+          item.icon,
+        ),
+      ),
+    ),
+  );
+}
+
 export function SwipeableListItem({
   children,
   actions = [],
@@ -1797,6 +1860,8 @@ const _PALETTE_SWATCH_COLORS = {
   violet: "#6d28d9",
   rose: "#be123c",
   blue: "#1d4ed8",
+  amber: "#b45309",
+  emerald: "#047857",
 };
 
 export function PaletteSwitcher({ className = "", ...props } = {}) {

@@ -8,6 +8,7 @@ import { PageFileDrop }    from "./pages/PageFileDrop.js";
 import { PageCodeEditor }  from "./pages/PageCodeEditor.js";
 import { PageToasts }      from "./pages/PageToasts.js";
 import { PageNewUI }       from "./pages/PageNewUI.js";
+import { PageCards }       from "./pages/PageCards.js";
 
 function App() {
   const { path, navigate } = useRouter();
@@ -27,6 +28,7 @@ function App() {
         { icon: h("i", { className: "bi bi-code-slash"   }), label: "Code Editor",       href: "#/editor",   active: path === "/editor"   },
         { icon: h("i", { className: "bi bi-bell"         }), label: "Toasts & Dialog",   href: "#/toasts",   active: path === "/toasts"   },
         { icon: h("i", { className: "bi bi-stars"        }), label: "New UI",             href: "#/newui",    active: path === "/newui"    },
+        { icon: h("i", { className: "bi bi-postcard"     }), label: "Cards",              href: "#/cards",    active: path === "/cards"    },
       ],
       actions: [
         h(DesignSwitcher, { key: "design" }),
@@ -52,6 +54,7 @@ function renderPage(path, toast) {
   if (path === "/editor")   return h(PageCodeEditor);
   if (path === "/toasts")   return h(PageToasts,     { toast });
   if (path === "/newui")    return h(PageNewUI);
+  if (path === "/cards")    return h(PageCards);
   return h(PageSwitches);
 }
 
