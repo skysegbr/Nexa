@@ -9,12 +9,14 @@ Full reference lives in [docs/AI_SPEC.md](../../../docs/AI_SPEC.md) in this repo
 
 ## Non-negotiable rules (memorize before reading further)
 
-1. **`render(App, container)`** — pass the function reference, never `h(App)`. Calling `h(App)` before mount throws "App can only be used during rendering."
-2. **No `<Context.Provider>` component, ever — not even one that takes `children` as a prop.** `h(type, props, ...children)` evaluates `...children` as normal JS arguments, so `h(App)` inside `h(ThemeProvider, null, h(App))` already ran *before* `ThemeProvider`'s body starts — wrapping that already-evaluated `children` in `() => children` does not defer it. A provider must construct what it wraps *inside* the `ctx.provide(value, () => h(...))` thunk it returns. To combine several contexts, nest `.provide()` calls directly in the root component passed to `render()` — see "Composing multiple contexts" / "Domain-owned context" in AI_SPEC §7 and §12.
-3. **Every list item needs a stable `key` prop**, or re-renders lose state.
-4. **Hooks are called unconditionally** at the top of the component — same rule as React.
-5. Real apps (more than a quick demo) use the **domain-componentized layout**: `app.js` (orchestrator only), `data.js` (UPPER_CASE exports), `components/<Name>.js` + paired `<Name>.css`, CSS collected centrally in `styles.css` via `@import` — components never import their own CSS. Group by feature/domain, not by type (no `forms/`, `ui/`, `shared/`). A domain whose components share state owns its own `createContext` + state hook in its own folder (`cart/CartContext.js` exporting `CartContext` + `useCartState()`); `app.js` is the only place that composes domain providers together.
-6. Single-file `app.js` with everything inline is only for throwaway demos — never for a real multi-section UI.
+These mirror AI_SPEC §3 "CRITICAL RULES — READ FIRST", the most common mistakes an AI makes with Nexa:
+
+1. Real apps (more than a quick demo) use the **domain-componentized layout**: `app.js` (orchestrator only), `data.js` (UPPER_CASE exports), `components/<Name>.js` + paired `<Name>.css`, CSS collected centrally in `styles.css` via `@import` — components never import their own CSS. Group by feature/domain, not by type (no `forms/`, `ui/`, `shared/`). A domain whose components share state owns its own `createContext` + state hook in its own folder (`cart/CartContext.js` exporting `CartContext` + `useCartState()`); `app.js` is the only place that composes domain providers together. Single-file `app.js` with everything inline is only for throwaway demos — never for a real multi-section UI.
+2. **No separate `styles/` folder, and no `src/` wrapper around the project.** A component's CSS is a sibling file in the same folder as its `.js` (`components/ProductCard.js` + `components/ProductCard.css`), never collected in a parallel `styles/` tree. The project root has no `src/` — components/data/styles.css live at the top level.
+3. **`render(App, container)`** — pass the function reference, never `h(App)`. Calling `h(App)` before mount throws "App can only be used during rendering."
+4. **No `<Context.Provider>` component, ever — not even one that takes `children` as a prop.** `h(type, props, ...children)` evaluates `...children` as normal JS arguments, so `h(App)` inside `h(ThemeProvider, null, h(App))` already ran *before* `ThemeProvider`'s body starts — wrapping that already-evaluated `children` in `() => children` does not defer it. A provider must construct what it wraps *inside* the `ctx.provide(value, () => h(...))` thunk it returns. To combine several contexts, nest `.provide()` calls directly in the root component passed to `render()` — see "Composing multiple contexts" / "Domain-owned context" in AI_SPEC §7 and §12.
+5. **Every list item needs a stable `key` prop**, or re-renders lose state.
+6. **Hooks are called unconditionally** at the top of the component — same rule as React.
 
 ## Workflow
 
