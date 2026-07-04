@@ -4,10 +4,10 @@ import { Card, Button } from "/dist/nexa-components.js";
 /* ── Expand group ──────────────────────────────────────── */
 
 const EXPAND_ITEMS = [
-  { id: "fog",    title: "Majestic Fog",    icon: "bi-cloud-fog2-fill", gradient: "linear-gradient(160deg, #64748b, #1e293b)" },
-  { id: "autumn", title: "Autumn Trees",    icon: "bi-tree-fill",       gradient: "linear-gradient(160deg, #f59e0b, #78350f)" },
-  { id: "winter", title: "Winter Forest",   icon: "bi-snow2",           gradient: "linear-gradient(160deg, #60a5fa, #1e3a8a)" },
-  { id: "lake",   title: "Hidden Lake",     icon: "bi-water",           gradient: "linear-gradient(160deg, #22d3ee, #164e63)" },
+  { id: "fog",    title: "Majestic Fog",    icon: "bi-cloud-fog2-fill", image: "https://picsum.photos/id/11/800/600" },
+  { id: "autumn", title: "Autumn Trees",    icon: "bi-tree-fill",       image: "https://picsum.photos/id/116/800/600" },
+  { id: "winter", title: "Winter Forest",   icon: "bi-snow2",           image: "https://picsum.photos/id/227/800/600" },
+  { id: "lake",   title: "Hidden Lake",     icon: "bi-water",           image: "https://picsum.photos/id/450/800/600" },
 ];
 
 export function SectionCardExpand() {
@@ -32,7 +32,7 @@ export function SectionCardExpand() {
             onMouseEnter: () => setActive(item.id),
             onClick: () => setActive(item.id),
           },
-          h("div", { className: "m-card-expand-img", style: { background: item.gradient } }),
+          h("img", { className: "m-card-expand-img", src: item.image, alt: item.title }),
           h("div", { className: "m-card-expand-shadow" }),
           h(
             "div",

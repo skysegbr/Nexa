@@ -4,9 +4,9 @@ import { Card, Button } from "/dist/nexa-components.js";
 /* ── Media + reveal ────────────────────────────────────── */
 
 const MEDIA_ITEMS = [
-  { id: "jinx", name: "Jinx", role: "Frontend Developer", gradient: "linear-gradient(160deg, #f59e0b, #7c2d12)" },
-  { id: "yaik", name: "Yaik", role: "Web Designer",        gradient: "linear-gradient(160deg, #34d399, #064e3b)" },
-  { id: "xima", name: "Xima", role: "Data Analytics",      gradient: "linear-gradient(160deg, #f472b6, #831843)" },
+  { id: "jinx", name: "Jinx", role: "Frontend Developer", image: "https://picsum.photos/id/1027/600/600" },
+  { id: "yaik", name: "Yaik", role: "Web Designer",        image: "https://picsum.photos/id/823/600/600" },
+  { id: "xima", name: "Xima", role: "Data Analytics",      image: "https://picsum.photos/id/661/600/600" },
 ];
 
 export function SectionCardMedia() {
@@ -29,7 +29,7 @@ export function SectionCardMedia() {
             className: "m-card-media m-card-media-zoom m-card-reveal",
             style: { height: "300px" },
           },
-          h("div", { className: "m-card-media-img", style: { background: item.gradient } }),
+          h("img", { className: "m-card-media-img", src: item.image, alt: item.name }),
           h("div", { className: "m-card-media-shadow" }),
           h(
             "div",
@@ -99,9 +99,9 @@ export function SectionCardGlow() {
 /* ── Float (image with slide-up panel) ─────────────────── */
 
 const FLOAT_ITEMS = [
-  { id: "path",   place: "Vancouver Mountains, Canada", title: "The Great Path",  gradient: "linear-gradient(160deg, #93c5fd, #1e3a8a)" },
-  { id: "night",  place: "Poon Hill, Nepal",             title: "Starry Night",    gradient: "linear-gradient(160deg, #a78bfa, #312e81)" },
-  { id: "peace",  place: "Bojcin Forest, Serbia",        title: "Path Of Peace",   gradient: "linear-gradient(160deg, #86efac, #14532d)" },
+  { id: "path",   place: "Vancouver Mountains, Canada", title: "The Great Path",  image: "https://picsum.photos/id/16/700/500" },
+  { id: "night",  place: "Poon Hill, Nepal",             title: "Starry Night",    image: "https://picsum.photos/id/29/700/500" },
+  { id: "peace",  place: "Bojcin Forest, Serbia",        title: "Path Of Peace",   image: "https://picsum.photos/id/28/700/500" },
 ];
 
 export function SectionCardFloat() {
@@ -119,7 +119,7 @@ export function SectionCardFloat() {
         h(
           "article",
           { key: item.id, className: "m-card-float" },
-          h("div", { className: "m-card-float-img", style: { background: item.gradient } }),
+          h("img", { className: "m-card-float-img", src: item.image, alt: item.title }),
           h(
             "div",
             { className: "m-card-float-panel" },
