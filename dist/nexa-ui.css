@@ -2346,6 +2346,97 @@ textarea.m-field {
   padding: var(--m-space-4);
 }
 
+/* ── Accordion ─────────────────────────────────────────── */
+
+.m-accordion {
+  border: 1px solid var(--m-border);
+  border-radius: var(--m-radius);
+  background: var(--m-surface);
+  overflow: hidden;
+}
+
+.m-accordion-item + .m-accordion-item {
+  border-top: 1px solid var(--m-border);
+}
+
+.m-accordion-header {
+  display: flex;
+  align-items: center;
+  gap: var(--m-space-2);
+  width: 100%;
+  min-height: 48px;
+  padding: var(--m-space-3) var(--m-space-4);
+  border: none;
+  background: transparent;
+  color: var(--m-text);
+  font-size: var(--m-font-size-sm);
+  font-weight: 800;
+  text-align: left;
+  cursor: pointer;
+}
+
+.m-accordion-header:hover:not(:disabled) { background: var(--m-surface-muted); }
+
+.m-accordion-header:focus-visible {
+  outline: 3px solid var(--m-focus);
+  outline-offset: -3px;
+}
+
+.m-accordion-header:disabled {
+  color: var(--m-text-muted);
+  cursor: not-allowed;
+}
+
+.m-accordion-chevron {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  color: var(--m-text-muted);
+}
+
+.m-accordion-chevron::after {
+  content: "▾";
+  font-size: 14px;
+  display: inline-block;
+  transform: rotate(-90deg);
+  transition: transform 200ms ease;
+}
+
+.m-accordion-item-open .m-accordion-chevron::after {
+  transform: rotate(0deg);
+}
+
+.m-accordion-title {
+  flex: 1;
+  min-width: 0;
+}
+
+/* grid-template-rows trick: 0fr ↔ 1fr animates max-height without knowing
+   the content's natural height. The inner element must have overflow:hidden
+   so the 0fr state actually clips the content. */
+.m-accordion-body-wrap {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 220ms ease;
+}
+
+.m-accordion-item-open .m-accordion-body-wrap {
+  grid-template-rows: 1fr;
+}
+
+.m-accordion-body-inner { overflow: hidden; }
+
+.m-accordion-body {
+  border-top: 1px solid var(--m-border);
+  padding: var(--m-space-4);
+  color: var(--m-text-secondary);
+  font-size: var(--m-font-size-sm);
+  line-height: var(--m-line-height);
+}
+
 /* ── Navbar ────────────────────────────────────────────── */
 
 .m-navbar {

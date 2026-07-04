@@ -790,11 +790,37 @@ h('ol', { className: 'm-breadcrumb' },
   h('li', { className: 'm-breadcrumb-item' }, 'Current page'),
 )
 
-// Collapse — accordion section
+// Collapse — single collapsible section
 h(Collapse, {
   title: 'Click to expand',
   defaultOpen: false,
 }, h('p', null, 'Hidden content'))
+
+// Accordion — multiple collapsible panels grouped together.
+// The body uses the same grid-template-rows: 0fr → 1fr animation as Collapse.
+//
+// items   [{ key, title, children, disabled? }]  — required
+// multiple  allow several panels open at once (default false)
+// defaultOpen  initially-open key (or array) — uncontrolled
+// open         controlled: key | key[]  (omit for uncontrolled)
+// onToggle     (key, nextOpenKeys) => void
+h(Accordion, {
+  items: [
+    { key: 'faq-1', title: 'What is Nexa?',     children: h('p', null, 'A no-build ESM-native framework.') },
+    { key: 'faq-2', title: 'Is it free?',        children: h('p', null, 'Yes, MIT licensed.') },
+    { key: 'faq-3', title: 'Disabled panel',     children: h('p', null, 'Never seen.'), disabled: true },
+  ],
+  defaultOpen: 'faq-1',
+})
+
+// Controlled + multiple
+const [open, setOpen] = useState(['faq-1']);
+h(Accordion, {
+  items: FAQ_ITEMS,
+  multiple: true,
+  open,
+  onToggle: (_key, nextKeys) => setOpen(nextKeys),
+})
 
 // EmptyState
 h(EmptyState, {

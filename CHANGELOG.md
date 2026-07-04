@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - `dist/nexa.d.ts` — TypeScript declarations covering all 39 exports of `nexa.js` (types, interfaces, and JSDoc comments for every hook, `h`, `render`, `unmount`, `memo`, `createPortal`, `createLazy`, `createContext`, `useContext`).
 - `dist/nexa-components.d.ts` — TypeScript declarations for all 41 components in `nexa-components.js`.
 - `"types": "dist/nexa.d.ts"` entry in `package.json`.
+- `Accordion` component in `nexa-components.js`: multiple panels, controlled/uncontrolled, `multiple` prop for simultaneous expansion, keyboard (Enter/Space via native `<button>`) and `aria-expanded` + `aria-controls`/`role="region"`. Animated with the same `grid-template-rows: 0fr → 1fr` technique as `Collapse`. CSS in `nexa-ui.css` (`.m-accordion`, `.m-accordion-item`, `.m-accordion-item-open`, `.m-accordion-header`, `.m-accordion-body-wrap`, etc.). TypeScript declaration in `dist/nexa-components.d.ts`. Documented in `docs/AI_SPEC.md` §9. Live demo at `examples/new-components` (`#/accordion`).
 
 ## [0.7.2] - 2026-07-04
 

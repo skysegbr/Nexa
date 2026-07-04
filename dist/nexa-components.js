@@ -1063,6 +1063,100 @@ export function Collapse({
   );
 }
 
+// ── Accordion ──────────────────────────────────────────────
+//
+// Multiple collapsible panels in a single grouped container.
+//
+// Props:
+//   items        [{ key, title, children, disabled? }]
+//   multiple     allow several panels open at once (default false)
+//   defaultOpen  initially-open key or array of keys (uncontrolled)
+//   open         controlled: key | key[] | undefined
+//   onToggle     (key, nextOpenKeys) => void
+//   className    extra CSS classes
+//
+// Keyboard: trigger buttons are native <button> elements — Enter and Space
+// activate them for free. aria-expanded + aria-controls wire up screen readers.
+
+function normalizeAccordionOpen(v) {
+  if (v == null) return [];
+  return Array.isArray(v) ? v : [v];
+}
+
+export function Accordion({
+  items = [],
+  multiple = false,
+  defaultOpen,
+  open,
+  onToggle,
+  className = "",
+  ...props
+} = {}) {
+  const [internalOpen, setInternalOpen] = useState(() => normalizeAccordionOpen(defaultOpen));
+  const openKeys = open !== undefined ? normalizeAccordionOpen(open) : internalOpen;
+
+  const toggle = (key) => {
+    const isOpen = openKeys.includes(key);
+    const nextOpenKeys = multiple
+      ? isOpen ? openKeys.filter((k) => k !== key) : [...openKeys, key]
+      : isOpen ? [] : [key];
+    if (open === undefined) setInternalOpen(nextOpenKeys);
+    onToggle?.(key, nextOpenKeys);
+  };
+
+  return h(
+    "div",
+    { ...props, className: joinClasses("m-accordion", className) },
+    items.map((item) => {
+      const isOpen = openKeys.includes(item.key);
+      const headerId = `${item.key}-header`;
+      const panelId = `${item.key}-panel`;
+
+      return h(
+        "div",
+        {
+          key: item.key,
+          className: joinClasses("m-accordion-item", isOpen && "m-accordion-item-open"),
+        },
+        h(
+          "button",
+          {
+            id: headerId,
+            type: "button",
+            className: "m-accordion-header",
+            disabled: item.disabled,
+            ariaExpanded: isOpen ? "true" : "false",
+            ariaControls: panelId,
+            onClick: item.disabled ? undefined : () => toggle(item.key),
+            onKeyDown: item.disabled ? undefined : (e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                toggle(item.key);
+              }
+            },
+          },
+          h("span", { className: "m-accordion-chevron", ariaHidden: "true" }),
+          h("span", { className: "m-accordion-title" }, item.title),
+        ),
+        h(
+          "div",
+          {
+            id: panelId,
+            role: "region",
+            className: "m-accordion-body-wrap",
+            ariaLabelledby: headerId,
+          },
+          h(
+            "div",
+            { className: "m-accordion-body-inner" },
+            h("div", { className: "m-accordion-body" }, item.children),
+          ),
+        ),
+      );
+    }),
+  );
+}
+
 // ── Navbar ─────────────────────────────────────────────────
 
 export function Navbar({

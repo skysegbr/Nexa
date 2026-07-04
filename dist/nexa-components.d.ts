@@ -303,6 +303,28 @@ export declare function Collapse(props?: {
   children?: VNode;
 } & ExtraProps): VNode;
 
+// ── Accordion ──────────────────────────────────────────────────────────────
+
+export interface AccordionItem {
+  key: string;
+  title: string;
+  children?: VNode;
+  disabled?: boolean;
+}
+
+export declare function Accordion(props?: {
+  items?: AccordionItem[];
+  /** Allow multiple panels open simultaneously — default `false`. */
+  multiple?: boolean;
+  /** Initially-open key(s) for the uncontrolled mode. */
+  defaultOpen?: string | string[];
+  /** Controlled: current open key(s). Omit to use uncontrolled mode. */
+  open?: string | string[];
+  /** Called when a panel is toggled: `(key, nextOpenKeys) => void`. */
+  onToggle?: (key: string, nextOpenKeys: string[]) => void;
+  className?: string;
+} & ExtraProps): VNode;
+
 // ── Navbar ─────────────────────────────────────────────────────────────────
 
 export interface NavbarItem {
