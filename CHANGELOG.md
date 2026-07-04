@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.7.2] - 2026-07-04
+
+### Changed
+- `examples/new-components` restructured from a flat `pages/` folder (grouping by type, explicitly disallowed by `docs/AI_SPEC.md`) into the domain-componentized layout: a root `data.js` for all static data, and `components/<domain>/<Name>.js` (one component per file; single-file domains — combobox, context menu, file drop, code editor, toasts — kept flat, multi-file ones — `switches/`, `cards/`, `new-ui/` — split by feature). No behavior change.
+
 ## [0.7.1] - 2026-07-04
 
 ### Fixed
