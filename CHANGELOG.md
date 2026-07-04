@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Added
 - `package.json` `"scripts"` block: `dev` (`python server.py`), `test` (`python scripts/run_browser_tests.py`), `validate` (`python scripts/validate_nexa.py`).
 - `tests/hooks.test.js` — test suite for `useForm` (initial values, `setValue`, `field.onChange`, validation error appear/disappear, `handleSubmit` blocking on invalid, `handleSubmit` calling `onSubmit` on valid) and `useRouter` hash mode (default `'/'` path, navigate + conditional re-render).
+- `dist/nexa.d.ts` — TypeScript declarations covering all 39 exports of `nexa.js` (types, interfaces, and JSDoc comments for every hook, `h`, `render`, `unmount`, `memo`, `createPortal`, `createLazy`, `createContext`, `useContext`).
+- `dist/nexa-components.d.ts` — TypeScript declarations for all 41 components in `nexa-components.js`.
+- `"types": "dist/nexa.d.ts"` entry in `package.json`.
 
 ## [0.7.2] - 2026-07-04
 

@@ -9,6 +9,7 @@
   "description": "Next-generation frontend framework in plain JavaScript, with no build step.",
   "type": "module",
   "main": "dist/nexa.js",
+  "types": "dist/nexa.d.ts",
   "style": "dist/nexa-ui.css",
   "exports": {
     ".": "./dist/nexa.js",
