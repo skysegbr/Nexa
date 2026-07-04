@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.7.1] - 2026-07-04
+
+### Fixed
+- `m-card-expand` — flex-grow, image zoom, and text-fade timings now match the bedimcode reference exactly (0.5s `flex` transition, a 0.4s `scale(1.1)` zoom on the active strip's image on hover, and the data fade delayed 0.1s behind the flex expansion) instead of all firing at once with no delay.
+- `m-card-float` — the info panel is now a frosted-glass surface at rest (`color-mix(in srgb, var(--m-surface) 88%, transparent)` + `backdrop-filter: blur(12px)`) that solidifies to opaque `var(--m-surface)` only for the 30%-50% stretch of each rise/sink keyframe, when it's actually moving — a translucent panel sliding over a photo mid-motion was hard to read.
+
+### Changed
+- `examples/new-components` card demos (`m-card-media`, `m-card-float`, `m-card-expand-group`) now use real hotlinked photos (Picsum Photos) instead of flat CSS gradients, so the showcase reads as a real product.
+
 ## [0.7.0] - 2026-07-04
 
 ### Added
