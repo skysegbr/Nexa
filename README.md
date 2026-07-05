@@ -198,7 +198,7 @@ python -m http.server 8080
 | [examples/core](./examples/core) | Engine playground: `useMemo`, `useCallback`, `useRef`, `dataset`, keyed lists |
 | [examples/form](./examples/form) | Controlled fields, validation, loading submit, reset, `useForm` |
 | [examples/complete-page](./examples/complete-page) | App-shell with sidebar, table, dialog, tabs, and toast |
-| [examples/new-components](./examples/new-components) | `Switch`, `Collapse`, `Combobox`, `ContextMenu`, `FileDropZone`, `CodeEditor`, toasts, and a `Cards` page showcasing the `m-card-*` variants + `SpeedDial` |
+| [examples/new-components](./examples/new-components) | `Switch`, `Collapse`, `Combobox`, `ContextMenu`, `FileDropZone`, `CodeEditor`, toasts, a `Cards` page showcasing the `m-card-*` variants + `SpeedDial`, `Accordion`, `Slider`/`RangeSlider`, `Menu` with nested submenus, `DataTable`, and `DatePicker` |
 | [examples/task-manager](./examples/task-manager) | Full CRUD with Python API, filters, pagination, and drawer editing |
 | [examples/mobile](./examples/mobile) | Mobile shell: `AppBar`, `BottomNav`, `BottomSheet`, `FAB`, swipe, long press |
 | [examples/charts](./examples/charts) | SVG donut chart drawn with raw `h("svg", ...)`, plus `useErrorBoundary` catching a corrupted dataset and recovering |

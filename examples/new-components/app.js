@@ -10,6 +10,10 @@ import { PageToasts }      from "./components/PageToasts.js";
 import { PageNewUI }       from "./components/new-ui/PageNewUI.js";
 import { PageCards }       from "./components/cards/PageCards.js";
 import { PageAccordion }   from "./components/accordion/PageAccordion.js";
+import { PageSlider }      from "./components/PageSlider.js";
+import { PageMenu }        from "./components/PageMenu.js";
+import { PageDataTable }   from "./components/PageDataTable.js";
+import { PageDatePicker }  from "./components/PageDatePicker.js";
 
 function App() {
   const { path, navigate } = useRouter();
@@ -31,6 +35,10 @@ function App() {
         { icon: h("i", { className: "bi bi-stars"        }), label: "New UI",             href: "#/newui",     active: path === "/newui"    },
         { icon: h("i", { className: "bi bi-postcard"     }), label: "Cards",              href: "#/cards",     active: path === "/cards"    },
         { icon: h("i", { className: "bi bi-chevron-expand" }), label: "Accordion",        href: "#/accordion", active: path === "/accordion" },
+        { icon: h("i", { className: "bi bi-sliders"      }), label: "Slider",             href: "#/slider",    active: path === "/slider"    },
+        { icon: h("i", { className: "bi bi-list-nested"  }), label: "Menu",               href: "#/menu",      active: path === "/menu"      },
+        { icon: h("i", { className: "bi bi-table"        }), label: "DataTable",          href: "#/datatable", active: path === "/datatable" },
+        { icon: h("i", { className: "bi bi-calendar3"    }), label: "DatePicker",         href: "#/datepicker", active: path === "/datepicker" },
       ],
       actions: [
         h(DesignSwitcher, { key: "design" }),
@@ -58,6 +66,10 @@ function renderPage(path, toast) {
   if (path === "/newui")     return h(PageNewUI);
   if (path === "/cards")     return h(PageCards);
   if (path === "/accordion") return h(PageAccordion);
+  if (path === "/slider")     return h(PageSlider);
+  if (path === "/menu")       return h(PageMenu,       { toast });
+  if (path === "/datatable")  return h(PageDataTable);
+  if (path === "/datepicker") return h(PageDatePicker);
   return h(PageSwitches);
 }
 
