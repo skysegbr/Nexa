@@ -2363,3 +2363,218 @@ export function RangeSlider({
     ),
   );
 }
+
+// ── Menu ─────────────────────────────────────────────────────
+//
+// Like Dropdown, but items may nest a `children` array to open a flyout
+// submenu (any number of levels deep). Each level tracks which single child
+// submenu is open (Accordion-style single-open), so hovering or arrowing
+// into a sibling closes the previous one.
+//
+// Props:
+//   trigger   element that opens the root menu on click
+//   items     [{ label, onClick?, children?, icon?, danger?, disabled?, divider? }]
+//   align     'left' | 'right' (root menu only)
+//   className extra classes
+//
+// Keyboard (per level): ArrowUp/ArrowDown/Home/End move between siblings;
+// ArrowRight (or Enter/click) opens a submenu and focuses its first item;
+// ArrowLeft closes the current submenu and returns focus to its parent
+// item. Escape/Tab close the whole menu, same as Dropdown.
+
+function getMenuItemButtons(list) {
+  if (!list) return [];
+  return Array.from(list.querySelectorAll(":scope > li > .m-menu-button"));
+}
+
+function MenuItemNode({ item, index, isOpen, onOpenChange, onLeafSelect, listRef, submenu, onCloseToParent }) {
+  const hasSubmenu = hasChildren(item.children);
+  const key = item.key ?? index;
+  const submenuRef = useRef(null);
+  const buttonRef = useRef(null);
+
+  const openSubmenu = () => onOpenChange(key);
+  const closeSubmenu = () => onOpenChange((current) => (current === key ? null : current));
+
+  return h(
+    "li",
+    {
+      className: "m-menu-item",
+      role: "none",
+      onMouseEnter: hasSubmenu ? openSubmenu : undefined,
+      onMouseLeave: hasSubmenu ? closeSubmenu : undefined,
+    },
+    h(
+      "button",
+      {
+        ref: buttonRef,
+        type: "button",
+        className: joinClasses("m-menu-button", item.danger && "m-menu-button-danger"),
+        role: "menuitem",
+        disabled: item.disabled,
+        ariaHaspopup: hasSubmenu ? "true" : undefined,
+        ariaExpanded: hasSubmenu ? (isOpen ? "true" : "false") : undefined,
+        onClick: () => {
+          if (item.disabled) return;
+          if (hasSubmenu) {
+            onOpenChange((current) => (current === key ? null : key));
+            return;
+          }
+          onLeafSelect(item);
+        },
+        onKeyDown: (event) => {
+          const buttons = getMenuItemButtons(listRef.current);
+
+          if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+            event.preventDefault();
+            const direction = event.key === "ArrowDown" ? 1 : -1;
+            const currentIndex = Math.max(0, buttons.indexOf(buttonRef.current));
+            buttons[(currentIndex + direction + buttons.length) % buttons.length]?.focus();
+          } else if (event.key === "Home") {
+            event.preventDefault();
+            buttons[0]?.focus();
+          } else if (event.key === "End") {
+            event.preventDefault();
+            buttons[buttons.length - 1]?.focus();
+          } else if (event.key === "ArrowRight" && hasSubmenu) {
+            event.preventDefault();
+            openSubmenu();
+            queueMicrotask(() => focusFirstElement(submenuRef.current));
+          } else if (event.key === "ArrowLeft" && submenu) {
+            event.preventDefault();
+            onCloseToParent?.();
+          }
+        },
+      },
+      item.icon && h("span", { className: "m-menu-icon", ariaHidden: "true" }, item.icon),
+      h("span", { className: "m-menu-label" }, item.label),
+      hasSubmenu && h("span", { className: "m-menu-caret", ariaHidden: "true" }, "›"),
+    ),
+    hasSubmenu &&
+      isOpen &&
+      h(MenuList, {
+        items: item.children,
+        listRef: submenuRef,
+        onLeafSelect,
+        submenu: true,
+        onCloseToParent: () => {
+          closeSubmenu();
+          buttonRef.current?.focus();
+        },
+      }),
+  );
+}
+
+function MenuList({ items, listRef, onLeafSelect, submenu = false, onCloseToParent, id, className = "" }) {
+  const [openKey, setOpenKey] = useState(null);
+
+  return h(
+    "ul",
+    {
+      ref: listRef,
+      id,
+      className: joinClasses("m-menu-list", submenu && "m-menu-list-submenu", className),
+      role: "menu",
+    },
+    items.map((item, index) =>
+      item.divider
+        ? h(
+            "li",
+            { key: `divider-${index}`, className: "m-menu-divider-wrap", role: "none" },
+            h("hr", { className: "m-menu-divider" }),
+          )
+        : h(MenuItemNode, {
+            key: item.key ?? index,
+            item,
+            index,
+            isOpen: openKey === (item.key ?? index),
+            onOpenChange: setOpenKey,
+            onLeafSelect,
+            listRef,
+            submenu,
+            onCloseToParent,
+          }),
+    ),
+  );
+}
+
+export function Menu({
+  id,
+  trigger,
+  items = [],
+  align = "left",
+  className = "",
+  ...props
+} = {}) {
+  const [open, setOpen] = useState(false);
+  const wrapRef = useRef(null);
+  const menuRef = useRef(null);
+  const menuId = id ? `${id}-menu` : undefined;
+
+  useEffect(() => {
+    if (!open) {
+      return undefined;
+    }
+
+    queueMicrotask(() => focusFirstElement(menuRef.current));
+
+    const onMouseDown = (event) => {
+      if (wrapRef.current && !wrapRef.current.contains(event.target)) {
+        setOpen(false);
+      }
+    };
+    const onKeyDown = (event) => {
+      if (event.key === "Escape") {
+        setOpen(false);
+        focusFirstElement(wrapRef.current);
+        return;
+      }
+      if (event.key === "Tab") {
+        setOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", onMouseDown);
+    document.addEventListener("keydown", onKeyDown);
+
+    return () => {
+      document.removeEventListener("mousedown", onMouseDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [open]);
+
+  return h(
+    "div",
+    { ...props, id, ref: wrapRef, className: joinClasses("m-menu", className) },
+    h(
+      "div",
+      {
+        className: "m-menu-trigger",
+        onClick: () => setOpen((v) => !v),
+        onKeyDown: (event) => {
+          if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+            event.preventDefault();
+            setOpen(true);
+          }
+        },
+        ariaHaspopup: "true",
+        ariaExpanded: open ? "true" : "false",
+        ariaControls: menuId,
+      },
+      trigger,
+    ),
+    open &&
+      h(MenuList, {
+        id: menuId,
+        items,
+        listRef: menuRef,
+        submenu: false,
+        className: `m-menu-list-${align}`,
+        onLeafSelect: (item) => {
+          if (item.disabled) return;
+          setOpen(false);
+          item.onClick?.();
+        },
+      }),
+  );
+}

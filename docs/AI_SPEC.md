@@ -1246,6 +1246,27 @@ h(Dropdown, {
 // a11y: opening focuses the first item; ArrowUp/ArrowDown/Home/End move
 // through items; Tab closes the menu (non-modal — focus is meant to leave).
 
+// Menu — like Dropdown, but items can nest a `children` array to open a
+// flyout submenu (any depth). Manages its own open state internally, same
+// as Dropdown — no open/onClose props.
+h(Menu, {
+  trigger: h(Button, null, 'File'),
+  items: [
+    { label: 'New', onClick: fn },
+    { label: 'Open Recent', children: [
+        { label: 'project-a.js', onClick: fn },
+        { label: 'project-b.js', onClick: fn },
+      ] },
+    { divider: true },
+    { label: 'Exit', onClick: fn, danger: true },
+  ],
+})
+// a11y: same base interaction as Dropdown (initial focus, arrow-key nav,
+// Tab/Escape close everything). Additionally: hovering an item with
+// `children` (or ArrowRight/Enter/click on it) opens its submenu and
+// focuses its first item; ArrowLeft closes that submenu and returns focus
+// to the parent item. Only one submenu per level is open at a time.
+
 // Tooltip
 h(Tooltip, { content: 'Click to save' },
   h(Button, null, 'Save')

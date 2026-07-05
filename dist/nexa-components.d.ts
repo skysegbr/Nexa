@@ -585,3 +585,25 @@ export declare function RangeSlider(props?: {
   className?: string;
   inputClassName?: string;
 } & ExtraProps): VNode;
+
+// ── Menu ───────────────────────────────────────────────────────────────────
+
+export interface MenuItem {
+  key?: string | number;
+  label?: string;
+  icon?: VNode;
+  onClick?: () => void;
+  disabled?: boolean;
+  danger?: boolean;
+  divider?: boolean;
+  /** Nested items — renders as a flyout submenu (any depth). */
+  children?: MenuItem[];
+}
+
+export declare function Menu(props?: {
+  id?: string;
+  trigger?: VNode;
+  items?: MenuItem[];
+  align?: "left" | "right";
+  className?: string;
+} & ExtraProps): VNode;

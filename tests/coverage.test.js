@@ -5,7 +5,7 @@
 
 import { h, render, useState } from "../dist/nexa.js";
 import { useFetch, useLocalStorage, useTheme, usePalette, useDesign, useToast } from "../dist/nexa.js";
-import { Table, Dialog, Drawer, Button, Accordion, Stepper, Pagination, FileDropZone, Navbar, Slider, RangeSlider } from "../dist/nexa-components.js";
+import { Table, Dialog, Drawer, Button, Accordion, Stepper, Pagination, FileDropZone, Navbar, Slider, RangeSlider, Menu } from "../dist/nexa-components.js";
 import { test, assert, assertEqual, mountPoint, flush } from "./runner.js";
 
 // ── useFetch ────────────────────────────────────────────────────────────────
@@ -878,4 +878,142 @@ test("RangeSlider: renders two thumbs and clamps each against the other", async 
   await flush();
   assertEqual(received[0], 50, "the lower thumb clamps the upper thumb's new value");
   assertEqual(received[1], 50, "upper can't go below the current lower value");
+});
+
+// ── Menu ──────────────────────────────────────────────────────────────────
+
+test("Menu: opens on trigger click, focuses the first item, and marks items with children as aria-haspopup", async () => {
+  const container = mountPoint();
+
+  function Widget() {
+    return h(Menu, {
+      trigger: h(Button, null, "File"),
+      items: [
+        { key: "new", label: "New" },
+        { key: "recent", label: "Open Recent", children: [{ key: "a", label: "project-a.js" }] },
+      ],
+    });
+  }
+
+  render(Widget, container);
+  await flush();
+
+  const trigger = container.querySelector(".m-menu-trigger");
+  assertEqual(trigger.getAttribute("aria-expanded"), "false");
+
+  trigger.click();
+  await flush();
+
+  assertEqual(trigger.getAttribute("aria-expanded"), "true");
+  const buttons = container.querySelectorAll(".m-menu-list > li > .m-menu-button");
+  assertEqual(buttons.length, 2);
+  assertEqual(document.activeElement, buttons[0], "opening focuses the first item");
+  assertEqual(buttons[1].getAttribute("aria-haspopup"), "true");
+  assertEqual(buttons[1].getAttribute("aria-expanded"), "false");
+});
+
+test("Menu: hovering a parent item opens its submenu; selecting a nested leaf calls onClick and closes the whole menu", async () => {
+  const container = mountPoint();
+  let selected;
+
+  function Widget() {
+    return h(Menu, {
+      trigger: h(Button, null, "File"),
+      items: [
+        { key: "new", label: "New", onClick: () => { selected = "new"; } },
+        {
+          key: "recent",
+          label: "Open Recent",
+          children: [
+            { key: "a", label: "project-a.js", onClick: () => { selected = "a"; } },
+            { key: "b", label: "project-b.js", onClick: () => { selected = "b"; } },
+          ],
+        },
+      ],
+    });
+  }
+
+  render(Widget, container);
+  await flush();
+
+  container.querySelector(".m-menu-trigger").click();
+  await flush();
+
+  const parentItem = container.querySelectorAll(".m-menu-item")[1];
+  parentItem.dispatchEvent(new MouseEvent("mouseenter"));
+  await flush();
+
+  const parentButton = parentItem.querySelector(".m-menu-button");
+  assertEqual(parentButton.getAttribute("aria-expanded"), "true");
+
+  const submenuButtons = container.querySelectorAll(".m-menu-list-submenu > li > .m-menu-button");
+  assertEqual(submenuButtons.length, 2);
+  assertEqual(submenuButtons[0].textContent.trim(), "project-a.js");
+
+  submenuButtons[1].click();
+  await flush();
+
+  assertEqual(selected, "b");
+  assertEqual(container.querySelector(".m-menu-list"), null, "selecting a leaf closes the entire menu");
+});
+
+test("Menu: ArrowRight opens a submenu and focuses its first item; ArrowLeft closes it and returns focus to the parent", async () => {
+  const container = mountPoint();
+
+  function Widget() {
+    return h(Menu, {
+      trigger: h(Button, null, "File"),
+      items: [
+        { key: "new", label: "New" },
+        {
+          key: "recent",
+          label: "Open Recent",
+          children: [{ key: "a", label: "project-a.js" }, { key: "b", label: "project-b.js" }],
+        },
+      ],
+    });
+  }
+
+  render(Widget, container);
+  await flush();
+
+  container.querySelector(".m-menu-trigger").click();
+  await flush();
+
+  const rootButtons = container.querySelectorAll(".m-menu-list > li > .m-menu-button");
+  rootButtons[1].focus();
+  rootButtons[1].dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true }));
+  await flush();
+
+  assertEqual(rootButtons[1].getAttribute("aria-expanded"), "true");
+  const submenuButtons = container.querySelectorAll(".m-menu-list-submenu > li > .m-menu-button");
+  assertEqual(document.activeElement, submenuButtons[0], "ArrowRight focuses the submenu's first item");
+
+  submenuButtons[0].dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowLeft", bubbles: true }));
+  await flush();
+
+  assertEqual(rootButtons[1].getAttribute("aria-expanded"), "false", "ArrowLeft closes the submenu");
+  assertEqual(document.activeElement, rootButtons[1], "focus returns to the parent item");
+});
+
+test("Menu: Escape closes the whole menu and returns focus to the trigger", async () => {
+  const container = mountPoint();
+
+  function Widget() {
+    return h(Menu, { trigger: h(Button, null, "File"), items: [{ key: "new", label: "New" }] });
+  }
+
+  render(Widget, container);
+  await flush();
+
+  const trigger = container.querySelector(".m-menu-trigger");
+  trigger.click();
+  await flush();
+  assert(container.querySelector(".m-menu-list"), "menu is open");
+
+  document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+  await flush();
+
+  assertEqual(container.querySelector(".m-menu-list"), null, "Escape closes the menu");
+  assertEqual(document.activeElement, container.querySelector("button"), "focus returns into the trigger");
 });
