@@ -44,6 +44,13 @@ cyan accent brings motion and technology, the lime nodes highlight interaction
 points, and the dark or light structural forms keep the mark stable across both
 light and dark themes.
 
+The hexagonal outline frames all of this as a single, self-contained system.
+Hexagons tile edge-to-edge with no gaps, mirroring how Nexa's components
+compose into an app with no build-step glue between them. It is also the most
+material-efficient shape for covering a surface, echoing the framework's
+lightweight footprint. And as a six-sided node, it extends the circuit motif
+inside the mark outward: Nexa itself as one connected node in a larger system.
+
 ## Using The CDN
 
 Nexa is published as a public GitHub repository, so you can load the browser
@@ -177,6 +184,8 @@ import {
 - [Nexa tutorial](./docs/TUTORIAL.md)
 - [Nexa UI guide](./docs/NEXA_UI.md)
 - [Nexa forms guide](./docs/FORMS.md)
+- [AI reference spec](./docs/AI_SPEC.md) — comprehensive reference for every hook, component, and pattern
+- [Changelog](./CHANGELOG.md)
 
 ## Examples
 
@@ -474,6 +483,8 @@ vibrate([100, 50, 100]); // pattern
 | `useLocalStorage(key, initialValue)` | `[value, setValue]` persisted to `localStorage`, JSON-encoded |
 | `useToast()` | `{ toasts, toast, dismiss }` — `toast.success/error/warning/info(msg, opts)` queues a toast for `ToastStack` |
 | `useRouter(options?)` | `{ path, params, navigate }` — router. `{ mode: 'hash' }` (default) or `{ mode: 'history' }` for clean URLs via the History API |
+| `useRoutes(routes, options?)` | Resolves a nested route config against the current path and returns the matched element; route fields: `path`, `index`, `component`, `element`, `lazy`, `fallback`, `children`. Calls `useRouter` internally |
+| `matchPath(pattern, path, options?)` | Segment matcher used internally by `useRoutes` — `:name` captures a segment, a trailing `*` captures the rest, `{ end: false }` prefix-matches |
 | `useTranslation(dict)` | `{ t }` — `t(key, vars)` looks up `dict[key]` and interpolates `{var}` placeholders |
 | `useContextMenu()` | `{ menu, openMenu, closeMenu }` — wires a right-click handler to `ContextMenu` |
 | `useHistory(initial, options)` | `{ state, set, undo, redo, canUndo, canRedo }` — undo/redo wrapper around a state value |
@@ -508,6 +519,30 @@ navigate("/settings?tab=profile");
 // intercepted automatically. Requires server-side SPA fallback (serve
 // index.html for every route) — see docs/AI_SPEC.md §6.
 const router = useRouter({ mode: "history" });
+
+// useRoutes + matchPath — nested routes, params, and lazy-per-route
+const routes = [
+  { path: "/", element: h(Home, null) },
+  {
+    path: "/users/:id",
+    component: UserLayout,                        // rendered with { params, outlet }
+    children: [
+      { index: true, component: Profile },         // matches /users/:id exactly
+      { path: "/settings", lazy: () => import("./Settings.js"), fallback: h(Spinner, null) },
+    ],
+  },
+  { path: "*", component: NotFound },              // catch-all — list specific routes first
+];
+
+function App() {
+  return useRoutes(routes, { notFound: h(NotFound, null) });
+}
+
+function UserLayout({ params, outlet }) {
+  return h("div", null, h("h1", null, `User ${params.id}`), outlet); // nested route renders here
+}
+
+matchPath("/users/:id", "/users/42"); // → { params: { id: "42" }, rest: "" }
 
 // useDebounce — delay value update
 const query = useDebounce(inputValue, 300);
@@ -662,6 +697,37 @@ The browser reconnects automatically if the server restarts. Remove the
 `<script>` tag before deploying — it has no effect in production but is a
 wasted request.
 
+## Server-Side Rendering
+
+`dist/nexa-server.js` re-exports `renderToString` and `hydrate` from the core
+— a separate entry point so a non-browser runtime (or the browser) imports
+only what it needs.
+
+```js
+import { renderToString } from "./dist/nexa-server.js";
+
+const html = renderToString(App);                    // a component
+const html = renderToString(App, { title: "Home" });  // with root props
+const html = renderToString(h("main", null, "Hi"));   // a vnode
+```
+
+Server mode runs the same hooks the client does, with a few rules: `useState`/
+`useReducer` return their **initial** value; `useMemo`/`useCallback`/`useRef`/
+`useContext` work normally; `useEffect` does **not** run — keep browser-only
+work (fetch, timers, `window`, `localStorage`) inside effects. All text and
+attribute values are HTML-escaped (no injection); event handlers and `ref`s
+are omitted, since the client wires those up on hydration.
+
+```js
+import { hydrate } from "./dist/nexa-server.js";
+
+// The server sent `<div id="app">${renderToString(App)}</div>`
+hydrate(App, document.getElementById("app"));
+// Reuses the existing DOM nodes in place, attaching handlers/refs. Falls back
+// to a clean client render if hydration throws. See examples/ssr for the
+// full round-trip in the browser.
+```
+
 ## Components API
 
 All components are pure functions that return virtual nodes and work with any
@@ -671,6 +737,7 @@ version of Nexa.
 
 | Component | Key props |
 |---|---|
+| `Accordion` | `items` (`{ key, title, children, disabled? }`), `multiple`, `defaultOpen`/`open`, `onToggle` |
 | `Alert` | `variant` (info · success · warning · danger), `title` |
 | `Badge` | — |
 | `Button` | `variant` (text · contained · tonal · danger), `type`, `disabled` |
@@ -681,6 +748,8 @@ version of Nexa.
 | `Collapse` | `title`, `defaultOpen`/`open`, `onToggle`, `actions`, `badge` |
 | `Combobox` | `id`, `label`, `options`, `value`, `onChange`, `searchPlaceholder` |
 | `ContextMenu` | `open`, `x`, `y`, `items`, `onClose` — pairs with `useContextMenu` |
+| `DataTable` | `columns`, `rows`, `pageSize`, `sortable`, `page`/`onPageChange`, `onSort` — `Table` + `Pagination` combined, sorts the full row set then renders only the current page |
+| `DatePicker` | `label`, `value` (`"YYYY-MM-DD"` \| `null`), `onChange`, `min`/`max`, `placeholder` — trigger button + one-month calendar popover |
 | `Dialog` | `open`, `title`, `onClose`, `actions` |
 | `Drawer` | `open`, `side` (left · right), `width`, `title`, `onClose` |
 | `Dropdown` | `trigger`, `items` (`{ key, label, onClick, danger, divider }`), `align` |
@@ -688,10 +757,13 @@ version of Nexa.
 | `FileDropZone` | `onFiles`, `accept`, `multiple`, `progress`, `label`, `hint` |
 | `FormField` | `id`, `label`, `help`, `error` |
 | `IconButton` | `label`, `variant` |
+| `Menu` | `trigger`, `items` (`{ key, label, onClick, danger, divider, children }`) — like `Dropdown`, but any item can nest a `children` array to open a flyout submenu at any depth |
 | `Navbar` | `brand`, `items`, `actions`, `defaultOpen`/`open`, `onToggle` — collapses into a hamburger menu below 768px |
 | `Pagination` | `page`, `total`, `siblings`, `onChange` |
 | `Progress` | `value`, `max`, `label` |
+| `RangeSlider` | `label`, `min`/`max`/`step`, `value` (`[lower, upper]`), `onChange`, `showValue`, `minLabel`/`maxLabel` — dual-thumb range; each thumb clamps against the other |
 | `Select` | `id`, `label`, `options`, `value`, `onChange` |
+| `Slider` | `label`, `min`/`max`/`step`, `value`, `onInput`, `showValue` — wraps a native `<input type="range">` |
 | `Spinner` | `label` |
 | `Stepper` | `steps`, `activeStep`, `orientation` (horizontal · vertical) |
 | `Switch` | `id`, `label`, `checked`, `onChange`, `disabled` |
@@ -964,7 +1036,7 @@ as quoted string keys exactly as the SVG spec writes them, the same way
 
 ## Status
 
-Nexa `0.3.0` covers:
+Nexa `0.8.0` covers:
 
 **Engine**
 - Function components with local hook state and multiple independent roots
@@ -982,6 +1054,8 @@ Nexa `0.3.0` covers:
 - `createPortal` — render a subtree into an arbitrary DOM node; unmount cleans up the target
 - `createLazy` — dynamic `import()` with fallback UI; re-renders all roots on load
 - `useId` — stable, unique string ID per component instance
+- `useRoutes` + `matchPath` — nested routes with path params, an `outlet` prop, and `lazy: () => import(...)` per route
+- `renderToString` + `hydrate` (`dist/nexa-server.js`) — server-side rendering with HTML-escaped output, plus client-side hydration that adopts the server DOM in place
 
 **Mobile hooks**
 - `useSwipe`, `useLongPress`, `useNetworkStatus`, `useOrientation`, `useVibrate`
@@ -995,13 +1069,15 @@ Nexa `0.3.0` covers:
 - `useWebSocket` — managed WebSocket connection with auto-reconnect
 - `useVirtualList` — windowed rendering for large lists
 
-**Components (40)**
-- General UI: `Alert`, `Badge`, `Button`, `Card`, `Checkbox`, `Chip`, `CodeEditor`,
-  `Collapse`, `Combobox`, `ContextMenu`, `Dialog`, `Drawer`, `Dropdown`, `EmptyState`,
-  `FileDropZone`, `FormField`, `IconButton`, `Navbar`, `Pagination`, `Progress`,
-  `Select`, `Spinner`, `Stepper`, `Switch`, `Table`, `TabPanel`, `Tabs`, `Textarea`,
+**Components (47)**
+- General UI: `Accordion`, `Alert`, `Badge`, `Button`, `Card`, `Checkbox`, `Chip`,
+  `CodeEditor`, `Collapse`, `Combobox`, `ContextMenu`, `DataTable`, `DatePicker`,
+  `Dialog`, `Drawer`, `Dropdown`, `EmptyState`, `FileDropZone`, `FormField`,
+  `IconButton`, `Menu`, `Navbar`, `Pagination`, `Progress`, `RangeSlider`, `Select`,
+  `Slider`, `Spinner`, `Stepper`, `Switch`, `Table`, `TabPanel`, `Tabs`, `Textarea`,
   `TextField`, `Toast`, `ToastStack`, `Tooltip`
-- Mobile shell: `AppBar`, `BottomNav`, `BottomSheet`, `FAB`, `SwipeableListItem`, `ThemeToggle`
+- Mobile shell: `AppBar`, `BottomNav`, `BottomSheet`, `FAB`, `SpeedDial`,
+  `SwipeableListItem`, `ThemeToggle`, `PaletteSwitcher`, `DesignSwitcher`
 
 **Canvas & Editor add-ons**
 - `PipelineCanvas` — SVG node editor with drag, pan, zoom, mini-map, undo/redo
