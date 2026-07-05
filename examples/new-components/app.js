@@ -1,5 +1,5 @@
 import { h, render, useToast, useRouter } from "/dist/nexa.js";
-import { Navbar, ThemeToggle, PaletteSwitcher, DesignSwitcher, ToastStack } from "/dist/nexa-components.js";
+import { Navbar, ThemeToggle, PaletteSwitcher, DesignSwitcher, ToastStack, Menu, Button } from "/dist/nexa-components.js";
 
 import { PageSwitches }    from "./components/switches/PageSwitches.js";
 import { PageCombobox }    from "./components/PageCombobox.js";
@@ -15,9 +15,22 @@ import { PageMenu }        from "./components/PageMenu.js";
 import { PageDataTable }   from "./components/PageDataTable.js";
 import { PageDatePicker }  from "./components/PageDatePicker.js";
 
+const MORE_PAGES = [
+  { key: "context",    label: "Context Menu",         path: "/context" },
+  { key: "filedrop",   label: "File Drop",            path: "/filedrop" },
+  { key: "editor",     label: "Code Editor",          path: "/editor" },
+  { key: "toasts",     label: "Toasts & Dialog",      path: "/toasts" },
+  { key: "accordion",  label: "Accordion",            path: "/accordion" },
+  { key: "slider",     label: "Slider / RangeSlider", path: "/slider" },
+  { key: "menu",       label: "Menu",                 path: "/menu" },
+  { key: "datatable",  label: "DataTable",            path: "/datatable" },
+  { key: "datepicker", label: "DatePicker",           path: "/datepicker" },
+];
+
 function App() {
   const { path, navigate } = useRouter();
   const { toasts, toast }  = useToast();
+  const isMorePageActive = MORE_PAGES.some((p) => p.path === path);
 
   return h(
     "div",
@@ -26,21 +39,18 @@ function App() {
     h(Navbar, {
       brand: h("span", { style: { fontWeight: 900, fontSize: "1.1rem" } }, "⬡ Nexa Demo"),
       items: [
-        { icon: h("i", { className: "bi bi-toggle-on"    }), label: "Switch & Collapse", href: "#/switches",  active: path === "/switches" || path === "/" },
-        { icon: h("i", { className: "bi bi-menu-button"  }), label: "Combobox",          href: "#/combobox",  active: path === "/combobox" },
-        { icon: h("i", { className: "bi bi-list-ul"      }), label: "Context Menu",      href: "#/context",   active: path === "/context"  },
-        { icon: h("i", { className: "bi bi-cloud-upload" }), label: "File Drop",         href: "#/filedrop",  active: path === "/filedrop" },
-        { icon: h("i", { className: "bi bi-code-slash"   }), label: "Code Editor",       href: "#/editor",    active: path === "/editor"   },
-        { icon: h("i", { className: "bi bi-bell"         }), label: "Toasts & Dialog",   href: "#/toasts",    active: path === "/toasts"   },
-        { icon: h("i", { className: "bi bi-stars"        }), label: "New UI",             href: "#/newui",     active: path === "/newui"    },
-        { icon: h("i", { className: "bi bi-postcard"     }), label: "Cards",              href: "#/cards",     active: path === "/cards"    },
-        { icon: h("i", { className: "bi bi-chevron-expand" }), label: "Accordion",        href: "#/accordion", active: path === "/accordion" },
-        { icon: h("i", { className: "bi bi-sliders"      }), label: "Slider",             href: "#/slider",    active: path === "/slider"    },
-        { icon: h("i", { className: "bi bi-list-nested"  }), label: "Menu",               href: "#/menu",      active: path === "/menu"      },
-        { icon: h("i", { className: "bi bi-table"        }), label: "DataTable",          href: "#/datatable", active: path === "/datatable" },
-        { icon: h("i", { className: "bi bi-calendar3"    }), label: "DatePicker",         href: "#/datepicker", active: path === "/datepicker" },
+        { icon: h("i", { className: "bi bi-toggle-on" }), label: "Switch & Collapse", href: "#/switches", active: path === "/switches" || path === "/" },
+        { icon: h("i", { className: "bi bi-menu-button" }), label: "Combobox",        href: "#/combobox", active: path === "/combobox" },
+        { icon: h("i", { className: "bi bi-stars" }),     label: "New UI",             href: "#/newui",    active: path === "/newui" },
+        { icon: h("i", { className: "bi bi-postcard" }),  label: "Cards",              href: "#/cards",    active: path === "/cards" },
       ],
       actions: [
+        h(Menu, {
+          key: "more",
+          trigger: h(Button, { variant: isMorePageActive ? "tonal" : "text" }, "More ▾"),
+          align: "right",
+          items: MORE_PAGES.map((p) => ({ key: p.key, label: p.label, onClick: () => navigate(p.path) })),
+        }),
         h(DesignSwitcher, { key: "design" }),
         h(PaletteSwitcher, { key: "palette" }),
         h(ThemeToggle, { key: "theme" }),
