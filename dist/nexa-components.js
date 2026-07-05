@@ -2244,3 +2244,122 @@ export function Stepper({ steps = [], activeStep = 0, orientation = "horizontal"
     }),
   );
 }
+
+// ── Slider / RangeSlider ────────────────────────────────────
+//
+// Thin wrapper around native <input type="range"> (keeps free keyboard
+// support — arrow keys/Home/End/PageUp/PageDown all work without extra
+// code) plus FormField's label/help/error chrome and an optional live
+// value readout.
+
+export function Slider({
+  id,
+  label,
+  help,
+  error,
+  required = false,
+  showValue = false,
+  min = 0,
+  max = 100,
+  step = 1,
+  value,
+  className = "",
+  inputClassName = "",
+  ...props
+} = {}) {
+  const helpId = help ? `${id}-help` : undefined;
+  const errorId = error ? `${id}-error` : undefined;
+
+  return h(
+    FormField,
+    { id, label, help, error, required, className },
+    h(
+      "div",
+      { className: "m-slider" },
+      h("input", {
+        ...props,
+        id,
+        type: "range",
+        min,
+        max,
+        step,
+        value,
+        required,
+        className: joinClasses("m-slider-input", inputClassName),
+        ariaInvalid: error ? "true" : undefined,
+        ariaDescribedby: joinClasses(helpId, errorId) || undefined,
+      }),
+      showValue && h("output", { className: "m-slider-value", htmlFor: id }, String(value)),
+    ),
+  );
+}
+
+// RangeSlider — two native range inputs stacked in the same track (the
+// standard dual-thumb trick: both span the full width, and CSS gives
+// pointer-events only to each thumb so either one can be dragged
+// independently). value/onChange use a [lower, upper] tuple; each input
+// clamps against the other so lower can never cross upper.
+export function RangeSlider({
+  id,
+  label,
+  help,
+  error,
+  required = false,
+  showValue = false,
+  min = 0,
+  max = 100,
+  step = 1,
+  value = [min, max],
+  onChange,
+  minLabel = "Minimum",
+  maxLabel = "Maximum",
+  className = "",
+  inputClassName = "",
+  ...props
+} = {}) {
+  const [lower, upper] = value;
+  const helpId = help ? `${id}-help` : undefined;
+  const errorId = error ? `${id}-error` : undefined;
+  const describedBy = joinClasses(helpId, errorId) || undefined;
+
+  return h(
+    FormField,
+    { id, label, help, error, required, className },
+    h(
+      "div",
+      { className: "m-slider m-slider-range" },
+      h(
+        "div",
+        { className: "m-slider-range-track" },
+        h("input", {
+          ...props,
+          id,
+          type: "range",
+          min,
+          max,
+          step,
+          value: lower,
+          ariaLabel: minLabel,
+          ariaInvalid: error ? "true" : undefined,
+          ariaDescribedby: describedBy,
+          className: joinClasses("m-slider-input", inputClassName),
+          onInput: (e) => onChange?.([Math.min(Number(e.target.value), upper), upper]),
+        }),
+        h("input", {
+          ...props,
+          type: "range",
+          min,
+          max,
+          step,
+          value: upper,
+          ariaLabel: maxLabel,
+          ariaInvalid: error ? "true" : undefined,
+          ariaDescribedby: describedBy,
+          className: joinClasses("m-slider-input", inputClassName),
+          onInput: (e) => onChange?.([lower, Math.max(Number(e.target.value), lower)]),
+        }),
+      ),
+      showValue && h("output", { className: "m-slider-value" }, `${lower} – ${upper}`),
+    ),
+  );
+}

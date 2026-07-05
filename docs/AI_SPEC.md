@@ -1038,6 +1038,27 @@ h(CodeEditor, {
   theme: 'default',
   options: {},          // passed through to the underlying editor
 })
+
+// Slider — wraps a native <input type="range"> (free keyboard support)
+h(Slider, {
+  label: 'Volume',
+  min: 0, max: 100, step: 1,
+  value: volume,
+  onInput: (e) => setVolume(Number(e.target.value)),
+  showValue: true,   // shows the current numeric value next to the track
+})
+
+// RangeSlider — dual-thumb range, value/onChange use a [lower, upper] tuple
+h(RangeSlider, {
+  label: 'Price range',
+  min: 0, max: 1000, step: 10,
+  value: [priceMin, priceMax],
+  onChange: ([lo, hi]) => { setPriceMin(lo); setPriceMax(hi); },
+  showValue: true,
+})
+// Each thumb clamps against the other (lower can never cross upper) and has
+// its own aria-label ("Minimum"/"Maximum" by default, override with
+// minLabel/maxLabel) since there's no single native element to label both.
 ```
 
 ### Feedback

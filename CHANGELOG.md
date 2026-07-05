@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+- `Slider` and `RangeSlider` in `nexa-components.js`. `Slider` wraps a native `<input type="range">` in `FormField`'s label/help/error chrome (free keyboard support — arrows/Home/End/PageUp/PageDown), with an optional `showValue` readout. `RangeSlider` stacks two native range inputs on one track for a dual-thumb control (`value`/`onChange` use a `[lower, upper]` tuple); each thumb clamps against the other so they can never cross, and each has its own `aria-label` (`minLabel`/`maxLabel`, default "Minimum"/"Maximum") since no single native element can label both. New CSS in `nexa-ui.css` (`.m-slider`, `.m-slider-input` incl. `-webkit`/`-moz` thumb/track pseudo-elements, `.m-slider-range-track`). TypeScript declarations in `dist/nexa-components.d.ts`; documented in `docs/AI_SPEC.md` §9; tests in `tests/coverage.test.js`.
+
 ### Fixed
 - `scripts/validate_nexa.py` no longer flags `examples/burger-shop-fastapi/static/index.html`'s `/static/styles.css` and `/static/app.js` refs as missing. Root-relative `/static/...` paths now resolve against the nearest ancestor directory literally named `static/` (the FastAPI `StaticFiles` mount convention used by that example) instead of the repo root.
 - `examples/ssr`'s "Server HTML string" preview box referenced `--m-surface-alt`, a CSS custom property that doesn't exist in `nexa-ui.css`, so it always fell back to a light background even in dark mode while the text inherited the theme's light `--m-text` — effectively invisible white-on-white. Now uses the real `--m-surface-muted` token (which does switch with the theme) plus an explicit `color`.

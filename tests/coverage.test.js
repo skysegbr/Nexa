@@ -5,7 +5,7 @@
 
 import { h, render, useState } from "../dist/nexa.js";
 import { useFetch, useLocalStorage, useTheme, usePalette, useDesign, useToast } from "../dist/nexa.js";
-import { Table, Dialog, Drawer, Button, Accordion, Stepper, Pagination, FileDropZone, Navbar } from "../dist/nexa-components.js";
+import { Table, Dialog, Drawer, Button, Accordion, Stepper, Pagination, FileDropZone, Navbar, Slider, RangeSlider } from "../dist/nexa-components.js";
 import { test, assert, assertEqual, mountPoint, flush } from "./runner.js";
 
 // ── useFetch ────────────────────────────────────────────────────────────────
@@ -798,4 +798,84 @@ test("Navbar: Escape and an outside click both close the open menu", async () =>
     !container.querySelector(".m-navbar").className.includes("m-navbar-open"),
     "clicking outside the nav closes the menu",
   );
+});
+
+// ── Slider ────────────────────────────────────────────────────────────────
+
+test("Slider: renders a native range input wired to min/max/step/value and shows the value when asked", async () => {
+  const container = mountPoint();
+  let received;
+
+  function Widget() {
+    const [value, setValue] = useState(40);
+    return h(Slider, {
+      label: "Volume",
+      min: 0,
+      max: 100,
+      step: 5,
+      value,
+      showValue: true,
+      onInput: (e) => { received = Number(e.target.value); setValue(Number(e.target.value)); },
+    });
+  }
+
+  render(Widget, container);
+  await flush();
+
+  const input = container.querySelector(".m-slider-input");
+  assertEqual(input.type, "range");
+  assertEqual(input.min, "0");
+  assertEqual(input.max, "100");
+  assertEqual(input.step, "5");
+  assertEqual(input.value, "40");
+  assertEqual(container.querySelector(".m-slider-value").textContent, "40");
+
+  input.value = "65";
+  input.dispatchEvent(new Event("input", { bubbles: true }));
+  await flush();
+
+  assertEqual(received, 65);
+  assertEqual(container.querySelector(".m-slider-value").textContent, "65");
+});
+
+// ── RangeSlider ───────────────────────────────────────────────────────────
+
+test("RangeSlider: renders two thumbs and clamps each against the other", async () => {
+  const container = mountPoint();
+  let received;
+
+  function Widget() {
+    const [value, setValue] = useState([20, 80]);
+    return h(RangeSlider, {
+      label: "Price range",
+      min: 0,
+      max: 100,
+      value,
+      showValue: true,
+      onChange: (next) => { received = next; setValue(next); },
+    });
+  }
+
+  render(Widget, container);
+  await flush();
+
+  const inputs = container.querySelectorAll(".m-slider-input");
+  assertEqual(inputs.length, 2);
+  assertEqual(inputs[0].value, "20");
+  assertEqual(inputs[1].value, "80");
+  assertEqual(inputs[0].ariaLabel, "Minimum");
+  assertEqual(inputs[1].ariaLabel, "Maximum");
+  assertEqual(container.querySelector(".m-slider-value").textContent, "20 – 80");
+
+  inputs[0].value = "50";
+  inputs[0].dispatchEvent(new Event("input", { bubbles: true }));
+  await flush();
+  assertEqual(received[0], 50);
+  assertEqual(received[1], 80);
+
+  inputs[1].value = "30";
+  inputs[1].dispatchEvent(new Event("input", { bubbles: true }));
+  await flush();
+  assertEqual(received[0], 50, "the lower thumb clamps the upper thumb's new value");
+  assertEqual(received[1], 50, "upper can't go below the current lower value");
 });

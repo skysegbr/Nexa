@@ -546,3 +546,42 @@ export declare function Stepper(props?: {
   orientation?: "horizontal" | "vertical";
   className?: string;
 } & ExtraProps): VNode;
+
+// ── Slider / RangeSlider ───────────────────────────────────────────────────
+
+export declare function Slider(props?: {
+  id?: string;
+  label?: string;
+  help?: string;
+  error?: string;
+  required?: boolean;
+  /** Shows the current numeric value next to the track. */
+  showValue?: boolean;
+  min?: number;
+  max?: number;
+  step?: number;
+  value?: number;
+  className?: string;
+  inputClassName?: string;
+} & ExtraProps): VNode;
+
+export declare function RangeSlider(props?: {
+  id?: string;
+  label?: string;
+  help?: string;
+  error?: string;
+  required?: boolean;
+  showValue?: boolean;
+  min?: number;
+  max?: number;
+  step?: number;
+  /** `[lower, upper]`. Defaults to `[min, max]`. */
+  value?: [number, number];
+  onChange?: (value: [number, number]) => void;
+  /** aria-label for the lower thumb. Defaults to "Minimum". */
+  minLabel?: string;
+  /** aria-label for the upper thumb. Defaults to "Maximum". */
+  maxLabel?: string;
+  className?: string;
+  inputClassName?: string;
+} & ExtraProps): VNode;
