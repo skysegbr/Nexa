@@ -26,6 +26,7 @@ Core ideas:
 /dist/nexa-components.js   ← UI component library (~40 components)
 /dist/nexa-ui.css          ← design system CSS (required for components to look right)
 /dist/nexa-bootstrap.css   ← optional Bootstrap 5 visual skin (opt-in, see §9)
+/dist/nexa-server.js       ← server-side rendering entry (renderToString)
 /dist/nexa-hmr.js          ← HMR client (dev only — injected by server.py)
 /dist/nexa-canvas.js       ← SVG pipeline canvas (PipelineCanvasController)
 /dist/nexa-canvas.css      ← styles for nexa-canvas
@@ -409,6 +410,41 @@ resolved via `createLazy` and cached per route object so its load state survives
 re-renders), `fallback` (shown while a `lazy` route loads), and `children`.
 `useRoutes` calls `useRouter` internally; for `navigate` in the same component,
 call `useRouter()` alongside it (both stay in sync).
+
+### `renderToString` (server-side rendering)
+
+```js
+// From the SSR entry (works in the browser and in Deno/Bun/Node — no build).
+import { renderToString } from '/dist/nexa-server.js';
+
+const html = renderToString(App);                 // a component
+const html = renderToString(App, { title: 'Home' }); // with root props
+const html = renderToString(h('main', { className: 'm-page' }, 'Hi')); // a vnode
+
+// Typical server response:
+//   `<!doctype html><html><body><div id="app">${renderToString(App)}</div>
+//    <script type="module" src="/app.js"></script></body></html>`
+// The client then `render(App, document.getElementById('app'))` takes over.
+```
+
+Server mode runs the same hooks the client does, with these rules:
+
+- `useState` / `useReducer` return their **initial** value; `useMemo` /
+  `useCallback` / `useRef` / `useContext` work normally; `useId` is stable.
+- `useEffect` effects **do not run** — put side effects and browser-only work
+  (fetch, timers, subscriptions, DOM/`window`/`localStorage` access) in effects,
+  which are client-only. A hook that reads a browser global *during render*
+  (e.g. `useMediaQuery`, `useRouter`, `useWebSocket`) can't run on a non-browser
+  runtime.
+- Attribute names map exactly as on the client (`className`→`class`,
+  `htmlFor`→`for`, `aria*`→`aria-*`, `style` objects → CSS strings, `dataset`
+  → `data-*`). All text and attribute values are **HTML-escaped** (no injection).
+- Event handlers (`onClick`, …) and `ref`s are omitted — the client wires those
+  up when it renders. Portals render their children inline.
+
+This is phase 1: HTML generation for SEO / first paint. DOM hydration (adopting
+the server markup instead of re-creating it) is not implemented yet — the client
+`render()` currently replaces the server HTML on mount.
 
 ### `useTheme`
 

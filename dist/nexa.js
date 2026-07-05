@@ -2276,3 +2276,167 @@ export function useVirtualList(items, { itemHeight, overscan = 3 } = {}) {
 
   return { containerRef, virtualItems, totalHeight, startIndex, endIndex };
 }
+
+// ── renderToString (server-side rendering) ─────────────────
+//
+// Renders a component (or a prebuilt vnode) to an HTML string, without a DOM.
+// It runs the same component + hook machinery the client uses, in a server
+// mode where:
+//   - useState / useReducer return their initial value,
+//   - useMemo / useCallback / useRef / useContext work normally,
+//   - useEffect effects DO NOT run — side effects and browser-only work
+//     belong in effects, which are client-only,
+//   - useId produces stable ids.
+//
+// Attributes serialize with the exact same name mapping the client DOM uses
+// (className→class, htmlFor→for, aria*→aria-*, style objects, dataset), and
+// all text and attribute values are HTML-escaped, so dynamic content can't
+// inject markup.
+//
+// Event handlers (onClick, ...) are omitted — they get wired up on the client.
+// Hooks that read browser globals during render (window, document,
+// localStorage, matchMedia, WebSocket, ...) are not usable on a non-browser
+// runtime; keep that access inside effects.
+//
+// Usage:
+//   import { renderToString } from "/dist/nexa-server.js";
+//   const html = renderToString(App);
+//   const html = renderToString(App, { title: "Home" });
+//   const html = renderToString(h("main", { className: "m-page" }, "Hi"));
+
+const VOID_ELEMENTS = new Set([
+  "area", "base", "br", "col", "embed", "hr", "img", "input",
+  "link", "meta", "param", "source", "track", "wbr",
+]);
+
+export function renderToString(input, props) {
+  const tree = typeof input === "function"
+    ? renderComponentToTree(input, props || {})
+    : normalizeTree(input);
+
+  let html = "";
+  for (const node of tree) {
+    html += serializeVNode(node);
+  }
+  return html;
+}
+
+function renderComponentToTree(component, props) {
+  const root = createRoot(component, null);
+  const previousRoot = currentRenderRoot;
+  const previousOwner = currentHookOwner;
+
+  prepareHookOwner(root);
+  root.pendingEffects = [];
+  currentRenderRoot = root;
+  currentHookOwner = root;
+
+  try {
+    return normalizeTree(component(props));
+  } finally {
+    // Effects are intentionally never flushed on the server; the synthetic
+    // root is discarded once serialization completes.
+    currentRenderRoot = previousRoot;
+    currentHookOwner = previousOwner;
+  }
+}
+
+function serializeVNode(vnode) {
+  if (vnode.type === TEXT_NODE) {
+    return escapeText(vnode.props.nodeValue);
+  }
+
+  // Portals have no DOM target on the server — render their children inline so
+  // content is not lost (position differs from the client; hydration
+  // reconciles it later).
+  if (vnode.type === PORTAL) {
+    return serializeChildren(vnode.props.children);
+  }
+
+  const tag = vnode.type;
+  const attributes = serializeAttributes(vnode.props);
+
+  if (VOID_ELEMENTS.has(tag)) {
+    return `<${tag}${attributes}>`;
+  }
+
+  return `<${tag}${attributes}>${serializeChildren(vnode.props.children)}</${tag}>`;
+}
+
+function serializeChildren(children) {
+  let out = "";
+  for (const child of children) {
+    out += serializeVNode(child);
+  }
+  return out;
+}
+
+function serializeAttributes(props) {
+  const parts = [];
+
+  for (const name of Object.keys(props)) {
+    if (name === "children" || name === "key" || name === "ref") continue;
+
+    const value = props[name];
+
+    // Event handlers are client-only.
+    if (name.startsWith("on") && typeof value === "function") continue;
+
+    if (value === null || value === undefined || value === false) continue;
+
+    if (name === "style") {
+      const style = styleToString(value);
+      if (style) parts.push(`style="${escapeAttribute(style)}"`);
+      continue;
+    }
+
+    if (name === "dataset" && value && typeof value === "object") {
+      for (const [key, dataValue] of Object.entries(value)) {
+        if (dataValue === null || dataValue === undefined) continue;
+        parts.push(`data-${camelToKebab(key)}="${escapeAttribute(String(dataValue))}"`);
+      }
+      continue;
+    }
+
+    const attribute = attributeAlias(name);
+
+    if (value === true) {
+      parts.push(attribute);
+      continue;
+    }
+
+    parts.push(`${attribute}="${escapeAttribute(String(value))}"`);
+  }
+
+  return parts.length ? " " + parts.join(" ") : "";
+}
+
+function styleToString(style) {
+  if (!style) return "";
+  if (typeof style === "string") return style;
+
+  const parts = [];
+  for (const [name, value] of Object.entries(style)) {
+    if (value === null || value === undefined) continue;
+    const property = name.startsWith("--") ? name : camelToKebab(name);
+    parts.push(`${property}: ${value}`);
+  }
+  return parts.join("; ");
+}
+
+function camelToKebab(name) {
+  return name.replace(/[A-Z]/g, (match) => "-" + match.toLowerCase());
+}
+
+function escapeText(value) {
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+function escapeAttribute(value) {
+  // Escape &, <, > via escapeText, then the double-quote separately with
+  // split/join (a `/"/g` regex literal trips some naive JS scanners).
+  return escapeText(value).split('"').join("&quot;");
+}

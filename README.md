@@ -22,6 +22,8 @@ Three optional add-ons build on top of that core:
   assets in `assets/codemirror/` (no CDN).
 - `dist/nexa-bootstrap.css` — optional Bootstrap 5 visual skin, switched at
   runtime with `useDesign()`. See [Design](#design) below.
+- `dist/nexa-server.js` — server-side rendering entry: `renderToString(App)`
+  produces an HTML string (SEO / first paint), no DOM and no build required.
 
 ## Logo Meaning
 

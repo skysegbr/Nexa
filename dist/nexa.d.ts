@@ -762,3 +762,27 @@ export declare function useVirtualList<T>(
   startIndex: number;
   endIndex: number;
 };
+
+// ── renderToString (SSR) ────────────────────────────────────────────────────
+
+/**
+ * Render a component (or a prebuilt vnode) to an HTML string, with no DOM.
+ *
+ * Runs the same hook machinery as the client in server mode: `useState` /
+ * `useReducer` return initial values, `useMemo` / `useCallback` / `useRef` /
+ * `useContext` work normally, `useId` is stable, and `useEffect` effects do
+ * NOT run. Attribute names map exactly as on the client (className→class,
+ * htmlFor→for, aria*→aria-*, style objects, dataset). Text and attribute
+ * values are HTML-escaped; event handlers and refs are omitted.
+ *
+ * Also exported from `dist/nexa-server.js`.
+ *
+ * @example
+ * const html = renderToString(App);
+ * const html = renderToString(App, { title: "Home" });
+ * const html = renderToString(h("main", { className: "m-page" }, "Hi"));
+ */
+export declare function renderToString(
+  input: Component | VNode,
+  props?: Record<string, unknown>,
+): string;
