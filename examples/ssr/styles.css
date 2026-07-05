@@ -40,7 +40,8 @@
   padding: 0.9rem;
   overflow-x: auto;
   border-radius: var(--m-radius, 0.5rem);
-  background: var(--m-surface-alt, #f5f5f5);
+  background: var(--m-surface-muted, #f5f5f5);
+  color: var(--m-text, #18212b);
   border: 1px solid var(--m-border, #ddd);
   font-size: 0.8rem;
   white-space: pre-wrap;
