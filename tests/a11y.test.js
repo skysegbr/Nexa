@@ -1,8 +1,6 @@
 // Keyboard, focus-management, and ARIA tests for the interactive components
 // audited for accessibility: BottomSheet, Dropdown, ContextMenu, Combobox,
-// Tooltip, Tabs/TabPanel. Dialog and Drawer already had full coverage
-// (focus trap, initial focus, restoration) before this audit and are not
-// re-tested here.
+// Tooltip, Tabs/TabPanel, Dialog, Drawer.
 
 import { h, render, useState } from "../dist/nexa.js";
 import {
@@ -13,6 +11,8 @@ import {
   Tooltip,
   Tabs,
   TabPanel,
+  Dialog,
+  Drawer,
   Button,
 } from "../dist/nexa-components.js";
 import { test, assert, assertEqual, mountPoint, flush } from "./runner.js";
@@ -285,4 +285,92 @@ test("Tabs: roving tabindex, arrow keys move focus and selection, aria linkage m
   );
   assert(container.querySelector("#panel-b"), "the newly selected tab's panel is now rendered");
   assertEqual(container.querySelector("#panel-a"), null, "the previous panel is no longer rendered");
+});
+
+// ── Dialog ──────────────────────────────────────────────────────────────────
+
+test("Dialog: focuses first element on open, traps Tab, restores focus on close", async () => {
+  let setOpenFn;
+  const container = mountPoint();
+
+  function Wrapper() {
+    const [open, setOpen] = useState(false);
+    setOpenFn = setOpen;
+    return h(
+      "div",
+      null,
+      h("button", { id: "opener" }, "Open"),
+      h(
+        Dialog,
+        { open, title: "Confirm", onClose: () => setOpen(false) },
+        h("button", null, "First"),
+        h("button", null, "Second"),
+      ),
+    );
+  }
+
+  render(Wrapper, container);
+  await flush();
+
+  const opener = container.querySelector("#opener");
+  opener.focus();
+
+  setOpenFn(true);
+  await flush();
+
+  const buttons = Array.from(container.querySelectorAll(".m-dialog button"));
+  assertEqual(buttons.length, 3, "close button + First + Second");
+  assertEqual(document.activeElement, buttons[0], "initial focus lands on the first focusable element");
+
+  buttons[buttons.length - 1].focus();
+  keydown(document, "Tab");
+  assertEqual(document.activeElement, buttons[0], "Tab from the last element wraps to the first");
+
+  keydown(document, "Escape");
+  await flush();
+  assertEqual(document.activeElement, opener, "Escape closes the dialog and restores focus to the opener");
+});
+
+// ── Drawer ──────────────────────────────────────────────────────────────────
+
+test("Drawer: focuses first element on open, traps Tab, restores focus on close", async () => {
+  let setOpenFn;
+  const container = mountPoint();
+
+  function Wrapper() {
+    const [open, setOpen] = useState(false);
+    setOpenFn = setOpen;
+    return h(
+      "div",
+      null,
+      h("button", { id: "opener" }, "Open"),
+      h(
+        Drawer,
+        { open, title: "Menu", onClose: () => setOpen(false) },
+        h("button", null, "First"),
+        h("button", null, "Second"),
+      ),
+    );
+  }
+
+  render(Wrapper, container);
+  await flush();
+
+  const opener = container.querySelector("#opener");
+  opener.focus();
+
+  setOpenFn(true);
+  await flush();
+
+  const buttons = Array.from(container.querySelectorAll(".m-drawer button"));
+  assertEqual(buttons.length, 3, "close button + First + Second");
+  assertEqual(document.activeElement, buttons[0], "initial focus lands on the first focusable element");
+
+  buttons[buttons.length - 1].focus();
+  keydown(document, "Tab");
+  assertEqual(document.activeElement, buttons[0], "Tab from the last element wraps to the first");
+
+  keydown(document, "Escape");
+  await flush();
+  assertEqual(document.activeElement, opener, "Escape closes the drawer and restores focus to the opener");
 });
