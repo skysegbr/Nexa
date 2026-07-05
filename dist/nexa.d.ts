@@ -786,3 +786,18 @@ export declare function renderToString(
   input: Component | VNode,
   props?: Record<string, unknown>,
 ): string;
+
+/**
+ * Hydrate server-rendered HTML (from {@link renderToString}) in `container`:
+ * adopt the existing DOM in place, attaching event handlers, refs, and any
+ * missing attributes instead of recreating nodes. Only mismatches are rebuilt.
+ * If hydration throws, it recovers with a clean client render.
+ *
+ * The container's markup must be renderToString's own (compact) output.
+ * Portals are not hydrated (created fresh). Also exported from
+ * `dist/nexa-server.js`.
+ *
+ * @example
+ * hydrate(App, document.getElementById("app"));
+ */
+export declare function hydrate(component: Component, container: Element): void;

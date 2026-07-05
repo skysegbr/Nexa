@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Nexa — SSR + hydrate</title>
+    <link rel="icon" type="image/png" href="/assets/nexa-logo-dark-bg.png" />
+    <link rel="stylesheet" href="/dist/nexa-ui.css" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <!-- #app receives server-rendered HTML (from renderToString) before the
+         client hydrates it. Everything below #app is demo chrome. -->
+    <main id="app"></main>
+
+    <p id="status" class="ssr-status"></p>
+
+    <details class="ssr-source-wrap">
+      <summary>Server HTML string (from <code>renderToString</code>)</summary>
+      <pre id="source" class="ssr-source"></pre>
+    </details>
+
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

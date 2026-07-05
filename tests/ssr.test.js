@@ -9,6 +9,7 @@ import {
   createContext,
   useContext,
   renderToString,
+  hydrate,
 } from "../dist/nexa.js";
 import { test, assert, assertEqual, mountPoint, flush } from "./runner.js";
 
@@ -135,3 +136,104 @@ test("renderToString output matches the client-rendered DOM", async () => {
 
   assertEqual(ssr.innerHTML, client.innerHTML);
 });
+
+// ── hydrate ─────────────────────────────────────────────────────────────────────
+
+test("hydrate: adopts existing DOM nodes and wires up event handlers", async () => {
+  function App() {
+    const [n, setN] = useState(0);
+    return h(
+      "div",
+      null,
+      h("span", { className: "val" }, String(n)),
+      h("button", { onClick: () => setN((v) => v + 1) }, "inc"),
+    );
+  }
+
+  const container = mountPoint();
+  container.innerHTML = renderToString(App); // simulate server-delivered HTML
+  const spanBefore = container.querySelector(".val");
+  const buttonBefore = container.querySelector("button");
+  assertEqual(spanBefore.textContent, "0");
+
+  hydrate(App, container);
+  await flush();
+
+  // the same DOM nodes are reused, not recreated
+  assert(container.querySelector(".val") === spanBefore, "span should be adopted, not recreated");
+  assert(container.querySelector("button") === buttonBefore, "button should be adopted, not recreated");
+
+  buttonBefore.click();
+  await flush();
+  assertEqual(container.querySelector(".val").textContent, "1");
+});
+
+test("hydrate: splits adjacent server text nodes so later updates patch cleanly", async () => {
+  function App() {
+    const [n, setN] = useState(3);
+    return h(
+      "p",
+      null,
+      "count: ",
+      String(n),
+      h("button", { onClick: () => setN((v) => v + 1) }, "+"),
+    );
+  }
+
+  const container = mountPoint();
+  container.innerHTML = renderToString(App); // "<p>count: 3<button>+</button></p>"
+  assertEqual(container.querySelector("p").firstChild.nodeType, 3);
+
+  hydrate(App, container);
+  await flush();
+  // p.textContent includes the button's "+"
+  assertEqual(container.querySelector("p").textContent, "count: 3+");
+
+  container.querySelector("button").click();
+  await flush();
+  assertEqual(container.querySelector("p").textContent, "count: 4+");
+});
+
+test("hydrate: handles falsey children (empty text nodes) and later toggles", async () => {
+  function App() {
+    const [show, setShow] = useState(false);
+    return h(
+      "div",
+      null,
+      show && h("span", { className: "flag" }, "on"),
+      h("button", { onClick: () => setShow(true) }, "toggle"),
+    );
+  }
+
+  const container = mountPoint();
+  container.innerHTML = renderToString(App); // "<div><button>toggle</button></div>"
+  hydrate(App, container);
+  await flush();
+  assert(container.querySelector(".flag") === null, "hidden content stays absent after hydration");
+
+  container.querySelector("button").click();
+  await flush();
+  assert(container.querySelector(".flag") !== null, "toggled content appears after hydration");
+  assertEqual(container.querySelector(".flag").textContent, "on");
+});
+
+test("hydrate: a post-hydration update keeps the same root element", async () => {
+  function App() {
+    const [n, setN] = useState(0);
+    return h("section", { className: "root" }, h("button", { onClick: () => setN((v) => v + 1) }, String(n)));
+  }
+
+  const container = mountPoint();
+  container.innerHTML = renderToString(App);
+  const rootBefore = container.querySelector(".root");
+
+  hydrate(App, container);
+  await flush();
+
+  container.querySelector("button").click();
+  await flush();
+
+  assert(container.querySelector(".root") === rootBefore, "root element should persist across updates");
+  assertEqual(container.querySelector("button").textContent, "1");
+});
+

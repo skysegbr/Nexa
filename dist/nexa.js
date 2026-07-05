@@ -2440,3 +2440,144 @@ function escapeAttribute(value) {
   // split/join (a `/"/g` regex literal trips some naive JS scanners).
   return escapeText(value).split('"').join("&quot;");
 }
+
+// ── hydrate (SSR phase 2) ──────────────────────────────────
+//
+// Adopts server-rendered HTML (from renderToString) instead of recreating it:
+// runs the component once, then walks the existing DOM in tandem with the new
+// vdom, reusing element and text nodes in place while attaching event handlers,
+// refs, and any missing attributes. Only mismatches are (re)created.
+//
+// Expects the container's markup to be renderToString's own (compact) output.
+// Two text-node subtleties are handled: the browser merges adjacent server
+// text into one node (split back apart with splitText), and empty text nodes
+// (`cond && h(...)` when false) are absent in the HTML (inserted here) — so the
+// hydrated DOM ends up structurally identical to a fresh client render, and all
+// later updates patch normally. Portals are not hydrated (created fresh). If
+// hydration throws, it recovers with a clean client render.
+//
+// Usage:
+//   import { hydrate } from "/dist/nexa-server.js";
+//   hydrate(App, document.getElementById("app"));
+
+export function hydrate(component, container) {
+  if (typeof component !== "function") {
+    throw new TypeError("hydrate expects a component as its first argument.");
+  }
+
+  if (roots.get(container)) {
+    // Already mounted here — just re-render normally.
+    render(component, container);
+    return;
+  }
+
+  const root = createRoot(component, container);
+  roots.set(container, root);
+  liveRoots.add(root);
+
+  prepareHookOwner(root);
+  root.pendingEffects = [];
+  const previousRoot = currentRenderRoot;
+  const previousOwner = currentHookOwner;
+  currentRenderRoot = root;
+  currentHookOwner = root;
+
+  let newTree;
+  try {
+    newTree = normalizeTree(root.component());
+    cleanupUnusedChildren(root);
+  } finally {
+    currentRenderRoot = previousRoot;
+    currentHookOwner = previousOwner;
+  }
+
+  try {
+    hydrateChildren(container, newTree);
+    root.oldTree = newTree;
+    runEffects(root);
+  } catch (error) {
+    console.error("Nexa: hydration failed — falling back to a clean client render.", error);
+    container.textContent = "";
+    root.oldTree = [];
+    scheduleRender(root);
+  }
+}
+
+function hydrateChildren(parent, newChildren) {
+  const doms = Array.from(parent.childNodes);
+  let index = 0;
+
+  for (const newChild of newChildren) {
+    index = hydrateNode(parent, doms, index, newChild);
+  }
+
+  // Remove any leftover server nodes the new tree didn't claim.
+  for (let i = index; i < doms.length; i += 1) {
+    if (doms[i].parentNode === parent) {
+      parent.removeChild(doms[i]);
+    }
+  }
+}
+
+function hydrateNode(parent, doms, index, vnode) {
+  const reference = doms[index] || null;
+
+  // Portals aren't hydrated — create fresh, consuming no server node.
+  if (vnode.type === PORTAL) {
+    parent.insertBefore(createDom(vnode, parent), reference);
+    return index;
+  }
+
+  if (vnode.type === TEXT_NODE) {
+    const value = vnode.props.nodeValue;
+
+    // Empty text nodes have no server markup — insert one to keep alignment.
+    if (value === "") {
+      const node = document.createTextNode("");
+      parent.insertBefore(node, reference);
+      vnode._dom = node;
+      return index;
+    }
+
+    const candidate = doms[index];
+    if (candidate && candidate.nodeType === 3) {
+      if (candidate.data === value) {
+        vnode._dom = candidate;
+        return index + 1;
+      }
+      // Adjacent text was merged by the parser — split this node's tail off so
+      // the following text vnode can adopt it.
+      if (candidate.data.startsWith(value)) {
+        const tail = candidate.splitText(value.length);
+        doms.splice(index + 1, 0, tail);
+        vnode._dom = candidate;
+        return index + 1;
+      }
+      // Content differs — reconcile in place.
+      candidate.data = value;
+      vnode._dom = candidate;
+      return index + 1;
+    }
+
+    const node = document.createTextNode(value);
+    parent.insertBefore(node, reference);
+    vnode._dom = node;
+    return index;
+  }
+
+  // Element.
+  const candidate = doms[index];
+  if (candidate && candidate.nodeType === 1 && candidate.localName === vnode.type) {
+    vnode._dom = candidate;
+    updateDom(candidate, {}, vnode.props);
+    hydrateChildren(candidate, vnode.props.children);
+    if (vnode.type === "select" && "value" in vnode.props) {
+      candidate.value = vnode.props.value;
+    }
+    return index + 1;
+  }
+
+  // No matching node — create fresh, consuming no server node.
+  parent.insertBefore(createDom(vnode, parent), reference);
+  return index;
+}

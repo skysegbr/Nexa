@@ -193,6 +193,7 @@ python -m http.server 8080
 |---|---|
 | [examples/intro](./examples/intro) | Minimal screen: `h`, `render`, `useState`, `useEffect`, dark mode |
 | [examples/minified](./examples/minified) | Runs the minified build (`/dist/nexa.min.js`, `nexa-ui.min.css`) with `useRoutes` nested routing — same API as the readable sources |
+| [examples/ssr](./examples/ssr) | Full SSR round-trip in the browser: `renderToString(App)` → inject as server HTML → `hydrate(App, #app)` adopts the DOM and wires up handlers |
 | [examples/basic](./examples/basic) | Counter using `nexa-components.js` and `ThemeToggle` |
 | [examples/core](./examples/core) | Engine playground: `useMemo`, `useCallback`, `useRef`, `dataset`, keyed lists |
 | [examples/form](./examples/form) | Controlled fields, validation, loading submit, reset, `useForm` |

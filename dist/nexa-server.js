@@ -8,4 +8,4 @@
 //   const html = renderToString(App);
 //
 // See the `renderToString` docs in dist/nexa.js and docs/AI_SPEC.md §6.
-export { renderToString } from "./nexa.js";
+export { renderToString, hydrate } from "./nexa.js";

@@ -440,11 +440,27 @@ Server mode runs the same hooks the client does, with these rules:
   `htmlFor`→`for`, `aria*`→`aria-*`, `style` objects → CSS strings, `dataset`
   → `data-*`). All text and attribute values are **HTML-escaped** (no injection).
 - Event handlers (`onClick`, …) and `ref`s are omitted — the client wires those
-  up when it renders. Portals render their children inline.
+  up when it hydrates. Portals render their children inline.
 
-This is phase 1: HTML generation for SEO / first paint. DOM hydration (adopting
-the server markup instead of re-creating it) is not implemented yet — the client
-`render()` currently replaces the server HTML on mount.
+**Hydration** — adopt the server HTML instead of recreating it:
+
+```js
+import { hydrate } from '/dist/nexa-server.js';
+
+// The server sent `<div id="app">${renderToString(App)}</div>`.
+hydrate(App, document.getElementById('app'));
+// Reuses the existing DOM nodes in place, attaching event handlers, refs, and
+// any missing attributes. Only mismatches are rebuilt. After this, updates
+// (setState) patch exactly as with render().
+```
+
+`hydrate(App, container)` expects the container's markup to be `renderToString`'s
+own (compact) output. It transparently handles the two text-node quirks of SSR
+— adjacent text merged by the parser (split back apart) and empty text nodes
+from falsey children (`cond && h(...)`, absent in the HTML) — so the hydrated
+DOM ends up identical to a fresh client render. Portals are not hydrated (created
+fresh). If hydration throws, it falls back to a clean client render. See
+`examples/ssr` for the full round-trip in the browser.
 
 ### `useTheme`
 
