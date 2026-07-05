@@ -4009,3 +4009,10 @@ textarea.m-field {
   flex-shrink: 0;
   color: var(--m-text-muted);
 }
+
+/* ── DataTable ─────────────────────────────────────────── */
+
+.m-data-table-pagination {
+  margin-top: var(--m-space-4);
+  justify-content: center;
+}

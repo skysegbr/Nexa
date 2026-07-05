@@ -2578,3 +2578,160 @@ export function Menu({
       }),
   );
 }
+
+// ── DataTable ────────────────────────────────────────────────
+//
+// Table + Pagination combined: sorts the full row set, then renders only
+// the current page. Table alone can't do this — its sort state lives
+// entirely inside it, invisible to whatever would need to slice by page —
+// so DataTable owns sorting itself and renders its own header/body (same
+// markup/classes as Table) instead of wrapping it. Column shape and the
+// sort algorithm match Table exactly.
+//
+// Props:
+//   columns      [{ key, header, align?, render?, sortable? }]
+//   rows         full (unsliced) row data
+//   pageSize     rows per page (default 10)
+//   page         controlled current page (1-based); omit for uncontrolled
+//   onPageChange (page) => void
+//   sortable     enable header sort (default true)
+//   defaultSort  { key, dir } — initial sort, uncontrolled
+//   onSort       ({ key, dir }) => void
+//   getRowKey    (row, index) => key
+
+export function DataTable({
+  columns = [],
+  rows = [],
+  pageSize = 10,
+  page,
+  onPageChange,
+  sortable = true,
+  defaultSort,
+  onSort,
+  getRowKey = (row, index) => row.id ?? index,
+  emptyTitle = "No rows",
+  emptyDescription = "Try changing the filters.",
+  className = "",
+  ...props
+} = {}) {
+  const [sort, setSort] = useState(defaultSort ?? { key: null, dir: "asc" });
+  const [internalPage, setInternalPage] = useState(1);
+  const currentPage = page !== undefined ? page : internalPage;
+
+  const setPage = (next) => {
+    if (page === undefined) setInternalPage(next);
+    onPageChange?.(next);
+  };
+
+  const sortedRows = useMemo(() => {
+    if (!sortable || !sort.key) return rows;
+    return [...rows].sort((a, b) => {
+      const av = a[sort.key] ?? "";
+      const bv = b[sort.key] ?? "";
+      const cmp = String(av).localeCompare(String(bv), undefined, { numeric: true });
+      return sort.dir === "asc" ? cmp : -cmp;
+    });
+  }, [rows, sort, sortable]);
+
+  const totalPages = Math.max(1, Math.ceil(sortedRows.length / pageSize));
+  const safePage = Math.min(totalPages, Math.max(1, currentPage));
+  const pageRows = sortedRows.slice((safePage - 1) * pageSize, safePage * pageSize);
+
+  const handleSort = (key) => {
+    if (!sortable) return;
+    const next = { key, dir: sort.key === key && sort.dir === "asc" ? "desc" : "asc" };
+    setSort(next);
+    onSort?.(next);
+    setPage(1);
+  };
+
+  return h(
+    "div",
+    { className: joinClasses("m-data-table", className) },
+    h(
+      "div",
+      { className: "m-table-wrap" },
+      h(
+        "table",
+        { ...props, className: "m-table" },
+        h(
+          "thead",
+          null,
+          h(
+            "tr",
+            null,
+            columns.map((column) =>
+              h(
+                "th",
+                {
+                  key: column.key,
+                  scope: "col",
+                  className: joinClasses(
+                    column.align === "right" && "m-table-cell-right",
+                    sortable && column.sortable !== false && "m-table-th-sortable",
+                    sortable && sort.key === column.key && "m-table-th-sorted",
+                  ),
+                  onClick: sortable && column.sortable !== false
+                    ? () => handleSort(column.key)
+                    : undefined,
+                  ariaSort: sort.key === column.key
+                    ? sort.dir === "asc" ? "ascending" : "descending"
+                    : undefined,
+                },
+                column.header,
+                sortable && column.sortable !== false && h(
+                  "span",
+                  { className: "m-table-sort-icon", ariaHidden: "true" },
+                  sort.key === column.key
+                    ? sort.dir === "asc" ? "↑" : "↓"
+                    : "↕",
+                ),
+              ),
+            ),
+          ),
+        ),
+        pageRows.length > 0
+          ? h(
+              "tbody",
+              null,
+              pageRows.map((row, rowIndex) =>
+                h(
+                  "tr",
+                  { key: getRowKey(row, rowIndex) },
+                  columns.map((column) =>
+                    h(
+                      "td",
+                      {
+                        key: column.key,
+                        className: column.align === "right" && "m-table-cell-right",
+                      },
+                      column.render ? column.render(row, rowIndex) : row[column.key],
+                    ),
+                  ),
+                ),
+              ),
+            )
+          : h(
+              "tbody",
+              null,
+              h(
+                "tr",
+                null,
+                h(
+                  "td",
+                  { colSpan: columns.length || 1 },
+                  h(EmptyState, { title: emptyTitle, description: emptyDescription }),
+                ),
+              ),
+            ),
+      ),
+    ),
+    sortedRows.length > pageSize &&
+      h(Pagination, {
+        className: "m-data-table-pagination",
+        page: safePage,
+        total: totalPages,
+        onChange: setPage,
+      }),
+  );
+}

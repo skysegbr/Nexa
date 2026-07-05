@@ -5,7 +5,7 @@
 
 import { h, render, useState } from "../dist/nexa.js";
 import { useFetch, useLocalStorage, useTheme, usePalette, useDesign, useToast } from "../dist/nexa.js";
-import { Table, Dialog, Drawer, Button, Accordion, Stepper, Pagination, FileDropZone, Navbar, Slider, RangeSlider, Menu } from "../dist/nexa-components.js";
+import { Table, Dialog, Drawer, Button, Accordion, Stepper, Pagination, FileDropZone, Navbar, Slider, RangeSlider, Menu, DataTable } from "../dist/nexa-components.js";
 import { test, assert, assertEqual, mountPoint, flush } from "./runner.js";
 
 // ── useFetch ────────────────────────────────────────────────────────────────
@@ -1016,4 +1016,113 @@ test("Menu: Escape closes the whole menu and returns focus to the trigger", asyn
 
   assertEqual(container.querySelector(".m-menu-list"), null, "Escape closes the menu");
   assertEqual(document.activeElement, container.querySelector("button"), "focus returns into the trigger");
+});
+
+// ── DataTable ─────────────────────────────────────────────────────────────
+
+function makeDataTableRows(n) {
+  return Array.from({ length: n }, (_, i) => ({ id: i + 1, name: `Row ${String(i + 1).padStart(2, "0")}` }));
+}
+
+test("DataTable: paginates rows and reports page changes via onPageChange", async () => {
+  const container = mountPoint();
+  let lastPage;
+
+  function Widget() {
+    const [page, setPage] = useState(1);
+    return h(DataTable, {
+      columns: [{ key: "name", header: "Name" }],
+      rows: makeDataTableRows(25),
+      pageSize: 10,
+      page,
+      onPageChange: (p) => { lastPage = p; setPage(p); },
+    });
+  }
+
+  render(Widget, container);
+  await flush();
+
+  let cells = container.querySelectorAll("tbody td");
+  assertEqual(cells.length, 10, "first page shows 10 rows");
+  assertEqual(cells[0].textContent, "Row 01");
+  assertEqual(cells[9].textContent, "Row 10");
+
+  assert(container.querySelector(".m-data-table-pagination"), "renders a pagination footer when rows exceed pageSize");
+  assertEqual(container.querySelectorAll(".m-pagination-item-active")[0].textContent, "1");
+
+  container.querySelector('[aria-label="Next page"]').click();
+  await flush();
+
+  assertEqual(lastPage, 2);
+  cells = container.querySelectorAll("tbody td");
+  assertEqual(cells[0].textContent, "Row 11");
+  assertEqual(cells[9].textContent, "Row 20");
+});
+
+test("DataTable: sortable header click sorts rows and resets to page 1; calls onSort", async () => {
+  const container = mountPoint();
+  let lastSort;
+  const rows = makeDataTableRows(15).reverse(); // Row 15 ... Row 01, unsorted
+
+  function Widget() {
+    return h(DataTable, {
+      columns: [{ key: "name", header: "Name" }],
+      rows,
+      pageSize: 10,
+      onSort: (s) => { lastSort = s; },
+    });
+  }
+
+  render(Widget, container);
+  await flush();
+
+  assertEqual(container.querySelectorAll("tbody td")[0].textContent, "Row 15", "unsorted: rows render in the given order");
+
+  container.querySelector('[aria-label="Next page"]').click();
+  await flush();
+  assertEqual(container.querySelectorAll("tbody td")[0].textContent, "Row 05", "page 2 before sorting");
+
+  container.querySelector("th").click();
+  await flush();
+
+  assertEqual(lastSort.key, "name");
+  assertEqual(lastSort.dir, "asc");
+
+  const cells = container.querySelectorAll("tbody td");
+  assertEqual(cells.length, 10, "sorting resets back to page 1");
+  assertEqual(cells[0].textContent, "Row 01", "ascending sort, first page");
+  assertEqual(container.querySelector("th").getAttribute("aria-sort"), "ascending");
+
+  container.querySelector("th").click();
+  await flush();
+  assertEqual(lastSort.dir, "desc");
+  assertEqual(container.querySelectorAll("tbody td")[0].textContent, "Row 15", "descending sort, first page");
+});
+
+test("DataTable: no pagination footer when rows fit in one page", async () => {
+  const container = mountPoint();
+
+  function Widget() {
+    return h(DataTable, { columns: [{ key: "name", header: "Name" }], rows: makeDataTableRows(5), pageSize: 10 });
+  }
+
+  render(Widget, container);
+  await flush();
+
+  assertEqual(container.querySelector(".m-data-table-pagination"), null);
+  assertEqual(container.querySelectorAll("tbody tr").length, 5);
+});
+
+test("DataTable: shows the empty state when there are no rows", async () => {
+  const container = mountPoint();
+
+  function Widget() {
+    return h(DataTable, { columns: [{ key: "name", header: "Name" }], rows: [], emptyTitle: "Nothing" });
+  }
+
+  render(Widget, container);
+  await flush();
+
+  assert(container.querySelector(".m-empty-state"), "renders EmptyState when rows is empty");
+  assertEqual(container.querySelector(".m-empty-state h2").textContent, "Nothing");
 });

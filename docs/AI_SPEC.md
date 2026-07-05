@@ -943,6 +943,24 @@ h(Table, {
   sortable: true,
   getRowKey: (row) => row.id,
 })
+
+// DataTable — Table + Pagination combined: sorts the full row set, then
+// renders only the current page (Table alone can't paginate — its sort
+// state is internal, invisible to whatever would need to slice by page).
+// Same columns shape as Table.
+h(DataTable, {
+  columns: [
+    { key: 'name', header: 'Name' },
+    { key: 'email', header: 'E-mail' },
+  ],
+  rows: allUsers,       // full, unsliced data
+  pageSize: 10,         // rows per page
+  sortable: true,       // default
+  onSort: (sort) => console.log(sort),       // { key, dir }
+  onPageChange: (page) => console.log(page),
+})
+// Pagination footer only renders when rows.length > pageSize. page/onPageChange
+// let you control the current page; omit page for uncontrolled (starts at 1).
 ```
 
 ### Form

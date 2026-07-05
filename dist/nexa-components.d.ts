@@ -607,3 +607,25 @@ export declare function Menu(props?: {
   align?: "left" | "right";
   className?: string;
 } & ExtraProps): VNode;
+
+// ── DataTable ──────────────────────────────────────────────────────────────
+
+export declare function DataTable<R extends Record<string, unknown> = Record<string, unknown>>(
+  props?: {
+    columns?: TableColumn<R>[];
+    rows?: R[];
+    /** Rows per page. Defaults to 10. */
+    pageSize?: number;
+    /** Controlled current page (1-based). Omit for uncontrolled. */
+    page?: number;
+    onPageChange?: (page: number) => void;
+    /** Enables header-click sorting. Defaults to true. */
+    sortable?: boolean;
+    defaultSort?: TableSort;
+    onSort?: (sort: TableSort) => void;
+    getRowKey?: (row: R, index: number) => string | number;
+    emptyTitle?: string;
+    emptyDescription?: string;
+    className?: string;
+  } & ExtraProps,
+): VNode;
