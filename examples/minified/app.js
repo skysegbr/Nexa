@@ -1,7 +1,7 @@
 // Example: running Nexa from the MINIFIED build.
 //
 // Everything here imports from the *.min.js bundles produced by
-// `python scripts/minify.py` (or `npm run minify`) instead of the readable
+// `python scripts/minify.py` instead of the readable
 // dist/*.js sources. The minifier is safe by construction — same API, same
 // behavior — so this demo also exercises the nested router (useRoutes) to
 // prove features work identically when minified.
