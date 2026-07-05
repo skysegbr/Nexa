@@ -1,5 +1,12 @@
 # Nexa
 
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="./assets/nexa-logo-dark-bg.png">
+    <img src="./assets/nexa-logo-transparent.png" alt="Nexa logo" width="160">
+  </picture>
+</p>
+
 Nexa is a next-generation frontend framework in plain JavaScript. It is designed
 for the browser: no Node, no JSX, no Vite, no Babel, and no build step.
 
