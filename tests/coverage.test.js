@@ -1,9 +1,11 @@
 // Incremental test coverage for hooks/components that had none: useFetch,
-// useLocalStorage, Table, Dialog, Drawer (Nexa backlog Task 3).
+// useLocalStorage, Table, Dialog, Drawer, useTheme, usePalette, useDesign,
+// useToast, Accordion, Stepper, Pagination, FileDropZone, Navbar
+// (Nexa backlog Task 3).
 
 import { h, render, useState } from "../dist/nexa.js";
-import { useFetch, useLocalStorage } from "../dist/nexa.js";
-import { Table, Dialog, Drawer, Button } from "../dist/nexa-components.js";
+import { useFetch, useLocalStorage, useTheme, usePalette, useDesign, useToast } from "../dist/nexa.js";
+import { Table, Dialog, Drawer, Button, Accordion, Stepper, Pagination, FileDropZone, Navbar } from "../dist/nexa-components.js";
 import { test, assert, assertEqual, mountPoint, flush } from "./runner.js";
 
 // ── useFetch ────────────────────────────────────────────────────────────────
@@ -310,4 +312,490 @@ test("Drawer: renders side/width/title, closes on backdrop click", async () => {
   await flush();
 
   assertEqual(container.querySelector(".m-drawer"), null, "unmounts once open becomes false");
+});
+
+// ── useTheme ──────────────────────────────────────────────────────────────
+
+test("useTheme: resolves from localStorage, applies data-theme, and setTheme updates both", async () => {
+  const key = "nexa-theme";
+  localStorage.setItem(key, "dark");
+
+  let captured;
+  function Widget() {
+    captured = useTheme();
+    return h("div", null);
+  }
+
+  render(Widget, mountPoint());
+  await flush();
+
+  assertEqual(captured.theme, "dark");
+  assertEqual(document.documentElement.getAttribute("data-theme"), "dark");
+
+  captured.setTheme("light");
+  await flush();
+
+  assertEqual(captured.theme, "light");
+  assertEqual(document.documentElement.getAttribute("data-theme"), "light");
+  assertEqual(localStorage.getItem(key), "light");
+
+  document.documentElement.removeAttribute("data-theme");
+  localStorage.removeItem(key);
+});
+
+test("useTheme: toggleTheme flips the value and stays in sync across instances", async () => {
+  localStorage.setItem("nexa-theme", "light");
+
+  let a, b;
+  function Widget() {
+    a = useTheme();
+    b = useTheme();
+    return h("div", null);
+  }
+
+  render(Widget, mountPoint());
+  await flush();
+
+  assertEqual(a.theme, "light");
+  a.toggleTheme();
+  await flush();
+
+  assertEqual(a.theme, "dark", "toggling flips from light to dark");
+  assertEqual(b.theme, "dark", "the other instance picks up the change via the nexa:themechange event");
+
+  document.documentElement.removeAttribute("data-theme");
+  localStorage.removeItem("nexa-theme");
+});
+
+// ── usePalette ────────────────────────────────────────────────────────────
+
+test('usePalette: defaults to "default", setPalette persists and applies data-palette, unknown values ignored', async () => {
+  localStorage.removeItem("nexa-palette");
+  localStorage.removeItem("nexa-palette-custom-color");
+
+  let captured;
+  function Widget() {
+    captured = usePalette();
+    return h("div", null);
+  }
+
+  render(Widget, mountPoint());
+  await flush();
+
+  assertEqual(captured.palette, "default");
+  assertEqual(captured.palettes.length, 7);
+
+  captured.setPalette("violet");
+  await flush();
+
+  assertEqual(captured.palette, "violet");
+  assertEqual(document.documentElement.getAttribute("data-palette"), "violet");
+  assertEqual(localStorage.getItem("nexa-palette"), "violet");
+
+  captured.setPalette("not-a-real-palette");
+  await flush();
+  assertEqual(captured.palette, "violet", "unknown palettes are ignored");
+
+  document.documentElement.removeAttribute("data-palette");
+  localStorage.removeItem("nexa-palette");
+});
+
+test('usePalette: setCustomColor switches to the "custom" palette and sets --m-primary; invalid hex is ignored', async () => {
+  localStorage.removeItem("nexa-palette");
+  localStorage.removeItem("nexa-palette-custom-color");
+
+  let captured;
+  function Widget() {
+    captured = usePalette();
+    return h("div", null);
+  }
+
+  render(Widget, mountPoint());
+  await flush();
+
+  captured.setCustomColor("#7c3aed");
+  await flush();
+
+  assertEqual(captured.palette, "custom");
+  assertEqual(captured.customColor, "#7c3aed");
+  assertEqual(document.documentElement.style.getPropertyValue("--m-primary").trim(), "#7c3aed");
+
+  captured.setCustomColor("not-a-hex");
+  await flush();
+  assertEqual(captured.customColor, "#7c3aed", "invalid hex values are ignored");
+
+  document.documentElement.removeAttribute("data-palette");
+  document.documentElement.style.removeProperty("--m-primary");
+  localStorage.removeItem("nexa-palette");
+  localStorage.removeItem("nexa-palette-custom-color");
+});
+
+// ── useDesign ─────────────────────────────────────────────────────────────
+
+test('useDesign: defaults to "nexa", setDesign persists and applies data-design, unknown values ignored', async () => {
+  localStorage.removeItem("nexa-design");
+
+  let captured;
+  function Widget() {
+    captured = useDesign();
+    return h("div", null);
+  }
+
+  render(Widget, mountPoint());
+  await flush();
+
+  assertEqual(captured.design, "nexa");
+  assertEqual(captured.designs.length, 2);
+
+  captured.setDesign("bootstrap");
+  await flush();
+
+  assertEqual(captured.design, "bootstrap");
+  assertEqual(document.documentElement.getAttribute("data-design"), "bootstrap");
+  assertEqual(localStorage.getItem("nexa-design"), "bootstrap");
+
+  captured.setDesign("not-a-real-design");
+  await flush();
+  assertEqual(captured.design, "bootstrap", "unknown designs are ignored");
+
+  document.documentElement.removeAttribute("data-design");
+  localStorage.removeItem("nexa-design");
+});
+
+// ── useToast ──────────────────────────────────────────────────────────────
+
+test('useToast: push adds a toast per variant (error maps to "danger"), dismiss removes it', async () => {
+  let captured;
+  function Widget() {
+    captured = useToast();
+    return h("div", null);
+  }
+
+  render(Widget, mountPoint());
+  await flush();
+
+  assertEqual(captured.toasts.length, 0);
+
+  const id = captured.toast.success("Saved!", { title: "Done" });
+  await flush();
+
+  assertEqual(captured.toasts.length, 1);
+  assertEqual(captured.toasts[0].id, id);
+  assertEqual(captured.toasts[0].variant, "success");
+  assertEqual(captured.toasts[0].message, "Saved!");
+  assertEqual(captured.toasts[0].title, "Done");
+  assertEqual(captured.toasts[0].duration, 3500, "defaults to a 3500ms duration");
+
+  captured.toast.error("Broken", { duration: 1000 });
+  await flush();
+  assertEqual(captured.toasts.length, 2);
+  assertEqual(captured.toasts[1].variant, "danger", 'error() maps to the "danger" variant');
+  assertEqual(captured.toasts[1].duration, 1000);
+
+  captured.dismiss(id);
+  await flush();
+  assertEqual(captured.toasts.length, 1);
+  assertEqual(captured.toasts[0].variant, "danger");
+});
+
+// ── Accordion ─────────────────────────────────────────────────────────────
+
+test("Accordion: single-open mode closes the previous item; disabled items don't toggle", async () => {
+  const container = mountPoint();
+  let lastToggle;
+
+  function Widget() {
+    return h(Accordion, {
+      items: [
+        { key: "a", title: "A", children: h("p", null, "A body") },
+        { key: "b", title: "B", children: h("p", null, "B body") },
+        { key: "c", title: "C", children: h("p", null, "C body"), disabled: true },
+      ],
+      onToggle: (key, next) => { lastToggle = { key, next }; },
+    });
+  }
+
+  render(Widget, container);
+  await flush();
+
+  const headers = container.querySelectorAll(".m-accordion-header");
+  assertEqual(headers.length, 3);
+  assertEqual(headers[0].getAttribute("aria-expanded"), "false");
+
+  headers[0].click();
+  await flush();
+  assertEqual(headers[0].getAttribute("aria-expanded"), "true");
+  assertEqual(lastToggle.key, "a");
+  assertEqual(lastToggle.next.length, 1);
+
+  headers[1].click();
+  await flush();
+  assertEqual(headers[0].getAttribute("aria-expanded"), "false", "opening b closes a in single-open mode");
+  assertEqual(headers[1].getAttribute("aria-expanded"), "true");
+
+  assert(headers[2].disabled, "disabled item's button is disabled");
+  headers[2].click();
+  await flush();
+  assertEqual(headers[2].getAttribute("aria-expanded"), "false", "disabled items never toggle");
+});
+
+test("Accordion: multiple=true allows several panels open independently", async () => {
+  const container = mountPoint();
+
+  function Widget() {
+    return h(Accordion, {
+      multiple: true,
+      items: [
+        { key: "a", title: "A", children: "A body" },
+        { key: "b", title: "B", children: "B body" },
+      ],
+    });
+  }
+
+  render(Widget, container);
+  await flush();
+
+  const headers = container.querySelectorAll(".m-accordion-header");
+  headers[0].click();
+  await flush();
+  headers[1].click();
+  await flush();
+
+  assertEqual(headers[0].getAttribute("aria-expanded"), "true");
+  assertEqual(headers[1].getAttribute("aria-expanded"), "true", "both stay open in multiple mode");
+});
+
+// ── Stepper ───────────────────────────────────────────────────────────────
+
+test("Stepper: marks completed steps with a check, the current step, and omits the trailing connector line", async () => {
+  const container = mountPoint();
+
+  function Widget() {
+    return h(Stepper, {
+      activeStep: 1,
+      steps: [
+        { label: "Account" },
+        { label: "Profile", description: "Add your details" },
+        { label: "Done" },
+      ],
+    });
+  }
+
+  render(Widget, container);
+  await flush();
+
+  const steps = container.querySelectorAll(".m-step");
+  assertEqual(steps.length, 3);
+  assert(steps[0].className.includes("m-step-done"), "step before activeStep is done");
+  assert(steps[1].className.includes("m-step-current"), "activeStep is current");
+  assert(!steps[2].className.includes("m-step-done") && !steps[2].className.includes("m-step-current"));
+
+  assertEqual(steps[0].querySelector(".m-step-check").textContent, "✓");
+  assertEqual(steps[1].querySelector(".m-step-number").textContent, "2");
+  assertEqual(steps[1].querySelector(".m-step-desc").textContent, "Add your details");
+
+  assertEqual(
+    container.querySelectorAll(".m-step-line").length,
+    2,
+    "one connector line between each pair of steps, none trailing the last",
+  );
+});
+
+// ── Pagination ────────────────────────────────────────────────────────────
+
+test("Pagination: renders ellipsis ranges, marks the current page, and reports clicks via onChange", async () => {
+  const container = mountPoint();
+  let lastPage;
+
+  function Widget() {
+    return h(Pagination, { page: 5, total: 10, onChange: (p) => { lastPage = p; } });
+  }
+
+  render(Widget, container);
+  await flush();
+
+  const ellipses = container.querySelectorAll(".m-pagination-ellipsis");
+  assertEqual(ellipses.length, 2, "both left and right ellipsis show up when page 5 of 10 has room on both sides");
+
+  const current = container.querySelector(".m-pagination-item-active");
+  assertEqual(current.textContent, "5");
+  assertEqual(current.getAttribute("aria-current"), "page");
+
+  const prev = container.querySelector('[aria-label="Previous page"]');
+  const next = container.querySelector('[aria-label="Next page"]');
+  assert(!prev.disabled && !next.disabled, "neither edge button is disabled mid-range");
+
+  next.click();
+  await flush();
+  assertEqual(lastPage, 6);
+
+  prev.click();
+  await flush();
+  assertEqual(lastPage, 4);
+
+  current.click();
+  await flush();
+  assertEqual(lastPage, 5);
+});
+
+test("Pagination: disables Previous on page 1 and Next on the last page", async () => {
+  const container = mountPoint();
+
+  function Widget() {
+    return h(Pagination, { page: 1, total: 3 });
+  }
+
+  render(Widget, container);
+  await flush();
+
+  assert(container.querySelector('[aria-label="Previous page"]').disabled);
+  assert(!container.querySelector('[aria-label="Next page"]').disabled);
+});
+
+// ── FileDropZone ──────────────────────────────────────────────────────────
+
+test("FileDropZone: drag state toggles the active class, and dropping files calls onFiles", async () => {
+  const container = mountPoint();
+  let received;
+
+  function Widget() {
+    return h(FileDropZone, { onFiles: (files) => { received = files; } });
+  }
+
+  render(Widget, container);
+  await flush();
+
+  const zone = container.querySelector(".m-file-dropzone");
+
+  zone.dispatchEvent(new Event("dragover", { bubbles: true, cancelable: true }));
+  await flush();
+  assert(zone.className.includes("m-dropzone-active"), "dragover marks the zone active");
+
+  zone.dispatchEvent(new Event("dragleave", { bubbles: true }));
+  await flush();
+  assert(!zone.className.includes("m-dropzone-active"), "dragleave clears the active state");
+
+  const file = new File(["hello"], "hello.txt", { type: "text/plain" });
+  const dropEvent = new Event("drop", { bubbles: true, cancelable: true });
+  dropEvent.dataTransfer = { files: [file] };
+  zone.dispatchEvent(dropEvent);
+  await flush();
+
+  assertEqual(received.length, 1);
+  assertEqual(received[0].name, "hello.txt");
+});
+
+test("FileDropZone: a disabled zone ignores drag state and never calls onFiles", async () => {
+  const container = mountPoint();
+  let called = false;
+
+  function Widget() {
+    return h(FileDropZone, { disabled: true, onFiles: () => { called = true; } });
+  }
+
+  render(Widget, container);
+  await flush();
+
+  const zone = container.querySelector(".m-file-dropzone");
+  assert(zone.className.includes("m-file-dropzone-disabled"));
+
+  zone.dispatchEvent(new Event("dragover", { bubbles: true, cancelable: true }));
+  await flush();
+  assert(!zone.className.includes("m-dropzone-active"), "disabled zone never shows the active drag state");
+
+  const dropEvent = new Event("drop", { bubbles: true, cancelable: true });
+  dropEvent.dataTransfer = { files: [new File(["x"], "x.txt")] };
+  zone.dispatchEvent(dropEvent);
+  await flush();
+  assert(!called, "disabled zone drops nothing");
+});
+
+// ── Navbar ────────────────────────────────────────────────────────────────
+
+test("Navbar: the toggle button opens/closes the menu with correct aria-expanded/aria-label", async () => {
+  const container = mountPoint();
+
+  function Widget() {
+    return h(Navbar, { brand: "Nexa", items: [{ key: "home", label: "Home", href: "#/" }] });
+  }
+
+  render(Widget, container);
+  await flush();
+
+  const toggle = container.querySelector(".m-navbar-toggle");
+  assertEqual(toggle.getAttribute("aria-expanded"), "false");
+  assertEqual(toggle.getAttribute("aria-label"), "Open menu");
+
+  toggle.click();
+  await flush();
+
+  assertEqual(toggle.getAttribute("aria-expanded"), "true");
+  assertEqual(toggle.getAttribute("aria-label"), "Close menu");
+  assert(container.querySelector(".m-navbar").className.includes("m-navbar-open"));
+
+  toggle.click();
+  await flush();
+  assertEqual(toggle.getAttribute("aria-expanded"), "false");
+});
+
+test("Navbar: clicking a nav link closes the menu and invokes the item's own onClick", async () => {
+  const container = mountPoint();
+  let clicked = false;
+
+  function Widget() {
+    return h(Navbar, {
+      items: [{ key: "home", label: "Home", href: "#/", onClick: () => { clicked = true; } }],
+    });
+  }
+
+  render(Widget, container);
+  await flush();
+
+  container.querySelector(".m-navbar-toggle").click();
+  await flush();
+  assert(container.querySelector(".m-navbar").className.includes("m-navbar-open"));
+
+  container.querySelector(".m-navbar-link").click();
+  await flush();
+
+  assert(clicked, "the link's own onClick fires");
+  assert(
+    !container.querySelector(".m-navbar").className.includes("m-navbar-open"),
+    "clicking a link closes the mobile menu",
+  );
+});
+
+test("Navbar: Escape and an outside click both close the open menu", async () => {
+  const container = mountPoint();
+
+  function Widget() {
+    return h(Navbar, { items: [{ key: "home", label: "Home" }] });
+  }
+
+  render(Widget, container);
+  await flush();
+
+  const toggle = container.querySelector(".m-navbar-toggle");
+
+  toggle.click();
+  await flush();
+  assert(container.querySelector(".m-navbar").className.includes("m-navbar-open"));
+
+  document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+  await flush();
+  assert(
+    !container.querySelector(".m-navbar").className.includes("m-navbar-open"),
+    "Escape closes the menu",
+  );
+
+  toggle.click();
+  await flush();
+  assert(container.querySelector(".m-navbar").className.includes("m-navbar-open"));
+
+  document.body.dispatchEvent(new MouseEvent("mousedown", { bubbles: true }));
+  await flush();
+  assert(
+    !container.querySelector(".m-navbar").className.includes("m-navbar-open"),
+    "clicking outside the nav closes the menu",
+  );
 });
