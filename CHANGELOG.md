@@ -34,6 +34,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - `useRoutes(routes, { mode, notFound })` and `matchPath(pattern, path, { end })` in `nexa.js` — nested routing with path params and lazy-per-route on top of `useRouter`. `matchPath` is a segment-based matcher (`:param` captures a URL-decoded segment; a trailing `*` captures the remainder; `{ end: false }` prefix-matches and returns the rest). `useRoutes` resolves the current router path against a nested route config (`{ path, index, component, element, lazy, fallback, children }`), rendering a parent route's matched child through its `outlet` prop and merging parent + child params. `lazy: () => import(...)` routes are resolved via `createLazy` and cached per route object (in a `WeakMap`) so their load state survives re-renders. First matching sibling wins. TypeScript declarations (`matchPath`, `useRoutes`, `RouteObject`, `RouteMatch`) in `dist/nexa.d.ts`; documented in `docs/AI_SPEC.md` §6; tests in `tests/hooks.test.js`.
 - `examples/minified` — a demo that runs the minified build (`/dist/nexa.min.js`, `/dist/nexa-components.min.js`, `/dist/nexa-ui.min.css`) instead of the readable sources, showing the API is identical. Doubles as a live `useRoutes` nested-routing showcase (Home / Counter / About with a `*` catch-all). Listed in the README examples table.
 
+### Changed
+- CI (`.github/workflows/ci.yml`) now runs `python3 scripts/minify.py --check` alongside static validation, so a PR that edits `nexa.js`/`nexa-components.js`/`nexa-ui.css` without regenerating the matching `dist/*.min.*` files fails instead of silently shipping stale minified output.
+
 ## [0.7.2] - 2026-07-04
 
 ### Changed

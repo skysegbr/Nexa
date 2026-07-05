@@ -16,6 +16,8 @@ jobs:
           python-version: "3.12"
       - name: Run static validation
         run: python3 scripts/validate_nexa.py
+      - name: Check minified dist files are up to date
+        run: python3 scripts/minify.py --check
 
   browser-tests:
     name: Browser tests (headless Chromium)
