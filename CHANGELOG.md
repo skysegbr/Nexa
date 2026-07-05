@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-07-05
+
 ### Added
 - Live demos for the four new components in `examples/new-components`: `components/PageSlider.js` (`Slider`, disabled state, `RangeSlider`), `components/PageMenu.js` (`Menu` with nested submenus, plus a right-aligned flat menu), `components/PageDataTable.js` (27-row sortable/paginated dataset), `components/PageDatePicker.js` (`DatePicker` basic/bounded/disabled). Wired into the nav in `app.js` (`#/slider`, `#/menu`, `#/datatable`, `#/datepicker`) and the README examples table.
   - Adding these on top of the existing 9 nav items overflowed `Navbar` onto a second line at common desktop widths (it wraps by design, with no built-in overflow menu). Fixed by dogfooding the new `Menu` component: `app.js`'s `Navbar` no longer uses `items` at all — all 13 example pages (with their icons) now live in one `Menu` dropdown in the navbar's `actions` slot, whose trigger label shows the current page's name (e.g. "DataTable ▾") so it doubles as a "you are here" indicator. Fits on one line down to 1024px wide.
