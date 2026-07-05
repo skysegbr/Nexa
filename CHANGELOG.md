@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+- `scripts/validate_nexa.py` no longer flags `examples/burger-shop-fastapi/static/index.html`'s `/static/styles.css` and `/static/app.js` refs as missing. Root-relative `/static/...` paths now resolve against the nearest ancestor directory literally named `static/` (the FastAPI `StaticFiles` mount convention used by that example) instead of the repo root.
+
 ### Added
 - `hydrate(component, container)` in `nexa.js`, re-exported from `dist/nexa-server.js` — SSR phase 2. Adopts server-rendered HTML (from `renderToString`) in place instead of recreating it: runs the component once, then walks the existing DOM in tandem with the new vdom, reusing element and text nodes while attaching event handlers, refs, and any missing attributes; only mismatches are rebuilt. Transparently handles the two SSR text-node quirks — adjacent text merged by the parser (split apart with `splitText`) and empty text nodes from falsey children (absent in the HTML, inserted here) — so the hydrated DOM ends up identical to a fresh client render and later `setState` updates patch normally. Portals are created fresh (not hydrated); on any hydration error it falls back to a clean client render. TypeScript declaration in `dist/nexa.d.ts` (+ `dist/nexa-server.d.ts`); documented in `docs/AI_SPEC.md` §6; tests in `tests/ssr.test.js`.
 - `examples/ssr` — full SSR round-trip in the browser: `renderToString(App)` produces the HTML string (shown in a collapsible panel), it's injected into `#app` as a server would, then `hydrate(App, #app)` adopts that DOM and wires up the buttons (with a status line confirming the existing nodes were reused). Listed in the README examples table.

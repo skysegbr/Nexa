@@ -348,10 +348,27 @@ def is_local_ref(value: str) -> bool:
 def resolve_ref(root: Path, base: Path, value: str) -> Path:
     path = urlparse(value).path
 
+    if path.startswith("/static/"):
+        # FastAPI examples mount a `static/` directory at the `/static` URL
+        # prefix, and the served index.html lives inside that same directory —
+        # so root-relative refs like `/static/app.js` resolve there, not from
+        # the repo root.
+        static_dir = find_ancestor_dir(base, "static")
+        if static_dir is not None:
+            return static_dir / path[len("/static/"):]
+
     if path.startswith("/"):
         return root / path.lstrip("/")
 
     return (base / path).resolve()
+
+
+def find_ancestor_dir(start: Path, name: str) -> Path | None:
+    for candidate in (start, *start.parents):
+        if candidate.name == name:
+            return candidate
+
+    return None
 def balanced_brackets_error(source: str) -> str | None:
     stack: list[tuple[str, int, int]] = []
     pairs = {"(": ")", "[": "]", "{": "}"}
