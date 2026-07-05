@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-07-05
+
 ### Added
 - 14 new components in `nexa-components.js` (47 → 61 exports), each with CSS in `nexa-ui.css` (where it didn't already exist), TypeScript declarations in `dist/nexa-components.d.ts`, docs in `docs/AI_SPEC.md` §9 + README tables, and tests in `tests/components-new.test.js`:
   - `RadioGroup`/`Radio` — the missing "choose one of N" form control. Native radios sharing a `name` (Arrow-key roving for free), one controlled `value`/`onChange` for the group, `inline` layout option, same label/help/error anatomy as the other fields. `docs/FORMS.md` documents wiring value-based controls to `useForm` via `setValue`.

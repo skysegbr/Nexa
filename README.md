@@ -1082,7 +1082,7 @@ as quoted string keys exactly as the SVG spec writes them, the same way
 
 ## Status
 
-Nexa `0.8.0` covers:
+Nexa `0.9.0` covers:
 
 **Engine**
 - Function components with local hook state and multiple independent roots
