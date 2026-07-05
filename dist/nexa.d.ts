@@ -461,6 +461,68 @@ export declare function useRouter(options?: { mode?: "hash" | "history" }): {
   navigate: (to: string) => void;
 };
 
+// ── matchPath / useRoutes ──────────────────────────────────────────────────
+
+/** Result of a successful matchPath(): captured params plus any remainder. */
+export interface RouteMatch {
+  params: Record<string, string>;
+  rest: string;
+}
+
+/**
+ * Segment-based path matcher.
+ *
+ * - `:name` captures one URL-decoded segment into `params`.
+ * - a trailing `*` segment captures the remaining segments into `params["*"]`.
+ * - `{ end: false }` prefix-matches and returns the remainder in `rest`.
+ *
+ * @example
+ * matchPath("/users/:id", "/users/42")            // { params: { id: "42" }, rest: "" }
+ * matchPath("/users", "/users/42", { end: false }) // { params: {}, rest: "42" }
+ */
+export declare function matchPath(
+  pattern: string,
+  path: string,
+  options?: { end?: boolean },
+): RouteMatch | null;
+
+/** A single (possibly nested) route definition for useRoutes(). */
+export interface RouteObject {
+  /** Path pattern relative to the parent route (supports `:param` and `*`). */
+  path?: string;
+  /** Matches the parent's exact path (empty remainder). */
+  index?: boolean;
+  /** Component rendered with `{ params, outlet }`. */
+  component?: Component<{ params: Record<string, string>; outlet: VNode }>;
+  /** Static vnode, or a builder called with `(params, outlet)`. */
+  element?: VNode | ((params: Record<string, string>, outlet: VNode) => VNode);
+  /** Dynamic import loader; resolved via createLazy and cached per route. */
+  lazy?: () => Promise<{ default: Component } | Component>;
+  /** Fallback shown while a `lazy` route loads. */
+  fallback?: VNode;
+  /** Nested routes; the parent renders its matched child as `outlet`. */
+  children?: RouteObject[];
+}
+
+/**
+ * Resolves the current router path against a nested route config and returns
+ * the element to render. First matching sibling wins.
+ *
+ * @example
+ * const routes = [
+ *   { path: "/", element: h(Home, null) },
+ *   { path: "/users/:id", component: UserLayout, children: [
+ *     { index: true, component: Profile },
+ *     { path: "/posts/:postId", lazy: () => import("./Post.js") },
+ *   ]},
+ * ];
+ * function App() { return useRoutes(routes, { notFound: h(NotFound, null) }); }
+ */
+export declare function useRoutes(
+  routes: RouteObject[],
+  options?: { mode?: "hash" | "history"; notFound?: VNode },
+): VNode;
+
 // ── useTranslation ─────────────────────────────────────────────────────────
 
 /**

@@ -361,6 +361,55 @@ const { path, navigate, params } = useRouter({ mode: 'history' });
 navigate('/dashboard');
 ```
 
+### `useRoutes` / `matchPath` (nested routes + lazy)
+
+```js
+// matchPath(pattern, path, { end }) — segment-based matcher.
+//   ':name' captures one URL-decoded segment; a trailing '*' captures the rest.
+//   { end: false } prefix-matches and returns the remainder in `rest`.
+matchPath('/users/:id', '/users/42')             // → { params: { id: '42' }, rest: '' }
+matchPath('/users/:id', '/users/42/edit')        // → null  (exact match by default)
+matchPath('/files/*', '/files/a/b.png')          // → { params: { '*': 'a/b.png' }, rest: '' }
+matchPath('/users', '/users/42', { end: false }) // → { params: {}, rest: '42' }
+
+// useRoutes(routes, { mode, notFound }) — resolve the current path against a
+// nested route config and return the element to render. First sibling that
+// matches wins, so list specific routes before catch-alls.
+const routes = [
+  { path: '/', element: h(Home, null) },
+  {
+    path: '/users/:id',
+    component: UserLayout,            // rendered with { params, outlet }
+    children: [
+      { index: true, component: Profile },          // matches /users/:id exactly
+      { path: '/posts/:postId', component: Post },  // matches /users/:id/posts/:postId
+      { path: '/settings', lazy: () => import('./Settings.js'), fallback: h(Spinner, null) },
+    ],
+  },
+  { path: '*', component: NotFound },  // catch-all
+];
+
+function App() {
+  return useRoutes(routes, { notFound: h(NotFound, null) });
+}
+
+// A parent route renders its matched child through the `outlet` prop:
+function UserLayout({ params, outlet }) {
+  return h('div', null,
+    h('h1', null, `User ${params.id}`),   // params merge parent + child
+    outlet,                                // nested route element goes here
+  );
+}
+```
+
+Route object fields: `path` (pattern, relative to parent), `index` (matches the
+parent's exact path), `component` (`(props) => vnode`, receives `{ params, outlet }`),
+`element` (a vnode or `(params, outlet) => vnode`), `lazy` (`() => import(...)`,
+resolved via `createLazy` and cached per route object so its load state survives
+re-renders), `fallback` (shown while a `lazy` route loads), and `children`.
+`useRoutes` calls `useRouter` internally; for `navigate` in the same component,
+call `useRouter()` alongside it (both stay in sync).
+
 ### `useTheme`
 
 ```js

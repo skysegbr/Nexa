@@ -190,6 +190,7 @@ python -m http.server 8080
 | Example | What it shows |
 |---|---|
 | [examples/intro](./examples/intro) | Minimal screen: `h`, `render`, `useState`, `useEffect`, dark mode |
+| [examples/minified](./examples/minified) | Runs the minified build (`/dist/nexa.min.js`, `nexa-ui.min.css`) with `useRoutes` nested routing — same API as the readable sources |
 | [examples/basic](./examples/basic) | Counter using `nexa-components.js` and `ThemeToggle` |
 | [examples/core](./examples/core) | Engine playground: `useMemo`, `useCallback`, `useRef`, `dataset`, keyed lists |
 | [examples/form](./examples/form) | Controlled fields, validation, loading submit, reset, `useForm` |

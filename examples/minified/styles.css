@@ -1,0 +1,37 @@
+.mn-page {
+  max-width: 720px;
+  margin-inline: auto;
+}
+
+.mn-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--m-space-4, 1rem);
+}
+
+.mn-nav {
+  display: flex;
+  gap: var(--m-space-3, 0.75rem);
+  flex-wrap: wrap;
+}
+
+.mn-link {
+  padding: 0.35rem 0.75rem;
+  border-radius: var(--m-radius, 0.5rem);
+  color: var(--m-text, inherit);
+  text-decoration: none;
+  border: 1px solid var(--m-border, #ddd);
+}
+
+.mn-link-active {
+  background: var(--m-primary-soft, #e8f6ff);
+  border-color: var(--m-primary, #22a);
+  color: var(--m-primary, #22a);
+  font-weight: 600;
+}
+
+.mn-row {
+  display: flex;
+  gap: var(--m-space-3, 0.75rem);
+}

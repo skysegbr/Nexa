@@ -219,3 +219,166 @@ test("useRouter hash: navigate updates path and re-renders dependent UI", async 
   window.location.hash = prevHash;
   await flush();
 });
+
+// ── matchPath ─────────────────────────────────────────────────────────────────
+
+test("matchPath: static segments match exactly", () => {
+  assert(matchPath("/about", "/about") !== null);
+  assertEqual(matchPath("/about", "/contact"), null);
+  assertEqual(matchPath("/", "/").rest, "");
+});
+
+test("matchPath: :param captures a URL-decoded segment", () => {
+  const m = matchPath("/users/:id", "/users/42");
+  assert(m !== null);
+  assertEqual(m.params.id, "42");
+  const decoded = matchPath("/tags/:name", "/tags/a%20b");
+  assertEqual(decoded.params.name, "a b");
+});
+
+test("matchPath: extra segments fail an exact (end) match", () => {
+  assertEqual(matchPath("/users/:id", "/users/42/edit"), null);
+});
+
+test("matchPath: trailing * captures the remainder", () => {
+  const m = matchPath("/files/*", "/files/a/b.png");
+  assert(m !== null);
+  assertEqual(m.params["*"], "a/b.png");
+});
+
+test("matchPath: { end:false } prefix-matches and returns the rest", () => {
+  const m = matchPath("/users", "/users/42/edit", { end: false });
+  assert(m !== null);
+  assertEqual(m.rest, "42/edit");
+});
+
+// ── useRoutes ─────────────────────────────────────────────────────────────────
+
+test("useRoutes: renders the matching route by path", async () => {
+  const prevHash = window.location.hash;
+  window.location.hash = "#/about";
+  await flush();
+
+  const routes = [
+    { path: "/", element: h("p", null, "home") },
+    { path: "/about", element: h("p", null, "about") },
+  ];
+
+  function App() {
+    return useRoutes(routes);
+  }
+
+  const container = mountPoint();
+  render(App, container);
+  await flush();
+
+  assertEqual(container.querySelector("p").textContent, "about");
+
+  window.location.hash = prevHash;
+  await flush();
+});
+
+test("useRoutes: nested routes render the parent's outlet with merged params", async () => {
+  const prevHash = window.location.hash;
+  window.location.hash = "#/users/42/posts/7";
+  await flush();
+
+  function UsersLayout({ params, outlet }) {
+    return h("section", null, h("span", { className: "uid" }, params.id), outlet);
+  }
+  function Post({ params }) {
+    return h("span", { className: "pid" }, params.postId);
+  }
+
+  const routes = [
+    {
+      path: "/users/:id",
+      component: UsersLayout,
+      children: [{ path: "/posts/:postId", component: Post }],
+    },
+  ];
+
+  function App() {
+    return useRoutes(routes);
+  }
+
+  const container = mountPoint();
+  render(App, container);
+  await flush();
+
+  assertEqual(container.querySelector(".uid").textContent, "42");
+  assertEqual(container.querySelector(".pid").textContent, "7");
+
+  window.location.hash = prevHash;
+  await flush();
+});
+
+test("useRoutes: falls back to notFound when nothing matches", async () => {
+  const prevHash = window.location.hash;
+  window.location.hash = "#/nope";
+  await flush();
+
+  const routes = [{ path: "/home", element: h("p", null, "home") }];
+
+  function App() {
+    return useRoutes(routes, { notFound: h("p", { className: "nf" }, "404") });
+  }
+
+  const container = mountPoint();
+  render(App, container);
+  await flush();
+
+  assertEqual(container.querySelector(".nf").textContent, "404");
+
+  window.location.hash = prevHash;
+  await flush();
+});
+
+test("useRoutes: lazy route shows fallback then the loaded component", async () => {
+  const prevHash = window.location.hash;
+  window.location.hash = "#/lazy";
+  await flush();
+
+  function Loaded() {
+    return h("p", { className: "loaded" }, "loaded");
+  }
+
+  // A deferred promise lets us hold the route in its loading state across a
+  // flush, then resolve it deterministically.
+  let resolveLoader;
+  const loaderPromise = new Promise((resolve) => {
+    resolveLoader = resolve;
+  });
+
+  const routes = [
+    {
+      path: "/lazy",
+      lazy: () => loaderPromise,
+      fallback: h("p", { className: "fallback" }, "loading"),
+    },
+  ];
+
+  function App() {
+    return useRoutes(routes);
+  }
+
+  const container = mountPoint();
+  render(App, container);
+  await flush();
+
+  // still pending → fallback is shown
+  assert(container.querySelector(".fallback") !== null, "expected the lazy fallback while pending");
+  assert(container.querySelector(".loaded") === null, "did not expect the component before resolve");
+
+  // resolve the loader and let the root re-render
+  resolveLoader({ default: Loaded });
+  await flush();
+  await flush();
+
+  assert(container.querySelector(".loaded") !== null, "expected the loaded component after resolve");
+  assert(container.querySelector(".fallback") === null, "expected the fallback gone after resolve");
+
+  window.location.hash = prevHash;
+  await flush();
+});
+
