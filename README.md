@@ -251,6 +251,7 @@ python -m http.server 8080
 | [examples/zoom-stage](./examples/zoom-stage) | `ZoomStage` basics: per-kind frame components behind a `FrameContent` dispatcher, toolbar with progress dots, keyboard navigation |
 | [examples/nexa-deck](./examples/nexa-deck) | Full `ZoomStage` presentation about Nexa: five frame kinds, rotated frames, a zoomed-out overview frame, `nexa-components` toolbar |
 | [examples/nexa-atlas](./examples/nexa-atlas) | Atlas-themed `ZoomStage` tour of Nexa: click any background frame to zoom straight to it, plus a live demo frame running real `useState`/`useTheme` mid-presentation |
+| [examples/nexa-architecture](./examples/nexa-architecture) | Modern `ZoomStage` presentation for solution architects: no-build runtime, technical contracts, integration paths, trade-offs, and adoption guidance |
 | [examples/burger-shop](./examples/burger-shop) | Multi-page ordering flow with a dependency-free Python API: menu, cart/checkout, order tracking with polling, admin panel with product CRUD + image upload. `EmptyMessage`/`StatusBadge` show CSS shared by 2+ components becoming its own paired component instead of a floating class |
 | [examples/burger-shop-fastapi](./examples/burger-shop-fastapi) | Same app as burger-shop, backed by a real FastAPI + SQLModel + SQLite app instead of `http.server` — same frontend, `/dist` mounted straight from the monorepo |
 

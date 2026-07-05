@@ -1,0 +1,261 @@
+@import "./components/CoverFrame.css";
+@import "./components/LensFrame.css";
+@import "./components/MapFrame.css";
+@import "./components/DecisionFrame.css";
+@import "./components/AdoptionFrame.css";
+@import "./components/CodeFrame.css";
+@import "./components/OverviewFrame.css";
+@import "./components/NavDock.css";
+
+:root {
+  --arch-bg: #050b12;
+  --arch-bg-soft: #071721;
+  --arch-text: #f4fbff;
+  --arch-muted: #b4c8d2;
+  --arch-cyan: #23f7ff;
+  --arch-teal: #12cdb8;
+  --arch-emerald: #58ffb3;
+  --arch-violet: #8d6bff;
+  --arch-amber: #ffd166;
+  --arch-panel: rgba(7, 20, 30, 0.72);
+  --arch-panel-strong: rgba(9, 27, 38, 0.88);
+  --arch-border: rgba(102, 244, 255, 0.28);
+  --arch-glow: 0 0 34px rgba(35, 247, 255, 0.22);
+}
+
+* { box-sizing: border-box; }
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  background: var(--arch-bg);
+  color: var(--arch-text);
+  font-family: var(--m-font);
+}
+
+.arch-app {
+  height: 100vh;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 18% 18%, rgba(35, 247, 255, 0.18), transparent 34%),
+    radial-gradient(circle at 86% 78%, rgba(141, 107, 255, 0.17), transparent 32%),
+    linear-gradient(145deg, #02060b 0%, #07141d 52%, #03090f 100%);
+}
+
+.arch-stage {
+  height: 100%;
+}
+
+.arch-stage.m-zoom-stage {
+  background-image:
+    linear-gradient(rgba(35, 247, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(35, 247, 255, 0.05) 1px, transparent 1px),
+    url("./assets/hex-architecture-bg.png");
+  background-position: center, center, center;
+  background-size: 92px 92px, 92px 92px, cover;
+}
+
+.arch-stage.m-zoom-stage::after {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, rgba(2, 6, 11, 0.78), rgba(2, 6, 11, 0.12) 42%, rgba(2, 6, 11, 0.28)),
+    radial-gradient(circle at 50% 50%, transparent 0%, rgba(0, 0, 0, 0.44) 78%);
+  content: "";
+}
+
+.arch-stage .m-zoom-frame {
+  z-index: 1;
+  overflow: hidden;
+  border: 1px solid var(--arch-border);
+  border-radius: 8px;
+  background:
+    linear-gradient(145deg, rgba(10, 30, 42, 0.88), rgba(4, 12, 20, 0.76)),
+    rgba(5, 13, 20, 0.86);
+  box-shadow:
+    0 36px 90px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    var(--arch-glow);
+  color: var(--arch-text);
+  backdrop-filter: blur(18px);
+}
+
+.arch-stage .m-zoom-frame:not(.m-zoom-frame-active) {
+  opacity: 0.28;
+  filter: saturate(0.72) brightness(0.72);
+}
+
+.arch-stage .m-zoom-frame::before {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(120deg, rgba(255, 255, 255, 0.12), transparent 28%),
+    radial-gradient(circle at 88% 14%, rgba(35, 247, 255, 0.2), transparent 34%),
+    linear-gradient(90deg, transparent 0 48%, rgba(35, 247, 255, 0.08) 48% 49%, transparent 49%);
+  content: "";
+}
+
+.arch-stage .m-zoom-frame-active {
+  z-index: 20;
+  opacity: 1;
+  filter: none;
+  border-color: rgba(88, 255, 179, 0.75);
+  box-shadow:
+    0 42px 120px rgba(0, 0, 0, 0.56),
+    0 0 46px rgba(88, 255, 179, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.arch-stage .m-zoom-frame:not(.m-zoom-frame-active):hover {
+  opacity: 0.44;
+  filter: saturate(0.86) brightness(0.84);
+  border-color: rgba(35, 247, 255, 0.66);
+  box-shadow:
+    0 38px 100px rgba(0, 0, 0, 0.48),
+    0 0 36px rgba(35, 247, 255, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+
+.arch-frame-hit {
+  position: relative;
+  z-index: 1;
+  height: 100%;
+}
+
+.arch-frame-hit-idle {
+  cursor: pointer;
+}
+
+.arch-frame {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  align-content: start;
+  gap: 20px;
+  height: 100%;
+  padding: 46px;
+}
+
+.arch-frame h1,
+.arch-frame h2,
+.arch-frame h3,
+.arch-frame p {
+  margin: 0;
+}
+
+.arch-frame h1,
+.arch-frame h2 {
+  max-width: 780px;
+  color: var(--arch-text);
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
+.arch-frame h1 {
+  font-size: 52px;
+  line-height: 1.06;
+}
+
+.arch-frame h2 {
+  font-size: 40px;
+  line-height: 1.08;
+}
+
+.arch-copy {
+  max-width: 720px;
+  color: var(--arch-muted);
+  font-size: 19px;
+  line-height: 1.55;
+}
+
+.arch-kicker {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  gap: 9px;
+  min-height: 32px;
+  padding: 0 12px;
+  border: 1px solid rgba(35, 247, 255, 0.28);
+  border-radius: 999px;
+  background: rgba(35, 247, 255, 0.08);
+  color: var(--arch-cyan);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.arch-kicker::before {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--arch-emerald);
+  box-shadow: 0 0 16px rgba(88, 255, 179, 0.9);
+  content: "";
+}
+
+.arch-list {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.arch-list li {
+  position: relative;
+  padding-left: 22px;
+  color: var(--arch-muted);
+  font-size: 16px;
+  line-height: 1.4;
+}
+
+.arch-list li::before {
+  position: absolute;
+  top: 8px;
+  left: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--arch-cyan);
+  box-shadow: 0 0 14px rgba(35, 247, 255, 0.8);
+  content: "";
+}
+
+.arch-pre {
+  max-height: 330px;
+  margin: 0;
+  overflow: auto;
+  border: 1px solid rgba(35, 247, 255, 0.2);
+  border-radius: 8px;
+  padding: 22px;
+  background: rgba(1, 8, 13, 0.78);
+  color: #dffbff;
+  font-size: 15px;
+  line-height: 1.5;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+
+@media (max-width: 760px) {
+  .arch-frame {
+    padding: 30px;
+  }
+
+  .arch-frame h1 {
+    font-size: 42px;
+  }
+
+  .arch-frame h2 {
+    font-size: 31px;
+  }
+
+  .arch-copy {
+    font-size: 17px;
+  }
+}

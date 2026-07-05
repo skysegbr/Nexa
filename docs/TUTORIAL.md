@@ -6,6 +6,73 @@ the browser and for projects that do not need a build step.
 You write plain JavaScript, import the framework in the browser, and build
 interfaces with functions.
 
+## What "ESM-native" Means
+
+Nexa is **ESM-native**: it uses **ECMAScript Modules** (JavaScript's official
+module system) directly in the browser, with no tool required to convert or
+bundle the code first.
+
+ESM is the standard `import`/`export` syntax of modern JavaScript:
+
+```js
+import { h, render } from "/dist/nexa.js";
+
+export function App() {
+  /* ... */
+}
+```
+
+For Nexa, being ESM-native means:
+
+- **The browser loads modules directly** through `<script type="module">`,
+  resolving each `import` natively.
+- **No bundler** (Webpack, Vite, Rollup, esbuild) is needed to merge or
+  transform files before they run.
+- **No transpiler** (Babel, TypeScript) and **no JSX** — what is in the file is
+  what runs.
+- **No required build step**: edit the `.js`, reload the page, and the code
+  executes.
+
+Traditional setup vs. ESM-native:
+
+| Traditional approach            | ESM-native (Nexa)                     |
+| ------------------------------- | ------------------------------------- |
+| Code passes through a bundler   | Browser executes the module directly  |
+| Needs `npm run build`           | No build                              |
+| JSX compiles to `h()`/elements  | Uses `h()` directly, no transform     |
+
+This is the architectural advantage: fewer tools between the code in the
+repository and what runs in production, built on a **native web standard**
+(supported by all modern browsers) instead of a proprietary tooling format.
+
+## What "opt-in" Means
+
+**Opt-in** means something you choose to enable or include explicitly, instead
+of it being on by default. The opposite is **opt-out** (on by default, and you
+have to turn it off).
+
+In Nexa, **"opt-in extensions"** means the extra layers only enter your app if
+you import them on purpose. Nothing beyond the core is loaded automatically:
+
+- You **don't pay** the cost (weight, complexity) of an extension you don't use.
+- Each `import` is a deliberate decision by the team.
+
+```js
+// Core — the minimum for an app to run
+import { h, render, useState } from "/dist/nexa.js";
+
+// Opt-in: only loads if you want the UI components
+import { Button, Card } from "/dist/nexa-components.js";
+
+// Opt-in: add-ons only enter if imported
+import { ZoomStage } from "/dist/nexa-zoom.js";
+import { PipelineCanvas } from "/dist/nexa-canvas.js";
+```
+
+So the core (`dist/nexa.js`) already sustains a full application on its own,
+while the design system, canvas, zoom-stage, and editor are **optional by
+choice** — the team includes only what it needs, when it needs it.
+
 ## 1. The Main Idea
 
 Nexa does not use JSX or a compiler. Instead, screens are described with the

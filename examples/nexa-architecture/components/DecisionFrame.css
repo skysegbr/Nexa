@@ -1,0 +1,40 @@
+.arch-decision-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 15px;
+  margin-top: 12px;
+}
+
+.arch-decision-item {
+  display: grid;
+  gap: 12px;
+  min-height: 178px;
+  padding: 20px;
+  border: 1px solid rgba(141, 107, 255, 0.25);
+  border-radius: 8px;
+  background:
+    radial-gradient(circle at 85% 12%, rgba(141, 107, 255, 0.2), transparent 42%),
+    rgba(255, 255, 255, 0.05);
+}
+
+.arch-decision-item i {
+  color: var(--arch-amber);
+  font-size: 28px;
+}
+
+.arch-decision-item strong {
+  color: var(--arch-text);
+  font-size: 17px;
+}
+
+.arch-decision-item p {
+  color: var(--arch-muted);
+  font-size: 15px;
+  line-height: 1.42;
+}
+
+@media (max-width: 760px) {
+  .arch-decision-grid {
+    grid-template-columns: 1fr;
+  }
+}

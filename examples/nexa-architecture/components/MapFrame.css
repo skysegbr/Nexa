@@ -1,0 +1,44 @@
+.arch-layer-stack {
+  display: grid;
+  gap: 12px;
+  margin-top: 6px;
+}
+
+.arch-layer {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr);
+  gap: 16px;
+  align-items: center;
+  min-height: 74px;
+  padding: 14px 18px;
+  border: 1px solid rgba(35, 247, 255, 0.18);
+  border-radius: 8px;
+  background:
+    linear-gradient(90deg, rgba(35, 247, 255, 0.12), transparent),
+    rgba(255, 255, 255, 0.045);
+}
+
+.arch-layer-index {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  border-radius: 8px;
+  background: rgba(35, 247, 255, 0.14);
+  color: var(--arch-cyan);
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.arch-layer strong {
+  display: block;
+  color: var(--arch-text);
+  font-size: 17px;
+}
+
+.arch-layer p {
+  margin-top: 4px;
+  color: var(--arch-muted);
+  font-size: 15px;
+  line-height: 1.35;
+}

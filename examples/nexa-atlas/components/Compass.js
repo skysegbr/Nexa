@@ -8,7 +8,7 @@ export function Compass({ index, total, label, controllerRef }) {
     "footer",
     { className: "atl-compass" },
     h(IconButton, {
-      label: "Território anterior",
+      label: "Previous territory",
       variant: "tonal",
       className: "atl-compass-btn",
       disabled: index === 0,
@@ -27,7 +27,7 @@ export function Compass({ index, total, label, controllerRef }) {
     ),
     h(
       "nav",
-      { className: "atl-compass-dots", ariaLabel: "Territórios do atlas" },
+      { className: "atl-compass-dots", ariaLabel: "Atlas territories" },
       Array.from({ length: total }, (_, i) =>
         h("button", {
           key: i,
@@ -39,7 +39,7 @@ export function Compass({ index, total, label, controllerRef }) {
       ),
     ),
     h(IconButton, {
-      label: "Próximo território",
+      label: "Next territory",
       variant: "tonal",
       className: "atl-compass-btn",
       disabled: index === total - 1,

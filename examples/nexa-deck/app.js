@@ -105,21 +105,21 @@ function PresentationToolbar({ index, total, controllerRef }) {
     "footer",
     { className: "nx-toolbar" },
     h(IconButton, {
-      label: "Quadro anterior",
+      label: "Previous frame",
       variant: "tonal",
       disabled: index === 0,
       onClick: () => nav?.prev(),
     }, h("i", { className: "bi-chevron-left", ariaHidden: "true" })),
     h(
       "nav",
-      { className: "nx-dots", ariaLabel: "Quadros da apresentacao" },
+      { className: "nx-dots", ariaLabel: "Presentation frames" },
       Array.from({ length: total }, (_, i) =>
         h("button", {
           key: i,
           type: "button",
           className: `nx-dot${i === index ? " nx-dot-active" : ""}`,
-          ariaLabel: `Ir para o quadro ${i + 1}`,
-          title: `Quadro ${i + 1}`,
+          ariaLabel: `Go to frame ${i + 1}`,
+          title: `Frame ${i + 1}`,
           onClick: () => nav?.goTo(i),
         }),
       ),
@@ -129,7 +129,7 @@ function PresentationToolbar({ index, total, controllerRef }) {
       variant: "contained",
       disabled: index === total - 1,
       onClick: () => nav?.next(),
-    }, "Avancar", h("i", { className: "bi-arrow-right-short", ariaHidden: "true" })),
+    }, "Next", h("i", { className: "bi-arrow-right-short", ariaHidden: "true" })),
   );
 }
 

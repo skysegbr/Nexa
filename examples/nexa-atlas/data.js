@@ -1,16 +1,16 @@
-// Geometria (px no "mundo") + descritores de conteúdo — nenhuma chamada h() aqui.
-// components/FrameContent.js converte cada descritor em vdom.
+// Frame geometry (px in "world" space) + content descriptors — no h() calls here.
+// components/FrameContent.js converts each descriptor into vdom.
 export const FRAMES = [
   {
     id: "capa",
     x: 0, y: 0, w: 1040, h: 640, rotate: 0,
     data: {
       kind: "cover",
-      eyebrow: "Atlas do Nexa",
-      heading: "Um framework JS sem build, mapeado quadro a quadro",
-      body: "Cada território deste mapa é uma peça do Nexa — h(), hooks, componentes e os add-ons visuais — tudo rodando direto no navegador, sem bundler.",
-      hint: "Use ← → ou clique no mapa para explorar",
-      meta: ["ESM nativo", "Zero bundler", "API em hooks"],
+      eyebrow: "Nexa Atlas",
+      heading: "A no-build JS framework, mapped frame by frame",
+      body: "Every territory in this map is a piece of Nexa — h(), hooks, components and the visual add-ons — all running straight in the browser, without a bundler.",
+      hint: "Use ← → or click the map to explore",
+      meta: ["ESM native", "Zero bundler", "Hook-based API"],
     },
   },
   {
@@ -18,14 +18,14 @@ export const FRAMES = [
     x: 1260, y: -280, w: 600, h: 480, rotate: -7,
     data: {
       kind: "territory",
-      eyebrow: "Território I · Fundação",
+      eyebrow: "Territory I · Foundation",
       icon: "bi-cloud",
-      heading: "O navegador é o ambiente de build",
-      body: "Nexa chega como três arquivos ESM prontos para importar. Um <script type=\"module\"> e a aplicação já está de pé — nada de Vite, Babel ou npm install.",
+      heading: "The browser is the build environment",
+      body: "Nexa arrives as three ESM files ready to import. One <script type=\"module\"> and the application is up — no Vite, Babel or npm install.",
       items: [
-        "dist/nexa.js — núcleo (h, render, hooks, contexto)",
-        "dist/nexa-components.js — 39 componentes de UI",
-        "dist/nexa-ui.css — tokens e design system",
+        "dist/nexa.js — core (h, render, hooks, context)",
+        "dist/nexa-components.js — 47 UI components",
+        "dist/nexa-ui.css — tokens and design system",
       ],
     },
   },
@@ -35,16 +35,16 @@ export const FRAMES = [
     data: {
       kind: "diagram",
       variant: "api",
-      eyebrow: "Território II · Gramática",
+      eyebrow: "Territory II · Grammar",
       icon: "bi-diagram-3",
-      heading: "h() desenha, render() planta a bandeira",
-      intro: "h(type, props, ...children) cria um nó virtual. Quando type é uma função, ela roda IMEDIATAMENTE — a execução não é adiada para depois.",
+      heading: "h() draws, render() plants the flag",
+      intro: "h(type, props, ...children) creates a virtual node. When type is a function, it runs IMMEDIATELY — execution is not deferred.",
       steps: [
-        { code: "h('div', props, ...)", note: "elemento HTML comum" },
-        { code: "h(Componente, props)", note: "executa a função agora, de olhos fechados" },
-        { code: "render(App, container)", note: "referência da função — nunca h(App)" },
+        { code: "h('div', props, ...)", note: "regular HTML element" },
+        { code: "h(Component, props)", note: "executes the function now, eagerly" },
+        { code: "render(App, container)", note: "function reference — never h(App)" },
       ],
-      warning: "render(h(App), el) explode com “App can only be used during rendering”.",
+      warning: "render(h(App), el) explodes with \"App can only be used during rendering\".",
     },
   },
   {
@@ -53,13 +53,13 @@ export const FRAMES = [
     data: {
       kind: "diagram",
       variant: "context",
-      eyebrow: "Território III · O Estreito do Contexto",
+      eyebrow: "Territory III · The Context Strait",
       icon: "bi-signpost-2",
-      heading: "Não existe <Provider>. E tem um motivo geográfico.",
-      intro: "h(Filho) já foi executado antes do corpo do provider sequer começar — não há como “segurar” esse valor depois. A travessia certa: construir a subárvore DENTRO do próprio thunk.",
-      wrongLabel: "Rota que afunda",
-      wrongCode: "ThemeCtx.provide(v, () => children)\n// children já rodou antes daqui",
-      rightLabel: "Rota que atravessa",
+      heading: "There is no <Provider>. And there is a geographical reason.",
+      intro: "h(Child) has already executed before the provider body even begins — there is no way to \"hold\" that value afterwards. The right crossing: build the subtree INSIDE the thunk itself.",
+      wrongLabel: "Route that sinks",
+      wrongCode: "ThemeCtx.provide(v, () => children)\n// children already ran before this",
+      rightLabel: "Route that crosses",
       rightCode: "ThemeCtx.provide(v, () =>\n  h(App, null)\n)",
     },
   },
@@ -68,12 +68,12 @@ export const FRAMES = [
     x: 2520, y: 560, w: 780, h: 640, rotate: 3,
     data: {
       kind: "rules",
-      eyebrow: "Três marcos que evitam quase todo naufrágio",
-      heading: "A bússola de regras críticas",
+      eyebrow: "Three landmarks that prevent almost every shipwreck",
+      heading: "The critical rules compass",
       rules: [
-        { dir: "N", tone: "danger", icon: "bi-x-octagon", title: "render(App, el)", body: "Nunca render(h(App), el) — passe a referência da função, não o resultado da chamada." },
-        { dir: "L", tone: "warning", icon: "bi-signpost-2", title: "Sem componente Provider", body: "Use ctx.provide(valor, () => ...) — mesmo um Provider que só recebe children não funciona." },
-        { dir: "S", tone: "success", icon: "bi-check2-circle", title: "key em toda lista", body: "Sem key, itens de lista perdem estado e se comportam mal em re-render." },
+        { dir: "N", tone: "danger", icon: "bi-x-octagon", title: "render(App, el)", body: "Never render(h(App), el) — pass the function reference, not the result of the call." },
+        { dir: "E", tone: "warning", icon: "bi-signpost-2", title: "No Provider component", body: "Use ctx.provide(value, () => ...) — even a Provider that only receives children won't work." },
+        { dir: "S", tone: "success", icon: "bi-check2-circle", title: "key in every list", body: "Without key, list items lose state and behave incorrectly on re-render." },
       ],
     },
   },
@@ -82,9 +82,9 @@ export const FRAMES = [
     x: 1580, y: 720, w: 820, h: 600, rotate: -5,
     data: {
       kind: "hooks",
-      eyebrow: "Território IV · O Arquipélago de Hooks",
-      heading: "31 hooks exportados por dist/nexa.js",
-      caption: "Do estado básico ao WebSocket com reconexão automática — sem uma linha de compilação.",
+      eyebrow: "Territory IV · The Hook Archipelago",
+      heading: "32 hooks exported by dist/nexa.js",
+      caption: "From basic state to WebSocket with auto-reconnect — without a single line of compilation.",
       words: [
         { text: "useState", size: "xl" }, { text: "useEffect", size: "xl" },
         { text: "useRef", size: "lg" }, { text: "useMemo", size: "lg" },
@@ -92,7 +92,8 @@ export const FRAMES = [
         { text: "useContext", size: "lg" }, { text: "useForm", size: "xl" },
         { text: "useErrorBoundary", size: "sm" }, { text: "useLocalStorage", size: "md" },
         { text: "useFetch", size: "md" }, { text: "useToast", size: "md" },
-        { text: "useRouter", size: "lg" }, { text: "useTheme", size: "md" },
+        { text: "useRouter", size: "lg" }, { text: "useRoutes", size: "md" },
+        { text: "useTheme", size: "md" },
         { text: "usePalette", size: "sm" }, { text: "useDesign", size: "sm" },
         { text: "useSwipe", size: "sm" }, { text: "useLongPress", size: "sm" },
         { text: "useNetworkStatus", size: "sm" }, { text: "useOrientation", size: "sm" },
@@ -110,9 +111,9 @@ export const FRAMES = [
     x: 660, y: 820, w: 860, h: 640, rotate: 4,
     data: {
       kind: "live",
-      eyebrow: "Território V · O Farol Vivo",
-      heading: "Este quadro não é uma captura de tela",
-      body: "É Button, Switch, TextField e Progress de verdade — renderizados agora, dentro da própria apresentação que você está navegando.",
+      eyebrow: "Territory V · The Live Lighthouse",
+      heading: "This frame is not a screenshot",
+      body: "It is a real Button, Switch, TextField and Progress — rendered right now, inside the very presentation you are navigating.",
     },
   },
   {
@@ -120,9 +121,9 @@ export const FRAMES = [
     x: -320, y: 940, w: 680, h: 580, rotate: -3,
     data: {
       kind: "tokens",
-      eyebrow: "Território VI · O Recife de Tokens",
-      heading: "Cores e espaçamento vivem em variáveis CSS",
-      caption: "Tudo em --m-*, herdado de dist/nexa-ui.css — sobrescreva no :root ou por escopo local.",
+      eyebrow: "Territory VI · The Token Reef",
+      heading: "Colors and spacing live in CSS variables",
+      caption: "All under --m-*, inherited from dist/nexa-ui.css — override in :root or by local scope.",
       swatches: [
         { name: "primary", varName: "--m-primary" },
         { name: "secondary", varName: "--m-secondary" },
@@ -139,12 +140,12 @@ export const FRAMES = [
     x: -420, y: -420, w: 740, h: 560, rotate: 6,
     data: {
       kind: "addons",
-      eyebrow: "Território VII · As Ilhas de Add-on",
-      heading: "Três extensões, fora do núcleo, no mesmo arquipélago",
+      eyebrow: "Territory VII · The Add-on Islands",
+      heading: "Three extensions, outside the core, in the same archipelago",
       addons: [
-        { icon: "bi-diagram-3", name: "PipelineCanvas", desc: "editor SVG de nós e conexões — drag, zoom, mini-mapa, undo/redo." },
-        { icon: "bi-compass", name: "ZoomStage", desc: "câmera animada sobre um canvas gigante — é exatamente o motor deste atlas.", wink: true },
-        { icon: "bi-code-slash", name: "FullCodeEditor", desc: "CodeMirror com toolbar, snippets e troca de linguagem." },
+        { icon: "bi-diagram-3", name: "PipelineCanvas", desc: "SVG node-and-edge editor — drag, zoom, mini-map, undo/redo." },
+        { icon: "bi-compass", name: "ZoomStage", desc: "animated camera over a giant canvas — this is exactly the engine powering this atlas.", wink: true },
+        { icon: "bi-code-slash", name: "FullCodeEditor", desc: "CodeMirror with toolbar, snippets and language switching." },
       ],
     },
   },
@@ -153,15 +154,15 @@ export const FRAMES = [
     x: 380, y: -740, w: 700, h: 580, rotate: -4,
     data: {
       kind: "filetree",
-      eyebrow: "Território VIII · O Posto Avançado",
-      heading: "A estrutura domain-componentized",
-      caption: "app.js só orquestra. data.js só guarda dados. Cada domínio cuida do seu próprio contexto.",
+      eyebrow: "Territory VIII · The Forward Post",
+      heading: "The domain-componentized structure",
+      caption: "app.js only orchestrates. data.js only holds data. Each domain manages its own context.",
       tree: [
-        { depth: 0, label: "app.js", note: "orquestrador" },
-        { depth: 0, label: "data.js", note: "dados em UPPER_CASE" },
-        { depth: 0, label: "styles.css", note: "@import central" },
+        { depth: 0, label: "app.js", note: "orchestrator" },
+        { depth: 0, label: "data.js", note: "data in UPPER_CASE" },
+        { depth: 0, label: "styles.css", note: "central @import" },
         { depth: 0, label: "components/" },
-        { depth: 1, label: "cart/CartContext.js", note: "contexto + estado" },
+        { depth: 1, label: "cart/CartContext.js", note: "context + state" },
         { depth: 1, label: "cart/CartButton.js" },
         { depth: 1, label: "auth/AuthContext.js" },
         { depth: 1, label: "auth/AuthMenu.js" },
@@ -173,9 +174,9 @@ export const FRAMES = [
     x: 1260, y: -880, w: 760, h: 600, rotate: 3,
     data: {
       kind: "code",
-      eyebrow: "Território IX · A Prancheta do Cartógrafo",
-      heading: "Uma app Nexa inteira cabe numa prancheta",
-      body: "Sem etapa de build entre este código e o navegador — o módulo roda como está.",
+      eyebrow: "Territory IX · The Cartographer's Board",
+      heading: "An entire Nexa app fits on one board",
+      body: "No build step between this code and the browser — the module runs as-is.",
       code: `import { h, render, useState } from "/dist/nexa.js";
 import { Button } from "/dist/nexa-components.js";
 
@@ -187,7 +188,7 @@ function App() {
     h(Button, {
       variant: "contained",
       onClick: () => setCount((v) => v + 1),
-    }, \`Cliques: \${count}\`),
+    }, \`Clicks: \${count}\`),
   );
 }
 
@@ -199,36 +200,36 @@ render(App, document.getElementById("app"));`,
     x: 2140, y: -740, w: 700, h: 480, rotate: -5,
     data: {
       kind: "stats",
-      eyebrow: "Território X · Os Marcos",
-      heading: "O tamanho da viagem, em números",
+      eyebrow: "Territory X · The Landmarks",
+      heading: "The size of the journey, in numbers",
       stats: [
-        { value: "0", label: "etapas de build" },
-        { value: "39", label: "componentes de UI" },
-        { value: "31", label: "hooks exportados" },
-        { value: "3", label: "arquivos-núcleo" },
+        { value: "0", label: "build steps" },
+        { value: "47", label: "UI components" },
+        { value: "32", label: "exported hooks" },
+        { value: "3", label: "core files" },
         { value: "1", label: "<script type=\"module\">" },
       ],
     },
   },
   {
     id: "mapa-mundi",
-    x: -600, y: -980, w: 4760, h: 2680, rotate: 0,
+    x: -600, y: -980, w: 4760, h: 3760, rotate: 0,
     data: {
       kind: "overview",
-      eyebrow: "O Atlas completo",
-      heading: "Dez territórios, um único caminho até a interface",
+      eyebrow: "The complete Atlas",
+      heading: "Ten territories, one single path to the interface",
       legend: [
         {
-          title: "Para criar",
-          items: ["Componentes são funções comuns", "h() fabrica nós virtuais", "Hooks cuidam de estado e efeitos"],
+          title: "To create",
+          items: ["Components are plain functions", "h() manufactures virtual nodes", "Hooks handle state and effects"],
         },
         {
-          title: "Para navegar",
-          items: ["render(App, container) planta a bandeira", "ctx.provide() substitui o <Provider>", "key mantém a memória das listas"],
+          title: "To navigate",
+          items: ["render(App, container) plants the flag", "ctx.provide() replaces <Provider>", "key keeps list memory intact"],
         },
         {
-          title: "Para expandir",
-          items: ["39 componentes prontos em nexa-components.js", "Canvas, Zoom e editor como add-ons", "Tudo sobre os mesmos tokens --m-*"],
+          title: "To expand",
+          items: ["47 ready-made components in nexa-components.js", "Canvas, Zoom and editor as add-ons", "All on the same --m-* tokens"],
         },
       ],
     },
@@ -238,9 +239,9 @@ render(App, document.getElementById("app"));`,
     x: 3260, y: 420, w: 780, h: 580, rotate: 5,
     data: {
       kind: "cta",
-      eyebrow: "Fim do mapa, início da expedição",
-      heading: "O horizonte é só um <script type=\"module\"> de distância",
-      body: "Aponte para os arquivos dist/ locais ou fixe uma tag de versão do CDN — e comece a desenhar o seu próprio território.",
+      eyebrow: "End of the map, start of the expedition",
+      heading: "The horizon is just one <script type=\"module\"> away",
+      body: "Point to the local dist/ files or pin a CDN version tag — and start drawing your own territory.",
       code: `<link rel="stylesheet" href="/dist/nexa-ui.css">
 <script type="module" src="./app.js"></script>`,
       cdn: "cdn.jsdelivr.net/gh/skysegbr/Nexa@main/dist/nexa.js",

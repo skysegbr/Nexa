@@ -1,0 +1,46 @@
+.arch-lens-icon {
+  display: grid;
+  width: 70px;
+  height: 70px;
+  place-items: center;
+  border: 1px solid rgba(35, 247, 255, 0.34);
+  border-radius: 8px;
+  background: rgba(35, 247, 255, 0.1);
+  color: var(--arch-cyan);
+  font-size: 32px;
+  box-shadow: 0 0 26px rgba(35, 247, 255, 0.18);
+}
+
+.arch-point-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 10px;
+}
+
+.arch-point {
+  min-height: 142px;
+  padding: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.055);
+}
+
+.arch-point strong {
+  display: block;
+  margin-bottom: 9px;
+  color: var(--arch-emerald);
+  font-size: 15px;
+}
+
+.arch-point p {
+  color: var(--arch-muted);
+  font-size: 15px;
+  line-height: 1.42;
+}
+
+@media (max-width: 760px) {
+  .arch-point-grid {
+    grid-template-columns: 1fr;
+  }
+}

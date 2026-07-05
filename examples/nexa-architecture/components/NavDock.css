@@ -1,0 +1,68 @@
+.arch-nav {
+  position: fixed;
+  right: 22px;
+  bottom: 22px;
+  z-index: 20;
+  display: grid;
+  grid-template-columns: 42px minmax(180px, 260px) 42px;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border: 1px solid rgba(35, 247, 255, 0.25);
+  border-radius: 8px;
+  background: rgba(2, 9, 14, 0.76);
+  box-shadow: 0 20px 54px rgba(0, 0, 0, 0.36);
+  backdrop-filter: blur(16px);
+}
+
+.arch-nav-button {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border: 1px solid rgba(35, 247, 255, 0.28);
+  border-radius: 8px;
+  background: rgba(35, 247, 255, 0.08);
+  color: var(--arch-text);
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.arch-nav-button:hover {
+  border-color: rgba(88, 255, 179, 0.62);
+  color: var(--arch-emerald);
+}
+
+.arch-nav-button:focus-visible {
+  outline: 3px solid rgba(35, 247, 255, 0.46);
+  outline-offset: 2px;
+}
+
+.arch-nav-status {
+  min-width: 0;
+}
+
+.arch-nav-status strong {
+  display: block;
+  color: var(--arch-cyan);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+}
+
+.arch-nav-status span {
+  display: block;
+  overflow: hidden;
+  color: var(--arch-muted);
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .arch-nav {
+    right: 12px;
+    bottom: 12px;
+    left: 12px;
+    grid-template-columns: 42px minmax(0, 1fr) 42px;
+  }
+}

@@ -1,0 +1,7 @@
+.arch-code {
+  grid-template-rows: auto auto auto minmax(0, 1fr);
+}
+
+.arch-code .arch-pre {
+  align-self: stretch;
+}

@@ -1,10 +1,10 @@
 import { h } from "/dist/nexa.js";
 import { Badge } from "/dist/nexa-components.js";
 
-// Quadros de texto simples — capa, território, bússola de regras,
-// prancheta de código, marcos numéricos, mapa-múndi e horizonte final.
-// Todos compartilham a mesma anatomia (selo + título + corpo), então
-// vivem juntos neste arquivo em vez de um arquivo por variante.
+// Simple text frames — cover, territory, rules compass,
+// code board, numeric stats, world map and final horizon.
+// All share the same anatomy (badge + title + body), so
+// they live together in this file instead of one file per variant.
 
 export function CoverFrame({ data }) {
   return h(
