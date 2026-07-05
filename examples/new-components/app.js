@@ -15,22 +15,26 @@ import { PageMenu }        from "./components/PageMenu.js";
 import { PageDataTable }   from "./components/PageDataTable.js";
 import { PageDatePicker }  from "./components/PageDatePicker.js";
 
-const MORE_PAGES = [
-  { key: "context",    label: "Context Menu",         path: "/context" },
-  { key: "filedrop",   label: "File Drop",            path: "/filedrop" },
-  { key: "editor",     label: "Code Editor",          path: "/editor" },
-  { key: "toasts",     label: "Toasts & Dialog",      path: "/toasts" },
-  { key: "accordion",  label: "Accordion",            path: "/accordion" },
-  { key: "slider",     label: "Slider / RangeSlider", path: "/slider" },
-  { key: "menu",       label: "Menu",                 path: "/menu" },
-  { key: "datatable",  label: "DataTable",            path: "/datatable" },
-  { key: "datepicker", label: "DatePicker",           path: "/datepicker" },
+const EXAMPLE_PAGES = [
+  { key: "switches",   label: "Switch & Collapse",    path: "/switches",   icon: "bi-toggle-on" },
+  { key: "combobox",   label: "Combobox",              path: "/combobox",   icon: "bi-menu-button" },
+  { key: "context",    label: "Context Menu",          path: "/context",    icon: "bi-list-ul" },
+  { key: "filedrop",   label: "File Drop",             path: "/filedrop",   icon: "bi-cloud-upload" },
+  { key: "editor",     label: "Code Editor",           path: "/editor",     icon: "bi-code-slash" },
+  { key: "toasts",     label: "Toasts & Dialog",       path: "/toasts",     icon: "bi-bell" },
+  { key: "newui",      label: "New UI",                path: "/newui",      icon: "bi-stars" },
+  { key: "cards",      label: "Cards",                 path: "/cards",      icon: "bi-postcard" },
+  { key: "accordion",  label: "Accordion",             path: "/accordion",  icon: "bi-chevron-expand" },
+  { key: "slider",     label: "Slider / RangeSlider",  path: "/slider",     icon: "bi-sliders" },
+  { key: "menu",       label: "Menu",                  path: "/menu",       icon: "bi-list-nested" },
+  { key: "datatable",  label: "DataTable",             path: "/datatable",  icon: "bi-table" },
+  { key: "datepicker", label: "DatePicker",            path: "/datepicker", icon: "bi-calendar3" },
 ];
 
 function App() {
   const { path, navigate } = useRouter();
   const { toasts, toast }  = useToast();
-  const isMorePageActive = MORE_PAGES.some((p) => p.path === path);
+  const current = EXAMPLE_PAGES.find((p) => p.path === path) ?? EXAMPLE_PAGES[0];
 
   return h(
     "div",
@@ -38,18 +42,17 @@ function App() {
 
     h(Navbar, {
       brand: h("span", { style: { fontWeight: 900, fontSize: "1.1rem" } }, "⬡ Nexa Demo"),
-      items: [
-        { icon: h("i", { className: "bi bi-toggle-on" }), label: "Switch & Collapse", href: "#/switches", active: path === "/switches" || path === "/" },
-        { icon: h("i", { className: "bi bi-menu-button" }), label: "Combobox",        href: "#/combobox", active: path === "/combobox" },
-        { icon: h("i", { className: "bi bi-stars" }),     label: "New UI",             href: "#/newui",    active: path === "/newui" },
-        { icon: h("i", { className: "bi bi-postcard" }),  label: "Cards",              href: "#/cards",    active: path === "/cards" },
-      ],
       actions: [
         h(Menu, {
-          key: "more",
-          trigger: h(Button, { variant: isMorePageActive ? "tonal" : "text" }, "More ▾"),
+          key: "examples",
+          trigger: h(Button, { variant: "tonal" }, `${current.label} ▾`),
           align: "right",
-          items: MORE_PAGES.map((p) => ({ key: p.key, label: p.label, onClick: () => navigate(p.path) })),
+          items: EXAMPLE_PAGES.map((p) => ({
+            key: p.key,
+            label: p.label,
+            icon: h("i", { className: `bi ${p.icon}` }),
+            onClick: () => navigate(p.path),
+          })),
         }),
         h(DesignSwitcher, { key: "design" }),
         h(PaletteSwitcher, { key: "palette" }),
