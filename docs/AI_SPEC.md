@@ -1015,6 +1015,9 @@ h(Combobox, {
   searchPlaceholder: 'Search...',
   error: '',
 })
+// a11y: ArrowUp/ArrowDown/Home/End/Enter drive selection via
+// aria-activedescendant (no real DOM focus moves off the search input);
+// Escape closes and returns focus to the trigger button.
 
 // FileDropZone — drag-and-drop file upload area
 h(FileDropZone, {
@@ -1089,6 +1092,10 @@ h(Tabs, {
 h(TabPanel, { id: 'overview', activeId: activeTab },
   h('p', null, 'Overview content')
 )
+// a11y: roving tabindex (only the active tab is in the Tab order),
+// ArrowLeft/ArrowRight/Home/End move focus + selection together
+// ("automatic activation"). Each tab/panel pair is linked via
+// aria-controls/aria-labelledby using `${value}`/`${id}` — no extra prop.
 
 // Navbar
 h(Navbar, {
@@ -1202,6 +1209,8 @@ h(BottomSheet, {
   onClose,
   title: 'Options',
 }, /* content */)
+// a11y: same modal focus lifecycle as Dialog/Drawer — initial focus on
+// open, Tab is trapped inside, focus restores to the invoking element on close.
 
 // Dropdown
 h(Dropdown, {
@@ -1213,11 +1222,16 @@ h(Dropdown, {
     { label: 'Delete', onClick: del, danger: true },
   ],
 })
+// a11y: opening focuses the first item; ArrowUp/ArrowDown/Home/End move
+// through items; Tab closes the menu (non-modal — focus is meant to leave).
 
 // Tooltip
 h(Tooltip, { content: 'Click to save' },
   h(Button, null, 'Save')
 )
+// a11y: the tooltip text is a real element (role="tooltip") referenced by
+// the wrapped trigger's aria-describedby (cloned onto it automatically when
+// there's a single element child); Escape dismisses it.
 
 // ContextMenu — right-click context menu (pair with useContextMenu hook)
 const { menu, openMenu, closeMenu } = useContextMenu();
@@ -1228,6 +1242,7 @@ h('div', { onContextMenu: openMenu },
     x: menu.x,
     y: menu.y,
     onClose: closeMenu,
+    ariaLabel: 'Row actions', // optional, defaults to "Context menu"
     items: [
       { label: 'Edit',   icon: '✏️', onClick: edit },
       { divider: true },
@@ -1235,6 +1250,8 @@ h('div', { onContextMenu: openMenu },
     ],
   }),
 )
+// a11y: same as Dropdown (initial focus, arrow-key nav, Tab closes), plus
+// focus restores to whatever invoked the menu when it closes.
 ```
 
 ---

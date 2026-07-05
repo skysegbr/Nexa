@@ -2123,8 +2123,7 @@ textarea.m-field {
   display: inline-flex;
 }
 
-.m-tooltip-wrap::after {
-  content: attr(data-tooltip);
+.m-tooltip-bubble {
   position: absolute;
   z-index: var(--m-z-tooltip);
   padding: 5px 10px;
@@ -2138,13 +2137,15 @@ textarea.m-field {
   transition: opacity 150ms ease;
 }
 
-.m-tooltip-wrap:hover::after,
-.m-tooltip-wrap:focus-within::after { opacity: 1; }
+.m-tooltip-wrap:hover .m-tooltip-bubble,
+.m-tooltip-wrap:focus-within .m-tooltip-bubble { opacity: 1; }
 
-.m-tooltip-top::after    { bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%); }
-.m-tooltip-bottom::after { top: calc(100% + 6px);    left: 50%; transform: translateX(-50%); }
-.m-tooltip-left::after   { right: calc(100% + 6px);  top: 50%;  transform: translateY(-50%); }
-.m-tooltip-right::after  { left: calc(100% + 6px);   top: 50%;  transform: translateY(-50%); }
+.m-tooltip-wrap.m-tooltip-dismissed .m-tooltip-bubble { opacity: 0 !important; }
+
+.m-tooltip-top .m-tooltip-bubble    { bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%); }
+.m-tooltip-bottom .m-tooltip-bubble { top: calc(100% + 6px);    left: 50%; transform: translateX(-50%); }
+.m-tooltip-left .m-tooltip-bubble   { right: calc(100% + 6px);  top: 50%;  transform: translateY(-50%); }
+.m-tooltip-right .m-tooltip-bubble  { left: calc(100% + 6px);   top: 50%;  transform: translateY(-50%); }
 
 /* ── Pagination ────────────────────────────────────────── */
 
@@ -2706,6 +2707,11 @@ textarea.m-field {
   font-weight: 700;
 }
 
+.m-combobox-option-active {
+  outline: 2px solid var(--m-focus);
+  outline-offset: -2px;
+}
+
 .m-combobox-empty {
   padding: var(--m-space-4);
   text-align: center;
@@ -3136,6 +3142,11 @@ textarea.m-field {
   animation: m-sheet-in 320ms cubic-bezier(0.4, 0, 0.2, 1) both;
 }
 
+.m-bottom-sheet:focus-visible {
+  outline: 3px solid var(--m-focus);
+  outline-offset: -3px;
+}
+
 @media (min-width: 768px) {
   .m-bottom-sheet {
     left: 50%;
@@ -3522,6 +3533,7 @@ textarea.m-field {
 .m-tabs-pills .m-tab-active     { background: var(--m-primary); color: #fff; }
 
 .m-tab-panel { padding: var(--m-space-4) 0; }
+.m-tab-panel:focus-visible { outline: 3px solid var(--m-focus); outline-offset: -3px; }
 
 /* ── Pagination ──────────────────────────────────────────────────────────────── */
 

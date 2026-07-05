@@ -253,20 +253,54 @@ export function Checkbox({
 }
 
 export function Tabs({ value, onChange, items = [], className = "" } = {}) {
+  const enabled = items.map((item, index) => index).filter((index) => !items[index].disabled);
+
+  const onKeyDown = (event, index) => {
+    if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) {
+      return;
+    }
+
+    event.preventDefault();
+
+    if (enabled.length === 0) {
+      return;
+    }
+
+    const pos = enabled.indexOf(index);
+    let nextPos;
+
+    if (event.key === "Home") {
+      nextPos = 0;
+    } else if (event.key === "End") {
+      nextPos = enabled.length - 1;
+    } else {
+      const direction = event.key === "ArrowRight" ? 1 : -1;
+      nextPos = (pos + direction + enabled.length) % enabled.length;
+    }
+
+    const nextItem = items[enabled[nextPos]];
+    onChange?.(nextItem.value);
+    queueMicrotask(() => document.getElementById(`tab-${nextItem.value}`)?.focus());
+  };
+
   return h(
     "div",
     { className: joinClasses("m-tabs", className), role: "tablist" },
-    items.map((item) =>
+    items.map((item, index) =>
       h(
         "button",
         {
           key: item.value,
+          id: `tab-${item.value}`,
           type: "button",
           className: joinClasses("m-tab", item.value === value && "m-tab-active"),
           role: "tab",
           ariaSelected: item.value === value ? "true" : "false",
+          ariaControls: `panel-${item.value}`,
+          tabIndex: item.value === value ? 0 : -1,
           disabled: item.disabled,
           onClick: () => onChange?.(item.value),
+          onKeyDown: (event) => onKeyDown(event, index),
         },
         item.label,
       ),
@@ -703,6 +737,11 @@ export function Dropdown({
         return;
       }
 
+      if (event.key === "Tab") {
+        setOpen(false);
+        return;
+      }
+
       if (["ArrowDown", "ArrowUp", "Home", "End"].includes(event.key)) {
         moveMenuFocus(event, menuRef.current);
       }
@@ -782,18 +821,47 @@ export function Dropdown({
 export function Tooltip({
   content,
   position = "top",
+  id = "nexa-tooltip",
   className = "",
   children,
   ...props
 } = {}) {
+  const [dismissed, setDismissed] = useState(false);
+  const bubbleId = `${id}-bubble`;
+
+  // Nexa evaluates function components eagerly (h() calls them immediately),
+  // so a single wrapped element already arrives here as a resolved
+  // `{ type, props }` DOM vnode — "TEXT_NODE" is the internal sentinel `h()`
+  // uses for bare text/null/boolean children, never a real tag name.
+  const [only] = children;
+  const canClone =
+    children.length === 1 && only && typeof only === "object" && only.type !== "TEXT_NODE";
+
+  const wrappedChildren = canClone
+    ? [{ ...only, props: { ...only.props, ariaDescribedby: joinClasses(only.props.ariaDescribedby, bubbleId) } }]
+    : children;
+
   return h(
     "span",
     {
       ...props,
-      className: joinClasses("m-tooltip-wrap", `m-tooltip-${position}`, className),
-      dataset: { tooltip: content },
+      className: joinClasses(
+        "m-tooltip-wrap",
+        `m-tooltip-${position}`,
+        dismissed && "m-tooltip-dismissed",
+        className,
+      ),
+      ariaDescribedby: canClone ? undefined : bubbleId,
+      onKeyDown: (event) => {
+        if (event.key === "Escape") {
+          setDismissed(true);
+        }
+      },
+      onMouseLeave: () => setDismissed(false),
+      onBlur: () => setDismissed(false),
     },
-    children,
+    wrappedChildren,
+    h("span", { id: bubbleId, role: "tooltip", className: "m-tooltip-bubble" }, content),
   );
 }
 
@@ -1270,7 +1338,7 @@ export function Navbar({
 // ── Combobox ───────────────────────────────────────────────
 
 export function Combobox({
-  id,
+  id = "nexa-combobox",
   label,
   help,
   error,
@@ -1286,13 +1354,30 @@ export function Combobox({
 } = {}) {
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(0);
   const wrapRef = useRef(null);
+  const triggerRef = useRef(null);
   const inputRef = useRef(null);
+
+  const listId = `${id}-list`;
+  const optionId = (opt) => `${id}-option-${opt.value}`;
 
   const selectedLabel = options.find((o) => o.value === value)?.label ?? "";
   const filtered = query
     ? options.filter((o) => o.label.toLowerCase().includes(query.toLowerCase()))
     : options;
+
+  // `filtered` is a fresh array every render, so it can't sit in the effect's
+  // dependency array below without re-attaching the listeners (and re-stealing
+  // focus) on every keystroke — mirror Dialog's onCloseRef pattern instead.
+  const filteredRef = useRef(filtered);
+  filteredRef.current = filtered;
+  const activeIndexRef = useRef(activeIndex);
+  activeIndexRef.current = activeIndex;
+
+  useEffect(() => {
+    setActiveIndex(0);
+  }, [query, open]);
 
   useEffect(() => {
     if (!open) return undefined;
@@ -1309,6 +1394,37 @@ export function Combobox({
       if (e.key === "Escape") {
         setOpen(false);
         setQuery("");
+        triggerRef.current?.focus();
+        return;
+      }
+
+      if (e.key === "Enter") {
+        e.preventDefault();
+        const active = filteredRef.current[activeIndexRef.current];
+        if (active) {
+          select(active);
+        }
+        return;
+      }
+
+      if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+        e.preventDefault();
+        const count = filteredRef.current.length;
+        if (count === 0) return;
+        const direction = e.key === "ArrowDown" ? 1 : -1;
+        setActiveIndex((i) => (i + direction + count) % count);
+        return;
+      }
+
+      if (e.key === "Home") {
+        e.preventDefault();
+        setActiveIndex(0);
+        return;
+      }
+
+      if (e.key === "End") {
+        e.preventDefault();
+        setActiveIndex(Math.max(0, filteredRef.current.length - 1));
       }
     };
     document.addEventListener("mousedown", onMouseDown);
@@ -1323,6 +1439,7 @@ export function Combobox({
     onChange?.(opt.value);
     setOpen(false);
     setQuery("");
+    triggerRef.current?.focus();
   };
 
   return h(
@@ -1335,6 +1452,7 @@ export function Combobox({
         "button",
         {
           ...props,
+          ref: triggerRef,
           type: "button",
           id,
           className: joinClasses(
@@ -1345,6 +1463,7 @@ export function Combobox({
           onClick: () => setOpen((v) => !v),
           ariaHaspopup: "listbox",
           ariaExpanded: open ? "true" : "false",
+          ariaControls: listId,
         },
         h(
           "span",
@@ -1364,24 +1483,31 @@ export function Combobox({
             h("input", {
               ref: inputRef,
               type: "text",
+              role: "combobox",
               className: "m-combobox-search",
               placeholder: searchPlaceholder,
               value: query,
+              ariaExpanded: "true",
+              ariaControls: listId,
+              ariaAutocomplete: "list",
+              ariaActivedescendant: filtered[activeIndex] ? optionId(filtered[activeIndex]) : undefined,
               onInput: (e) => setQuery(e.target.value),
             }),
           ),
           h(
             "ul",
-            { className: "m-combobox-list", role: "listbox" },
+            { id: listId, className: "m-combobox-list", role: "listbox" },
             filtered.length > 0
-              ? filtered.map((opt) =>
+              ? filtered.map((opt, index) =>
                   h(
                     "li",
                     {
                       key: opt.value,
+                      id: optionId(opt),
                       className: joinClasses(
                         "m-combobox-option",
                         opt.value === value && "m-combobox-option-selected",
+                        index === activeIndex && "m-combobox-option-active",
                       ),
                       role: "option",
                       ariaSelected: opt.value === value ? "true" : "false",
@@ -1402,23 +1528,45 @@ export function Combobox({
 
 // ── ContextMenu ────────────────────────────────────────────
 
-export function ContextMenu({ open = false, x = 0, y = 0, items = [], onClose, className = "" } = {}) {
+export function ContextMenu({
+  open = false,
+  x = 0,
+  y = 0,
+  items = [],
+  onClose,
+  ariaLabel = "Context menu",
+  className = "",
+} = {}) {
   const menuRef = useRef(null);
 
   useEffect(() => {
     if (!open) return undefined;
 
+    const previousActive = document.activeElement;
+    queueMicrotask(() => focusFirstElement(menuRef.current));
+
     const onMouseDown = (e) => {
       if (menuRef.current && !menuRef.current.contains(e.target)) onClose?.();
     };
     const onKeyDown = (e) => {
-      if (e.key === "Escape") onClose?.();
+      if (e.key === "Escape" || e.key === "Tab") {
+        onClose?.();
+        return;
+      }
+
+      if (["ArrowDown", "ArrowUp", "Home", "End"].includes(e.key)) {
+        moveMenuFocus(e, menuRef.current);
+      }
     };
     document.addEventListener("mousedown", onMouseDown);
     document.addEventListener("keydown", onKeyDown);
     return () => {
       document.removeEventListener("mousedown", onMouseDown);
       document.removeEventListener("keydown", onKeyDown);
+
+      if (previousActive && typeof previousActive.focus === "function") {
+        previousActive.focus();
+      }
     };
   }, [open, onClose]);
 
@@ -1430,6 +1578,7 @@ export function ContextMenu({ open = false, x = 0, y = 0, items = [], onClose, c
       ref: menuRef,
       className: joinClasses("m-context-menu", className),
       role: "menu",
+      ariaLabel,
       style: { top: `${y}px`, left: `${x}px` },
     },
     items.map((item, i) =>
@@ -1696,14 +1845,30 @@ export function BottomSheet({
   const sheetRef = useRef(null);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open) return undefined;
+
+    const previousActive = document.activeElement;
+    queueMicrotask(() => focusFirstElement(sheetRef.current));
 
     const onKey = (e) => {
-      if (e.key === "Escape") onClose?.();
+      if (e.key === "Escape") {
+        onClose?.();
+        return;
+      }
+
+      if (e.key === "Tab") {
+        trapFocus(e, sheetRef.current);
+      }
     };
 
     document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("keydown", onKey);
+
+      if (previousActive && typeof previousActive.focus === "function") {
+        previousActive.focus();
+      }
+    };
   }, [open]);
 
   if (!open) return null;
@@ -1724,6 +1889,7 @@ export function BottomSheet({
         role: "dialog",
         ariaModal: "true",
         ariaLabel: title,
+        tabIndex: -1,
       },
       h("div", { className: "m-bottom-sheet-handle" }),
       h(
@@ -2034,7 +2200,18 @@ export function DesignSwitcher({ className = "", ...props } = {}) {
 // TabPanel — companion to Tabs; only renders when id === activeId
 export function TabPanel({ id, activeId, className = "", children, ...props } = {}) {
   if (id !== activeId) return null;
-  return h("div", { ...props, className: joinClasses("m-tab-panel", className), role: "tabpanel" }, children);
+  return h(
+    "div",
+    {
+      ...props,
+      id: `panel-${id}`,
+      className: joinClasses("m-tab-panel", className),
+      role: "tabpanel",
+      ariaLabelledby: `tab-${id}`,
+      tabIndex: 0,
+    },
+    children,
+  );
 }
 
 // ── Stepper ───────────────────────────────────────────────────────────────────

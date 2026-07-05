@@ -1273,6 +1273,14 @@ function attributeAlias(name) {
     return "aria-valuemax";
   }
 
+  if (name === "ariaActivedescendant") {
+    return "aria-activedescendant";
+  }
+
+  if (name === "ariaAutocomplete") {
+    return "aria-autocomplete";
+  }
+
   return name;
 }
 

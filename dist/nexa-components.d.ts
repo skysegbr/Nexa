@@ -264,6 +264,8 @@ export declare function Dropdown(props?: {
 export declare function Tooltip(props?: {
   content?: string;
   position?: "top" | "bottom" | "left" | "right";
+  /** Prefix for the generated tooltip bubble id (`${id}-bubble`). Defaults to "nexa-tooltip". */
+  id?: string;
   className?: string;
   children?: VNode;
 } & ExtraProps): VNode;
@@ -386,6 +388,8 @@ export declare function ContextMenu(props?: {
   y?: number;
   items?: ContextMenuItem[];
   onClose?: () => void;
+  /** Accessible name for the menu (no trigger element to derive one from). Defaults to "Context menu". */
+  ariaLabel?: string;
   className?: string;
 }): VNode;
 
