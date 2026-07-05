@@ -66,7 +66,31 @@ https://cdn.jsdelivr.net/gh/skysegbr/Nexa@main/dist/nexa-zoom.js
 https://cdn.jsdelivr.net/gh/skysegbr/Nexa@main/dist/nexa-zoom.css
 https://cdn.jsdelivr.net/gh/skysegbr/Nexa@main/dist/nexa-editor.js
 https://cdn.jsdelivr.net/gh/skysegbr/Nexa@main/dist/nexa-editor.css
+https://cdn.jsdelivr.net/gh/skysegbr/Nexa@main/dist/nexa-editor-snippets.js
+https://cdn.jsdelivr.net/gh/skysegbr/Nexa@main/dist/nexa-bootstrap.css
+https://cdn.jsdelivr.net/gh/skysegbr/Nexa@main/dist/nexa-server.js
 ```
+
+Every file above also ships a minified twin (same path, `.min.js`/`.min.css`
+before the extension) — same API, smaller payload:
+
+```text
+https://cdn.jsdelivr.net/gh/skysegbr/Nexa@main/dist/nexa.min.js
+https://cdn.jsdelivr.net/gh/skysegbr/Nexa@main/dist/nexa-components.min.js
+https://cdn.jsdelivr.net/gh/skysegbr/Nexa@main/dist/nexa-ui.min.css
+https://cdn.jsdelivr.net/gh/skysegbr/Nexa@main/dist/nexa-canvas.min.js
+https://cdn.jsdelivr.net/gh/skysegbr/Nexa@main/dist/nexa-canvas.min.css
+https://cdn.jsdelivr.net/gh/skysegbr/Nexa@main/dist/nexa-zoom.min.js
+https://cdn.jsdelivr.net/gh/skysegbr/Nexa@main/dist/nexa-zoom.min.css
+https://cdn.jsdelivr.net/gh/skysegbr/Nexa@main/dist/nexa-editor.min.js
+https://cdn.jsdelivr.net/gh/skysegbr/Nexa@main/dist/nexa-editor.min.css
+https://cdn.jsdelivr.net/gh/skysegbr/Nexa@main/dist/nexa-editor-snippets.min.js
+https://cdn.jsdelivr.net/gh/skysegbr/Nexa@main/dist/nexa-bootstrap.min.css
+https://cdn.jsdelivr.net/gh/skysegbr/Nexa@main/dist/nexa-server.min.js
+```
+
+See [examples/minified](./examples/minified) for a full page built entirely
+on the `.min.*` bundles.
 
 Minimal page:
 
