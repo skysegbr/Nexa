@@ -1048,6 +1048,20 @@ h(FileDropZone, {
   disabled: false,
 })
 
+// DatePicker — trigger button + one-month calendar popover
+h(DatePicker, {
+  label: 'Start date',
+  value: startDate,          // "YYYY-MM-DD" | null
+  onChange: (iso) => setStartDate(iso),
+  min: '2026-01-01',         // optional "YYYY-MM-DD" bounds, inclusive
+  max: '2026-12-31',
+  placeholder: 'Select a date',
+})
+// a11y: roving tabindex over the day grid — ArrowLeft/Right/Up/Down move by
+// day/week (panning the calendar across month boundaries as needed),
+// Home/End jump to the start/end of the focused week, Enter/Space selects,
+// Escape closes and returns focus to the trigger button.
+
 // CodeEditor — thin wrapper for CodeMirror or Monaco (whichever is on window)
 h(CodeEditor, {
   value: code,

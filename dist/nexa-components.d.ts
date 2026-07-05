@@ -629,3 +629,24 @@ export declare function DataTable<R extends Record<string, unknown> = Record<str
     className?: string;
   } & ExtraProps,
 ): VNode;
+
+// ── DatePicker ─────────────────────────────────────────────────────────────
+
+export declare function DatePicker(props?: {
+  id?: string;
+  label?: string;
+  help?: string;
+  error?: string;
+  required?: boolean;
+  disabled?: boolean;
+  /** "YYYY-MM-DD", or omit/null for no selection. */
+  value?: string | null;
+  onChange?: (value: string) => void;
+  /** "YYYY-MM-DD" lower bound, inclusive. */
+  min?: string;
+  /** "YYYY-MM-DD" upper bound, inclusive. */
+  max?: string;
+  placeholder?: string;
+  className?: string;
+  inputClassName?: string;
+} & ExtraProps): VNode;

@@ -5,7 +5,7 @@
 
 import { h, render, useState } from "../dist/nexa.js";
 import { useFetch, useLocalStorage, useTheme, usePalette, useDesign, useToast } from "../dist/nexa.js";
-import { Table, Dialog, Drawer, Button, Accordion, Stepper, Pagination, FileDropZone, Navbar, Slider, RangeSlider, Menu, DataTable } from "../dist/nexa-components.js";
+import { Table, Dialog, Drawer, Button, Accordion, Stepper, Pagination, FileDropZone, Navbar, Slider, RangeSlider, Menu, DataTable, DatePicker } from "../dist/nexa-components.js";
 import { test, assert, assertEqual, mountPoint, flush } from "./runner.js";
 
 // ── useFetch ────────────────────────────────────────────────────────────────
@@ -1125,4 +1125,155 @@ test("DataTable: shows the empty state when there are no rows", async () => {
 
   assert(container.querySelector(".m-empty-state"), "renders EmptyState when rows is empty");
   assertEqual(container.querySelector(".m-empty-state h2").textContent, "Nothing");
+});
+
+// ── DatePicker ────────────────────────────────────────────────────────────
+
+test("DatePicker: shows the selected date on the trigger and opens the calendar with that day focused", async () => {
+  const container = mountPoint();
+
+  function Widget() {
+    return h(DatePicker, { label: "Date", value: "2026-07-15", placeholder: "Select a date" });
+  }
+
+  render(Widget, container);
+  await flush();
+
+  const trigger = container.querySelector(".m-datepicker-trigger");
+  assertEqual(trigger.textContent, "2026-07-15");
+  assertEqual(trigger.getAttribute("aria-expanded"), "false");
+
+  trigger.click();
+  await flush();
+
+  assertEqual(trigger.getAttribute("aria-expanded"), "true");
+  assertEqual(container.querySelector(".m-datepicker-month").textContent, "July 2026");
+
+  const selectedDay = container.querySelector(".m-datepicker-day-selected");
+  assertEqual(selectedDay.textContent, "15");
+  assertEqual(selectedDay.getAttribute("tabindex"), "0", "the selected day is the roving-tabindex target");
+  assertEqual(document.activeElement, selectedDay, "opening focuses the selected day");
+});
+
+test("DatePicker: clicking a day calls onChange with the ISO date and closes the calendar", async () => {
+  const container = mountPoint();
+  let received;
+
+  function Widget() {
+    const [value, setValue] = useState(null);
+    return h(DatePicker, { label: "Date", value, onChange: (v) => { received = v; setValue(v); } });
+  }
+
+  render(Widget, container);
+  await flush();
+
+  container.querySelector(".m-datepicker-trigger").click();
+  await flush();
+
+  const days = container.querySelectorAll(".m-datepicker-day:not(.m-datepicker-day-outside)");
+  const fifteenth = Array.from(days).find((d) => d.textContent === "15");
+  fifteenth.click();
+  await flush();
+
+  assert(received.endsWith("-15"), "onChange receives the clicked day's ISO date");
+  assertEqual(container.querySelector(".m-datepicker-calendar"), null, "selecting a day closes the calendar");
+  assertEqual(container.querySelector(".m-datepicker-trigger").textContent, received);
+});
+
+test("DatePicker: prev/next month buttons pan the calendar", async () => {
+  const container = mountPoint();
+
+  function Widget() {
+    return h(DatePicker, { label: "Date", value: "2026-07-15" });
+  }
+
+  render(Widget, container);
+  await flush();
+
+  container.querySelector(".m-datepicker-trigger").click();
+  await flush();
+  assertEqual(container.querySelector(".m-datepicker-month").textContent, "July 2026");
+
+  container.querySelector('[aria-label="Next month"]').click();
+  await flush();
+  assertEqual(container.querySelector(".m-datepicker-month").textContent, "August 2026");
+
+  container.querySelector('[aria-label="Previous month"]').click();
+  await flush();
+  container.querySelector('[aria-label="Previous month"]').click();
+  await flush();
+  assertEqual(container.querySelector(".m-datepicker-month").textContent, "June 2026");
+});
+
+test("DatePicker: min/max disable out-of-range days", async () => {
+  const container = mountPoint();
+
+  function Widget() {
+    return h(DatePicker, { label: "Date", value: "2026-07-15", min: "2026-07-10", max: "2026-07-20" });
+  }
+
+  render(Widget, container);
+  await flush();
+
+  container.querySelector(".m-datepicker-trigger").click();
+  await flush();
+
+  const days = Array.from(container.querySelectorAll(".m-datepicker-day"));
+  const inRange = (label) => days.find((d) => !d.className.includes("outside") && d.textContent === label);
+
+  assert(inRange("5").disabled, "days before min are disabled");
+  assert(!inRange("15").disabled, "days within range are enabled");
+  assert(inRange("25").disabled, "days after max are disabled");
+});
+
+test("DatePicker: Escape closes the calendar and returns focus to the trigger", async () => {
+  const container = mountPoint();
+
+  function Widget() {
+    return h(DatePicker, { label: "Date", value: "2026-07-15" });
+  }
+
+  render(Widget, container);
+  await flush();
+
+  const trigger = container.querySelector(".m-datepicker-trigger");
+  trigger.click();
+  await flush();
+  assert(container.querySelector(".m-datepicker-calendar"));
+
+  document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+  await flush();
+
+  assertEqual(container.querySelector(".m-datepicker-calendar"), null);
+  assertEqual(document.activeElement, trigger);
+});
+
+test("DatePicker: ArrowRight moves the roving focus by one day, and Enter selects it", async () => {
+  const container = mountPoint();
+  let received;
+
+  function Widget() {
+    const [value, setValue] = useState("2026-07-15");
+    return h(DatePicker, { label: "Date", value, onChange: (v) => { received = v; setValue(v); } });
+  }
+
+  render(Widget, container);
+  await flush();
+
+  container.querySelector(".m-datepicker-trigger").click();
+  await flush();
+
+  const focused = container.querySelector('[tabindex="0"]');
+  assertEqual(focused.textContent, "15");
+
+  focused.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true }));
+  await flush();
+
+  const nextFocused = container.querySelector('[tabindex="0"]');
+  assertEqual(nextFocused.textContent, "16");
+
+  nextFocused.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
+  await flush();
+
+  assertEqual(received, "2026-07-16");
 });
