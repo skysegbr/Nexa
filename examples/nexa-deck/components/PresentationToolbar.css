@@ -1,0 +1,65 @@
+.nx-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 20px;
+  border-top: 1px solid rgba(148, 163, 184, 0.24);
+  background: rgba(15, 23, 42, 0.94);
+  color: #e5e7eb;
+}
+
+.nx-toolbar .m-button-contained {
+  gap: 6px;
+}
+
+.nx-dots {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nx-dot {
+  width: 12px;
+  height: 12px;
+  border: 0;
+  border-radius: 50%;
+  padding: 0;
+  background: rgba(148, 163, 184, 0.65);
+  cursor: pointer;
+  transition: transform var(--m-transition-fast), background var(--m-transition-fast);
+}
+
+.nx-dot:hover {
+  background: #e5e7eb;
+}
+
+.nx-dot-active {
+  background: #22d3ee;
+  transform: scale(1.3);
+}
+
+.nx-counter {
+  margin-left: auto;
+  color: #cbd5e1;
+  font-weight: 700;
+}
+
+@media (max-width: 760px) {
+  .nx-toolbar {
+    gap: 10px;
+    padding: 10px;
+  }
+
+  .nx-dots {
+    gap: 6px;
+  }
+
+  .nx-dot {
+    width: 10px;
+    height: 10px;
+  }
+
+  .nx-counter {
+    display: none;
+  }
+}

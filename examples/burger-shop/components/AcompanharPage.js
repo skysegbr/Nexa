@@ -1,9 +1,9 @@
 import {
   h, Fragment, useState, useEffect, useFetch,
-} from "../../../dist/nexa.js";
+} from "/dist/nexa.js";
 import {
   Spinner, Alert, Button, TextField,
-} from "../../../dist/nexa-components.js";
+} from "/dist/nexa-components.js";
 import { STATUS_LABELS } from "../data.js";
 import { brl } from "../api.js";
 import { StatusBadge } from "./StatusBadge.js";

@@ -27,7 +27,7 @@ export const RUNS = [
   { id: 4, pipeline: "Sales ETL",       status: "success", duration: "1m 18s", start: "2026-06-05 10:00" },
 ];
 
-/* ── New UI: Sidebar nav ───────────────────────────────── */
+/* ── Primitives: Sidebar nav ───────────────────────────────── */
 
 export const SIDEBAR_NAV_ITEMS = [
   { icon: "bi-speedometer2",   label: "Dashboard",  badge: null,  active: true  },
@@ -37,7 +37,7 @@ export const SIDEBAR_NAV_ITEMS = [
   { icon: "bi-gear",           label: "Settings",   badge: null,  active: false },
 ];
 
-/* ── New UI: Skeleton (loaded users) ───────────────────── */
+/* ── Primitives: Skeleton (loaded users) ───────────────────── */
 
 export const USERS = [
   { id: 1, name: "Ana Lima",    role: "Designer",  initials: "AL", color: "#d9f3ef" },
@@ -87,4 +87,46 @@ export const PRICING_ITEMS = [
     features: ["100 user requests", "Unlimited downloads", "Unlock all features", "Daily content updates"] },
   { id: "enterprise", subtitle: "For agencies", title: "Enterprise", price: "29", icon: "bi-building-fill-gear",
     features: ["Unlimited user requests", "Unlimited downloads", "Unlock all features", "Fully editable files"] },
+];
+
+/* ── Widgets: KPI stats ──────────────────────────────── */
+
+export const KPI_STATS = [
+  { value: "1.2k", label: "Active users", delta: "+12%" },
+  { value: "37",   label: "Churned",      delta: "-3%" },
+  { value: "99.9%", label: "Uptime",      help: "last 30 days" },
+  { value: "412ms", label: "P95 latency", delta: "-8%" },
+];
+
+/* ── Widgets: file tree ──────────────────────────────── */
+
+export const PROJECT_TREE = [
+  {
+    id: "app", label: "my-app", icon: "📁",
+    children: [
+      { id: "index", label: "index.html", icon: "📄" },
+      { id: "appjs", label: "app.js", icon: "📄" },
+      { id: "data", label: "data.js", icon: "📄" },
+      {
+        id: "components", label: "components", icon: "📁",
+        children: [
+          { id: "hero", label: "Hero.js", icon: "📄" },
+          { id: "herocss", label: "Hero.css", icon: "🎨" },
+          { id: "footer", label: "Footer.js", icon: "📄" },
+        ],
+      },
+    ],
+  },
+  { id: "readme", label: "README.md", icon: "📖" },
+];
+
+/* ── Widgets: command palette ────────────────────────── */
+
+export const PALETTE_COMMANDS = [
+  { id: "new",     label: "New pipeline",     section: "Pipelines", hint: "Ctrl+N", keywords: ["create"] },
+  { id: "run",     label: "Run all pipelines", section: "Pipelines", keywords: ["execute"] },
+  { id: "export",  label: "Export to S3",     section: "Pipelines" },
+  { id: "theme",   label: "Toggle theme",     section: "View", keywords: ["dark", "light"] },
+  { id: "palette", label: "Switch palette",   section: "View", keywords: ["color"] },
+  { id: "docs",    label: "Open documentation", section: "Help", hint: "F1" },
 ];

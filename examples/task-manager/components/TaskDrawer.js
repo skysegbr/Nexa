@@ -1,4 +1,4 @@
-import { h, useEffect, useForm } from "../../../dist/nexa.js";
+import { h, useEffect, useForm } from "/dist/nexa.js";
 import {
   Alert,
   Button,
@@ -8,13 +8,8 @@ import {
   Select,
   Textarea,
   TextField,
-} from "../../../dist/nexa-components.js";
-
-const PRIORITY_OPTIONS = [
-  { value: "high", label: "High" },
-  { value: "medium", label: "Medium" },
-  { value: "low", label: "Low" },
-];
+} from "/dist/nexa-components.js";
+import { PRIORITY_OPTIONS } from "../data.js";
 
 function valuesFromTask(task) {
   return {

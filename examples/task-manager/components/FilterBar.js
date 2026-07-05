@@ -1,25 +1,9 @@
-import { h } from "../../../dist/nexa.js";
-import { Select, TextField } from "../../../dist/nexa-components.js";
+import { h } from "/dist/nexa.js";
+import { Select, TextField } from "/dist/nexa-components.js";
+import { STATUS_OPTIONS, PRIORITY_OPTIONS, SORT_OPTIONS } from "../data.js";
 
-const STATUS_OPTIONS = [
-  { value: "all", label: "All statuses" },
-  { value: "todo", label: "Pending" },
-  { value: "in-progress", label: "In progress" },
-  { value: "done", label: "Done" },
-];
-
-const PRIORITY_OPTIONS = [
-  { value: "all", label: "All priorities" },
-  { value: "high", label: "High" },
-  { value: "medium", label: "Medium" },
-  { value: "low", label: "Low" },
-];
-
-const SORT_OPTIONS = [
-  { value: "createdAt", label: "Creation date" },
-  { value: "title", label: "Title (A-Z)" },
-  { value: "priority", label: "Priority" },
-];
+const ALL_STATUSES = [{ value: "all", label: "All statuses" }, ...STATUS_OPTIONS];
+const ALL_PRIORITIES = [{ value: "all", label: "All priorities" }, ...PRIORITY_OPTIONS];
 
 /**
  * Filter bar: text search, status, priority, category and sort.
@@ -44,14 +28,14 @@ export function FilterBar({ filters, categories, onChange }) {
     h(Select, {
       id: "filter-status",
       label: "Status",
-      options: STATUS_OPTIONS,
+      options: ALL_STATUSES,
       value: filters.status,
       onChange: (e) => onChange("status", e.target.value),
     }),
     h(Select, {
       id: "filter-priority",
       label: "Priority",
-      options: PRIORITY_OPTIONS,
+      options: ALL_PRIORITIES,
       value: filters.priority,
       onChange: (e) => onChange("priority", e.target.value),
     }),

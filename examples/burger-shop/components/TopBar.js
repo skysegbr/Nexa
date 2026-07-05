@@ -1,4 +1,4 @@
-import { h } from "../../../dist/nexa.js";
+import { h } from "/dist/nexa.js";
 
 export function TopBar({ page, setPage, cartCount }) {
   const pages = [

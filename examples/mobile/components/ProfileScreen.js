@@ -1,5 +1,5 @@
-import { h, useNetworkStatus, useOrientation } from "../../../dist/nexa.js";
-import { Alert, Card } from "../../../dist/nexa-components.js";
+import { h, useNetworkStatus, useOrientation } from "/dist/nexa.js";
+import { Alert, Card } from "/dist/nexa-components.js";
 
 export function ProfileScreen() {
   const online      = useNetworkStatus();

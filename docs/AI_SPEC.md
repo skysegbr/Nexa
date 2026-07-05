@@ -740,7 +740,7 @@ h('input', { required: true })
 
 ## 9. UI Components (`/dist/nexa-components.js`)
 
-~40 components + CSS-only primitives. Import only what you use:
+~60 components + CSS-only primitives. Import only what you use:
 
 ```js
 import { Button, Card, TextField } from '/dist/nexa-components.js';
@@ -790,6 +790,21 @@ h(SpeedDial, {
 })
 // Manages its own open/close state (useState) and closes on outside click or
 // after an item is picked — no controlled-state prop needed.
+
+// Avatar — initials fallback derived from `name` when there is no src
+h(Avatar, { name: 'Ada Lovelace', size: 'md' })   // renders "AL"
+h(Avatar, { src: '/u/ada.png', name: 'Ada Lovelace' })
+// sizes: 'xs' | 'sm' | 'md' | 'lg' | 'xl'
+
+// AvatarGroup — overlapping stack; avatars beyond `max` collapse into "+N"
+h(AvatarGroup, {
+  max: 4,
+  avatars: [{ name: 'Ada' }, { name: 'Grace' }, { src: '/u/alan.png', name: 'Alan' }],
+})
+
+// Divider
+h(Divider)                    // <hr class="m-divider">
+h(Divider, { vertical: true }) // inline separator, role="separator"
 ```
 
 ### Layout
@@ -801,7 +816,7 @@ h(Card, { padded: true }, h('p', null, 'Content'))
 
 // Card variants — CSS-only modifier classes on top of Card/.m-card, combine
 // with a plain `<article className="...">` when you need children the Card()
-// helper doesn't pass through (see examples/new-components/components/cards/PageCards.js):
+// helper doesn't pass through (see examples/components/components/cards/PageCards.js):
 //
 // m-card-media (+ m-card-media-zoom)
 //   Image-backed card: absolutely-positioned `.m-card-media-img`,
@@ -1091,6 +1106,49 @@ h(RangeSlider, {
 // Each thumb clamps against the other (lower can never cross upper) and has
 // its own aria-label ("Minimum"/"Maximum" by default, override with
 // minLabel/maxLabel) since there's no single native element to label both.
+
+// RadioGroup — "choose one of N" with visible options (use Select for long lists)
+h(RadioGroup, {
+  id: 'size',
+  label: 'Size',
+  value: size,                 // controlled
+  onChange: (v) => setSize(v),
+  inline: false,               // true = options laid out horizontally
+  options: [
+    { value: 's', label: 'Small' },
+    { value: 'm', label: 'Medium' },
+    { value: 'l', label: 'Large', disabled: true },
+  ],
+})
+// Native radios under the hood — Arrow-key roving comes for free. The group
+// shares `name` (defaults to `id`); label/help/error match the other fields.
+
+// Radio — single option, same anatomy as Checkbox (rarely needed alone)
+h(Radio, { id: 'r1', label: 'Accept', checked, onChange: fn })
+
+// NumberInput — numeric TextField with −/+ steppers
+h(NumberInput, {
+  id: 'qty',
+  label: 'Quantity',
+  min: 0, max: 99, step: 1,
+  value: qty,                       // number | null (null = cleared field)
+  onChange: (n) => setQty(n),
+})
+// Steppers clamp at min/max and round to the step's precision (no float
+// drift with step: 0.1); ArrowUp/Down on the input come from the native
+// number input.
+
+// TimePicker — trigger + listbox of "HH:MM" options every `step` minutes
+h(TimePicker, {
+  id: 'start',
+  label: 'Start time',
+  value: start,              // "HH:MM" | null
+  onChange: (t) => setStart(t),
+  min: '08:00', max: '18:00',
+  step: 30,                  // minutes between options
+})
+// a11y: opening focuses the selected option; ArrowUp/Down/Home/End move,
+// Enter selects, Escape closes and returns focus to the trigger.
 ```
 
 ### Feedback
@@ -1126,6 +1184,20 @@ h(Toast, {
 // ToastStack — floating toast container (place once near root)
 // Use with useToast() hook
 h(ToastStack, { toasts, onClose: (id) => removeToast(id) })
+
+// Skeleton — loading placeholder (pairs with useFetch's loading state)
+h(Skeleton, { width: 240, height: 16 })                 // rect
+h(Skeleton, { variant: 'circle', width: 40, height: 40 })
+h(Skeleton, { variant: 'text', lines: 3 })              // paragraph stub
+// Decorative only (aria-hidden) — announce loading on the region itself.
+
+// Stat / StatGrid — KPI tiles
+h(StatGrid, null,
+  h(Stat, { value: '1.2k', label: 'Users', delta: '+12%' }),
+  h(Stat, { value: '37',   label: 'Churn', delta: '-3%', icon: '📉' }),
+  h(Stat, { value: '99.9%', label: 'Uptime', help: 'last 30 days' }),
+)
+// delta colors itself by its leading sign (+ green, − red).
 ```
 
 ### Navigation
@@ -1231,6 +1303,34 @@ h(Pagination, {
   total: 12,
   onChange: (p) => setPage(p),
 })
+
+// Breadcrumb — ancestors are links, the last item is the current page
+h(Breadcrumb, {
+  items: [
+    { label: 'Home', href: '#/' },
+    { label: 'Projects', href: '#/projects' },
+    { label: 'Nexa' },                       // current — aria-current="page"
+  ],
+  separator: '/',                            // optional
+})
+
+// TreeView — WAI-ARIA tree over `{ id, label, icon?, children? }` nodes
+h(TreeView, {
+  items: [
+    { id: 'src', label: 'src', children: [
+        { id: 'app', label: 'app.js' },
+        { id: 'data', label: 'data.js' },
+      ] },
+    { id: 'readme', label: 'README.md' },
+  ],
+  selected: selectedId,                      // selection is controlled
+  onSelect: (id, node) => setSelectedId(id),
+  defaultExpanded: ['src'],                  // uncontrolled expansion…
+  // expanded + onExpandedChange              // …or controlled
+})
+// a11y: roving tabindex over visible nodes — ArrowUp/Down walk, ArrowRight
+// expands/enters a branch, ArrowLeft collapses/climbs to the parent,
+// Home/End jump, Enter/Space select. Caret clicks toggle without selecting.
 ```
 
 ### Overlay
@@ -1326,6 +1426,35 @@ h('div', { onContextMenu: openMenu },
 )
 // a11y: same as Dropdown (initial focus, arrow-key nav, Tab closes), plus
 // focus restores to whatever invoked the menu when it closes.
+
+// Popover — generic anchored panel for arbitrary interactive content
+// (Tooltip = text on hover; Dropdown/Menu = action lists; Popover = the rest)
+h(Popover, {
+  id: 'filters',
+  trigger: h(Button, { variant: 'tonal' }, 'Filters'),
+  placement: 'bottom',   // 'top' | 'bottom' | 'left' | 'right'
+  title: 'Filter results',
+},
+  h(Checkbox, { id: 'f1', label: 'Only active' }),
+  h(Button, { variant: 'contained' }, 'Apply'),
+)
+// Manages its own open state. Escape and outside clicks close it (Escape
+// also refocuses the trigger); Tab is NOT trapped — it's not a modal.
+
+// CommandPalette — Ctrl/Cmd-K launcher, controlled like Dialog
+h(CommandPalette, {
+  open: paletteOpen,
+  onClose: () => setPaletteOpen(false),
+  commands: [
+    { id: 'new',   label: 'New file',     section: 'Files', hint: 'Ctrl+N', onSelect: fn },
+    { id: 'theme', label: 'Toggle theme', section: 'View',  keywords: ['dark'], onSelect: fn },
+  ],
+})
+// Bind the global shortcut in the app (document keydown → setPaletteOpen);
+// the palette only handles what happens while it's open. Filtering is a
+// substring match over label/hint/section/keywords. The input keeps focus
+// and drives the list via aria-activedescendant — ArrowUp/Down move the
+// active option, Enter runs it (then closes), Escape closes.
 ```
 
 ---

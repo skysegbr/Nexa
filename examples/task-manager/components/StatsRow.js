@@ -1,5 +1,5 @@
-import { h } from "../../../dist/nexa.js";
-import { Card, Progress, Spinner } from "../../../dist/nexa-components.js";
+import { h } from "/dist/nexa.js";
+import { Card, Progress, Spinner } from "/dist/nexa-components.js";
 
 /** Displays the 4 summary counters and an overall progress bar. */
 export function StatsRow({ stats, loading }) {

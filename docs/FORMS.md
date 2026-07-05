@@ -164,6 +164,31 @@ h(Checkbox, {
 })
 ```
 
+### RadioGroup
+
+`RadioGroup` is controlled through `value`/`onChange` (one value for the whole
+group) rather than per-input events, so wire it to the form state directly
+instead of spreading `form.field()`:
+
+```js
+h(RadioGroup, {
+  id: "size",
+  label: "Size",
+  value: form.values.size,
+  onChange: (v) => form.setValue("size", v),
+  error: form.touched.size ? form.errors.size : undefined,
+  options: [
+    { value: "s", label: "Small" },
+    { value: "m", label: "Medium" },
+    { value: "l", label: "Large" },
+  ],
+})
+```
+
+The same pattern applies to the other value-based controls: `NumberInput`
+(`value`/`onChange` with a number), `DatePicker` and `TimePicker`
+(`"YYYY-MM-DD"` / `"HH:MM"` strings).
+
 ---
 
 ## Submit

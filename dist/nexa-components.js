@@ -2976,3 +2976,950 @@ export function DatePicker({
     ),
   );
 }
+
+// ── Radio / RadioGroup ───────────────────────────────────────
+//
+// Radio mirrors Checkbox (label-wrapped native input); RadioGroup is the
+// form-level control — a labeled fieldset-like group of options sharing a
+// `name`, controlled via value/onChange. Native radios already give the
+// correct Arrow-key roving behavior for free, so there is no custom
+// keyboard handling here.
+
+export function Radio({
+  id,
+  label,
+  help,
+  error,
+  className = "",
+  inputClassName = "",
+  ...props
+} = {}) {
+  const helpId = help ? `${id}-help` : undefined;
+  const errorId = error ? `${id}-error` : undefined;
+
+  return h(
+    "div",
+    { className: joinClasses("m-form-field", className) },
+    h(
+      "label",
+      { className: "m-radio" },
+      h("input", {
+        ...props,
+        id,
+        type: "radio",
+        className: inputClassName,
+        ariaInvalid: error ? "true" : undefined,
+        ariaDescribedby: joinClasses(helpId, errorId) || undefined,
+      }),
+      h("span", null, label),
+    ),
+    help && h("p", { id: helpId, className: "m-help" }, help),
+    error && h("p", { id: errorId, className: "m-error" }, error),
+  );
+}
+
+export function RadioGroup({
+  id,
+  label,
+  help,
+  error,
+  required = false,
+  disabled = false,
+  name,
+  options = [],
+  value,
+  onChange,
+  inline = false,
+  className = "",
+  ...props
+} = {}) {
+  const groupName = name ?? id;
+  const helpId = help ? `${id}-help` : undefined;
+  const errorId = error ? `${id}-error` : undefined;
+  const labelId = label ? `${id}-label` : undefined;
+
+  return h(
+    "div",
+    { className: joinClasses("m-form-field", className) },
+    label &&
+      h(
+        "span",
+        { id: labelId, className: "m-label" },
+        label,
+        required && h("span", { className: "m-required", ariaLabel: "required" }, "*"),
+      ),
+    h(
+      "div",
+      {
+        ...props,
+        id,
+        role: "radiogroup",
+        className: joinClasses("m-radio-group", inline && "m-radio-group-inline"),
+        ariaLabelledby: labelId,
+        ariaInvalid: error ? "true" : undefined,
+        ariaDescribedby: joinClasses(helpId, errorId) || undefined,
+      },
+      options.map((option) =>
+        h(
+          "label",
+          { key: option.value, className: "m-radio" },
+          h("input", {
+            type: "radio",
+            name: groupName,
+            value: option.value,
+            checked: option.value === value,
+            disabled: disabled || option.disabled,
+            required,
+            onChange: () => onChange?.(option.value),
+          }),
+          h("span", null, option.label),
+        ),
+      ),
+    ),
+    help && h("p", { id: helpId, className: "m-help" }, help),
+    error && h("p", { id: errorId, className: "m-error" }, error),
+  );
+}
+
+// ── Divider ──────────────────────────────────────────────────
+
+export function Divider({ vertical = false, className = "", ...props } = {}) {
+  if (vertical) {
+    return h("span", {
+      ...props,
+      className: joinClasses("m-divider-vertical", className),
+      role: "separator",
+      ariaOrientation: "vertical",
+    });
+  }
+
+  return h("hr", { ...props, className: joinClasses("m-divider", className) });
+}
+
+// ── Skeleton ─────────────────────────────────────────────────
+//
+// Loading placeholder. Purely decorative (ariaHidden) — pair it with a
+// visually-hidden status message or ariaBusy on the region being loaded.
+
+export function Skeleton({
+  variant = "rect",
+  width,
+  height,
+  lines = 1,
+  className = "",
+  ...props
+} = {}) {
+  const toSize = (v) => (typeof v === "number" ? `${v}px` : v);
+  const style = {};
+  if (width !== undefined) style.width = toSize(width);
+  if (height !== undefined) style.height = toSize(height);
+
+  if (variant === "text" && lines > 1) {
+    return h(
+      "div",
+      { ...props, className: joinClasses("m-skeleton-lines", className), ariaHidden: "true" },
+      Array.from({ length: lines }, (_, i) =>
+        h("span", {
+          key: i,
+          className: "m-skeleton m-skeleton-text",
+          // Shorter last line reads as a natural paragraph stub.
+          style: i === lines - 1 ? { ...style, width: "60%" } : style,
+        }),
+      ),
+    );
+  }
+
+  return h("span", {
+    ...props,
+    className: joinClasses(
+      "m-skeleton",
+      variant === "text" && "m-skeleton-text",
+      variant === "circle" && "m-skeleton-circle",
+      className,
+    ),
+    style,
+    ariaHidden: "true",
+  });
+}
+
+// ── Avatar / AvatarGroup ─────────────────────────────────────
+
+function avatarInitials(name) {
+  const words = String(name ?? "").trim().split(/\s+/).filter(Boolean);
+  if (words.length === 0) return "";
+  const first = words[0][0];
+  const last = words.length > 1 ? words[words.length - 1][0] : "";
+  return (first + last).toUpperCase();
+}
+
+export function Avatar({
+  src,
+  alt = "",
+  name,
+  size = "md",
+  className = "",
+  children,
+  ...props
+} = {}) {
+  const fallback = hasChildren(children) ? children : avatarInitials(name);
+
+  return h(
+    "span",
+    {
+      ...props,
+      className: joinClasses("m-avatar", `m-avatar-${size}`, className),
+      role: src ? undefined : "img",
+      ariaLabel: src ? undefined : name,
+    },
+    src ? h("img", { src, alt: alt || name || "" }) : fallback,
+  );
+}
+
+export function AvatarGroup({
+  avatars = [],
+  max = 4,
+  size = "md",
+  className = "",
+  ...props
+} = {}) {
+  const visible = avatars.slice(0, max);
+  const extra = avatars.length - visible.length;
+
+  // .m-avatar-group is row-reverse so earlier avatars paint on top of later
+  // ones without z-index bookkeeping — which means the DOM order must be the
+  // reverse of the display order (overflow counter first, then the visible
+  // avatars back-to-front).
+  const rendered = [];
+  if (extra > 0) {
+    rendered.push(
+      h(Avatar, { key: "m-avatar-overflow", size, name: `${extra} more`, className: "m-avatar-overflow" }, `+${extra}`),
+    );
+  }
+  for (let i = visible.length - 1; i >= 0; i -= 1) {
+    const item = visible[i];
+    rendered.push(h(Avatar, { key: item.name ?? item.src ?? i, size, ...item }));
+  }
+
+  return h(
+    "span",
+    { ...props, className: joinClasses("m-avatar-group", className), role: "group" },
+    rendered,
+  );
+}
+
+// ── Breadcrumb ───────────────────────────────────────────────
+
+export function Breadcrumb({
+  items = [],
+  separator = "/",
+  ariaLabel = "Breadcrumb",
+  className = "",
+  ...props
+} = {}) {
+  const last = items.length - 1;
+
+  return h(
+    "nav",
+    { ...props, ariaLabel, className },
+    h(
+      "ol",
+      { className: "m-breadcrumb" },
+      items.map((item, index) =>
+        h(
+          "li",
+          // item.key ?? index (not href/label): several crumbs can share the
+          // same placeholder href, and duplicate keys corrupt reconciliation.
+          { key: item.key ?? index, className: "m-breadcrumb-item" },
+          index > 0 && h("span", { className: "m-breadcrumb-sep", ariaHidden: "true" }, separator),
+          index === last || (!item.href && !item.onClick)
+            ? h("span", { ariaCurrent: index === last ? "page" : undefined }, item.icon, item.label)
+            : h(
+                "a",
+                { className: "m-breadcrumb-link", href: item.href, onClick: item.onClick },
+                item.icon,
+                item.label,
+              ),
+        ),
+      ),
+    ),
+  );
+}
+
+// ── Stat / StatGrid ──────────────────────────────────────────
+//
+// KPI tile: big value + small label, with an optional delta ("+12%" / "-3%")
+// that colors itself by its leading sign. StatGrid is the auto-fit wrapper.
+
+export function Stat({
+  value,
+  label,
+  icon,
+  delta,
+  help,
+  className = "",
+  ...props
+} = {}) {
+  const deltaDown = typeof delta === "string" && delta.trim().startsWith("-");
+
+  return h(
+    "div",
+    { ...props, className: joinClasses("m-stat", className) },
+    icon && h("span", { className: "m-stat-icon", ariaHidden: "true" }, icon),
+    h("strong", { className: "m-stat-value" }, value),
+    h(
+      "span",
+      { className: "m-stat-label" },
+      label,
+      delta &&
+        h(
+          "span",
+          { className: joinClasses("m-stat-delta", deltaDown ? "m-stat-delta-down" : "m-stat-delta-up") },
+          ` ${delta}`,
+        ),
+    ),
+    help && h("p", { className: "m-stat-help" }, help),
+  );
+}
+
+export function StatGrid({ className = "", children, ...props } = {}) {
+  return h("div", { ...props, className: joinClasses("m-stat-grid", className) }, children);
+}
+
+// ── NumberInput ──────────────────────────────────────────────
+//
+// TextField's numeric sibling: native number input flanked by −/+ stepper
+// buttons. Controlled with a number (or null when cleared). The steppers
+// are tabIndex -1 — keyboard users already have ArrowUp/Down on the input
+// itself, so the buttons only need to serve pointer users.
+
+export function NumberInput({
+  id,
+  label,
+  help,
+  error,
+  required = false,
+  disabled = false,
+  min,
+  max,
+  step = 1,
+  value,
+  onChange,
+  decrementLabel = "Decrease",
+  incrementLabel = "Increase",
+  className = "",
+  inputClassName = "",
+  ...props
+} = {}) {
+  const lo = finiteNumber(min, -Infinity);
+  const hi = finiteNumber(max, Infinity);
+  const stepValue = finiteNumber(step, 1);
+  // Rounding to the step's own precision keeps repeated 0.1 steps from
+  // accumulating float drift (0.30000000000000004).
+  const decimals = (String(stepValue).split(".")[1] || "").length;
+  const clamp = (n) => Number(Math.min(hi, Math.max(lo, n)).toFixed(decimals));
+
+  // Careful: Number(null) and Number("") are both 0, so empty must be
+  // detected before coercing — otherwise a cleared field reads as 0 and
+  // wrongly disables the stepper at min=0.
+  const current =
+    value === null || value === undefined || value === "" ? null : finiteNumber(value, null);
+  const stepFrom = current ?? (Number.isFinite(lo) ? lo : 0);
+
+  const nudge = (direction) => {
+    if (disabled) return;
+    onChange?.(clamp(current === null ? stepFrom : current + direction * stepValue));
+  };
+
+  return h(
+    FormField,
+    { id, label, help, error, required, className },
+    h(
+      "div",
+      { className: "m-number-input" },
+      h(
+        "button",
+        {
+          type: "button",
+          className: "m-number-input-btn",
+          ariaLabel: decrementLabel,
+          tabIndex: -1,
+          disabled: disabled || (current !== null && current <= lo),
+          onClick: () => nudge(-1),
+        },
+        "−",
+      ),
+      h("input", {
+        ...fieldProps({ id, error, help, required, inputClassName, props }),
+        type: "number",
+        min,
+        max,
+        step,
+        disabled,
+        value: current === null ? "" : current,
+        onInput: (event) => {
+          const raw = event.target.value;
+          onChange?.(raw === "" ? null : finiteNumber(raw, current));
+        },
+      }),
+      h(
+        "button",
+        {
+          type: "button",
+          className: "m-number-input-btn",
+          ariaLabel: incrementLabel,
+          tabIndex: -1,
+          disabled: disabled || (current !== null && current >= hi),
+          onClick: () => nudge(1),
+        },
+        "+",
+      ),
+    ),
+  );
+}
+
+// ── TimePicker ───────────────────────────────────────────────
+//
+// DatePicker's sibling for "HH:MM" strings: a trigger that opens a listbox
+// of times generated between min/max at `step`-minute intervals (the
+// Google-Calendar pattern). Opening focuses the selected option; ArrowUp/
+// Down walk the list (moveMenuFocus), Enter picks (native button click),
+// Escape closes and refocuses the trigger.
+
+function parseHHMM(value) {
+  const match = typeof value === "string" ? /^(\d{2}):(\d{2})$/.exec(value) : null;
+  if (!match) return null;
+  const minutes = Number(match[1]) * 60 + Number(match[2]);
+  return minutes < 24 * 60 ? minutes : null;
+}
+
+function toHHMM(minutes) {
+  return `${pad2(Math.floor(minutes / 60))}:${pad2(minutes % 60)}`;
+}
+
+export function TimePicker({
+  id,
+  label,
+  help,
+  error,
+  required = false,
+  disabled = false,
+  value,
+  onChange,
+  min = "00:00",
+  max = "23:59",
+  step = 30,
+  placeholder = "Select a time",
+  className = "",
+  inputClassName = "",
+  ...props
+} = {}) {
+  const [open, setOpen] = useState(false);
+  const wrapRef = useRef(null);
+  const listRef = useRef(null);
+
+  const selected = parseHHMM(value);
+  const lo = parseHHMM(min) ?? 0;
+  const hi = parseHHMM(max) ?? 24 * 60 - 1;
+  const stepValue = Math.max(1, finiteNumber(step, 30));
+
+  const options = [];
+  for (let m = Math.ceil(lo / stepValue) * stepValue; m <= hi; m += stepValue) {
+    options.push(m);
+  }
+
+  const helpId = help ? `${id}-help` : undefined;
+  const errorId = error ? `${id}-error` : undefined;
+  const menuId = id ? `${id}-listbox` : undefined;
+
+  useEffect(() => {
+    if (!open) return undefined;
+
+    queueMicrotask(() => {
+      const list = listRef.current;
+      (list?.querySelector('[aria-selected="true"]') ?? list?.querySelector("button"))?.focus();
+    });
+
+    const onMouseDown = (event) => {
+      if (wrapRef.current && !wrapRef.current.contains(event.target)) setOpen(false);
+    };
+    const onKeyDown = (event) => {
+      if (event.key === "Escape") {
+        setOpen(false);
+        focusFirstElement(wrapRef.current);
+        return;
+      }
+      if (event.key === "Tab") {
+        setOpen(false);
+        return;
+      }
+      if (["ArrowDown", "ArrowUp", "Home", "End"].includes(event.key)) {
+        moveMenuFocus(event, listRef.current);
+      }
+    };
+
+    document.addEventListener("mousedown", onMouseDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", onMouseDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [open]);
+
+  return h(
+    FormField,
+    { id, label, help, error, required, className },
+    h(
+      "div",
+      { ...props, ref: wrapRef, className: "m-timepicker" },
+      h(
+        "button",
+        {
+          id,
+          type: "button",
+          className: joinClasses("m-timepicker-trigger", inputClassName),
+          disabled,
+          onClick: () => {
+            if (!disabled) setOpen((v) => !v);
+          },
+          ariaHaspopup: "listbox",
+          ariaExpanded: open ? "true" : "false",
+          ariaControls: menuId,
+          ariaInvalid: error ? "true" : undefined,
+          ariaDescribedby: joinClasses(helpId, errorId) || undefined,
+        },
+        selected !== null ? toHHMM(selected) : placeholder,
+      ),
+      open &&
+        h(
+          "ul",
+          { ref: listRef, id: menuId, className: "m-timepicker-list", role: "listbox" },
+          options.map((minutes) =>
+            h(
+              "li",
+              { key: minutes, role: "none" },
+              h(
+                "button",
+                {
+                  type: "button",
+                  role: "option",
+                  className: joinClasses(
+                    "m-timepicker-option",
+                    minutes === selected && "m-timepicker-option-selected",
+                  ),
+                  ariaSelected: minutes === selected ? "true" : "false",
+                  onClick: () => {
+                    onChange?.(toHHMM(minutes));
+                    setOpen(false);
+                    focusFirstElement(wrapRef.current);
+                  },
+                },
+                toHHMM(minutes),
+              ),
+            ),
+          ),
+        ),
+    ),
+  );
+}
+
+// ── Popover ──────────────────────────────────────────────────
+//
+// Generic anchored panel — the primitive Tooltip/Dropdown/Menu don't cover:
+// arbitrary interactive content next to a trigger. Unlike Dialog it does
+// not trap Tab (the panel is part of the page flow); Escape and outside
+// clicks close it, Escape also restores focus to the trigger.
+
+export function Popover({
+  id,
+  trigger,
+  placement = "bottom",
+  title,
+  className = "",
+  children,
+  ...props
+} = {}) {
+  const [open, setOpen] = useState(false);
+  const wrapRef = useRef(null);
+  const panelRef = useRef(null);
+  const panelId = id ? `${id}-panel` : undefined;
+  const titleId = id && title ? `${id}-title` : undefined;
+
+  useEffect(() => {
+    if (!open) return undefined;
+
+    queueMicrotask(() => focusFirstElement(panelRef.current));
+
+    const onMouseDown = (event) => {
+      if (wrapRef.current && !wrapRef.current.contains(event.target)) setOpen(false);
+    };
+    const onKeyDown = (event) => {
+      if (event.key === "Escape") {
+        setOpen(false);
+        focusFirstElement(wrapRef.current);
+      }
+    };
+
+    document.addEventListener("mousedown", onMouseDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", onMouseDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [open]);
+
+  return h(
+    "span",
+    { ...props, id, ref: wrapRef, className: joinClasses("m-popover", className) },
+    h(
+      "span",
+      {
+        className: "m-popover-trigger",
+        onClick: () => setOpen((v) => !v),
+        ariaHaspopup: "dialog",
+        ariaExpanded: open ? "true" : "false",
+        ariaControls: panelId,
+      },
+      trigger,
+    ),
+    open &&
+      h(
+        "div",
+        {
+          ref: panelRef,
+          id: panelId,
+          className: joinClasses("m-popover-panel", `m-popover-${placement}`),
+          role: "dialog",
+          ariaLabelledby: titleId,
+        },
+        title && h("h3", { id: titleId, className: "m-popover-title" }, title),
+        children,
+      ),
+  );
+}
+
+// ── TreeView ─────────────────────────────────────────────────
+//
+// WAI-ARIA tree: nodes are `{ id, label, icon?, children? }`. Expansion is
+// uncontrolled by default (defaultExpanded) or controlled via `expanded` +
+// onExpandedChange; selection is always controlled (selected/onSelect).
+// Keyboard follows the ARIA authoring pattern with a roving tabindex over
+// the *visible* nodes: ArrowUp/Down walk, ArrowRight expands / enters a
+// branch, ArrowLeft collapses / climbs to the parent, Home/End jump,
+// Enter/Space select.
+
+function flattenVisibleTree(items, isExpanded, parent = null, out = []) {
+  for (const node of items) {
+    out.push({ node, parent });
+    if (node.children?.length && isExpanded(node.id)) {
+      flattenVisibleTree(node.children, isExpanded, node, out);
+    }
+  }
+  return out;
+}
+
+export function TreeView({
+  items = [],
+  expanded,
+  defaultExpanded = [],
+  onExpandedChange,
+  selected,
+  onSelect,
+  ariaLabel = "Tree",
+  className = "",
+  ...props
+} = {}) {
+  const [internalExpanded, setInternalExpanded] = useState(defaultExpanded);
+  const [focusedId, setFocusedId] = useState(null);
+  const treeRef = useRef(null);
+
+  const expandedIds = expanded ?? internalExpanded;
+  const isExpanded = (nodeId) => expandedIds.includes(nodeId);
+
+  const setExpandedIds = (next) => {
+    if (expanded === undefined) setInternalExpanded(next);
+    onExpandedChange?.(next);
+  };
+
+  const toggleNode = (nodeId) => {
+    setExpandedIds(
+      isExpanded(nodeId) ? expandedIds.filter((x) => x !== nodeId) : [...expandedIds, nodeId],
+    );
+  };
+
+  const visible = flattenVisibleTree(items, isExpanded);
+  // The roving stop falls back to the selected node (or the first root) when
+  // focus never entered the tree, or when the focused node was hidden by a
+  // collapse.
+  const rovingId = visible.some(({ node }) => node.id === focusedId)
+    ? focusedId
+    : visible.find(({ node }) => node.id === selected)?.node.id ?? visible[0]?.node.id;
+
+  const focusNode = (nodeId) => {
+    setFocusedId(nodeId);
+    queueMicrotask(() =>
+      treeRef.current?.querySelector(`[data-id="${CSS.escape(String(nodeId))}"]`)?.focus(),
+    );
+  };
+
+  const onTreeKeyDown = (event) => {
+    const index = visible.findIndex(({ node }) => node.id === rovingId);
+    if (index === -1) return;
+    const { node, parent } = visible[index];
+    const hasKids = node.children?.length > 0;
+
+    if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+      event.preventDefault();
+      const next = visible[index + (event.key === "ArrowDown" ? 1 : -1)];
+      if (next) focusNode(next.node.id);
+    } else if (event.key === "ArrowRight") {
+      event.preventDefault();
+      if (hasKids && !isExpanded(node.id)) toggleNode(node.id);
+      else if (hasKids) focusNode(node.children[0].id);
+    } else if (event.key === "ArrowLeft") {
+      event.preventDefault();
+      if (hasKids && isExpanded(node.id)) toggleNode(node.id);
+      else if (parent) focusNode(parent.id);
+    } else if (event.key === "Home") {
+      event.preventDefault();
+      if (visible.length) focusNode(visible[0].node.id);
+    } else if (event.key === "End") {
+      event.preventDefault();
+      if (visible.length) focusNode(visible[visible.length - 1].node.id);
+    } else if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      onSelect?.(node.id, node);
+    }
+  };
+
+  const renderNode = (node) => {
+    const hasKids = node.children?.length > 0;
+    const nodeOpen = hasKids && isExpanded(node.id);
+
+    return h(
+      "li",
+      {
+        key: node.id,
+        role: "treeitem",
+        className: joinClasses("m-tree-item", node.id === selected && "m-tree-item-selected"),
+        dataset: { id: node.id },
+        tabIndex: node.id === rovingId ? 0 : -1,
+        ariaExpanded: hasKids ? String(nodeOpen) : undefined,
+        ariaSelected: node.id === selected ? "true" : "false",
+      },
+      h(
+        "div",
+        {
+          className: "m-tree-row",
+          onClick: (event) => {
+            event.stopPropagation();
+            focusNode(node.id);
+            onSelect?.(node.id, node);
+          },
+        },
+        h(
+          "span",
+          {
+            className: joinClasses(
+              "m-tree-caret",
+              nodeOpen && "m-tree-caret-open",
+              !hasKids && "m-tree-caret-leaf",
+            ),
+            ariaHidden: "true",
+            onClick: hasKids
+              ? (event) => {
+                  event.stopPropagation();
+                  toggleNode(node.id);
+                }
+              : undefined,
+          },
+          "▸",
+        ),
+        node.icon && h("span", { className: "m-tree-icon", ariaHidden: "true" }, node.icon),
+        h("span", { className: "m-tree-label" }, node.label),
+      ),
+      nodeOpen &&
+        h("ul", { role: "group", className: "m-tree-group" }, node.children.map(renderNode)),
+    );
+  };
+
+  return h(
+    "ul",
+    {
+      ...props,
+      ref: treeRef,
+      role: "tree",
+      ariaLabel,
+      className: joinClasses("m-tree", className),
+      onKeyDown: onTreeKeyDown,
+    },
+    items.map(renderNode),
+  );
+}
+
+// ── CommandPalette ───────────────────────────────────────────
+//
+// Ctrl/Cmd-K style launcher. Controlled like Dialog (open/onClose) — bind
+// the global shortcut in the app, not here. Commands are
+// `{ id, label, hint?, icon?, section?, keywords?, onSelect }`; filtering
+// is a case-insensitive substring match over label/hint/section/keywords.
+// The text input keeps focus the whole time and drives an
+// aria-activedescendant listbox, so ArrowUp/Down/Enter never move focus.
+
+export function CommandPalette({
+  open = false,
+  id = "nexa-command",
+  onClose,
+  commands = [],
+  placeholder = "Type a command…",
+  emptyLabel = "No matching commands",
+  className = "",
+  ...props
+} = {}) {
+  const [query, setQuery] = useState("");
+  const [active, setActive] = useState(0);
+  const inputRef = useRef(null);
+  const panelRef = useRef(null);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+
+  useEffect(() => {
+    if (!open) return undefined;
+
+    setQuery("");
+    setActive(0);
+
+    const previousActive = document.activeElement;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    queueMicrotask(() => inputRef.current?.focus());
+
+    const onKeyDown = (event) => {
+      if (event.key === "Escape") {
+        onCloseRef.current?.();
+        return;
+      }
+      if (event.key === "Tab") {
+        trapFocus(event, panelRef.current);
+      }
+    };
+
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      document.body.style.overflow = previousOverflow;
+      if (previousActive && typeof previousActive.focus === "function") {
+        previousActive.focus();
+      }
+    };
+  }, [open]);
+
+  if (!open) return null;
+
+  const q = query.trim().toLowerCase();
+  const filtered = commands.filter((cmd) => {
+    if (!q) return true;
+    return [cmd.label, cmd.hint, cmd.section, ...(cmd.keywords ?? [])]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase()
+      .includes(q);
+  });
+  const activeIndex = Math.max(0, Math.min(active, filtered.length - 1));
+  const listId = `${id}-listbox`;
+
+  const runCommand = (cmd) => {
+    cmd.onSelect?.(cmd);
+    onCloseRef.current?.();
+  };
+
+  const moveActive = (next) => {
+    setActive(next);
+    queueMicrotask(() =>
+      document.getElementById(`${id}-option-${next}`)?.scrollIntoView({ block: "nearest" }),
+    );
+  };
+
+  const onInputKeyDown = (event) => {
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      if (filtered.length) moveActive(Math.min(activeIndex + 1, filtered.length - 1));
+    } else if (event.key === "ArrowUp") {
+      event.preventDefault();
+      if (filtered.length) moveActive(Math.max(activeIndex - 1, 0));
+    } else if (event.key === "Enter") {
+      event.preventDefault();
+      if (filtered[activeIndex]) runCommand(filtered[activeIndex]);
+    }
+  };
+
+  let lastSection;
+  const listChildren = [];
+  filtered.forEach((cmd, index) => {
+    if (cmd.section && cmd.section !== lastSection) {
+      lastSection = cmd.section;
+      listChildren.push(
+        h("li", { key: `section-${cmd.section}`, className: "m-command-section", role: "presentation" }, cmd.section),
+      );
+    }
+    listChildren.push(
+      h(
+        "li",
+        {
+          key: cmd.id ?? cmd.label,
+          id: `${id}-option-${index}`,
+          role: "option",
+          ariaSelected: index === activeIndex ? "true" : "false",
+          className: joinClasses("m-command-option", index === activeIndex && "m-command-option-active"),
+          onMouseEnter: () => setActive(index),
+          onClick: () => runCommand(cmd),
+        },
+        cmd.icon && h("span", { className: "m-command-icon", ariaHidden: "true" }, cmd.icon),
+        h("span", { className: "m-command-label" }, cmd.label),
+        cmd.hint && h("span", { className: "m-command-hint" }, cmd.hint),
+      ),
+    );
+  });
+  if (filtered.length === 0) {
+    listChildren.push(h("li", { key: "empty", className: "m-command-empty", role: "presentation" }, emptyLabel));
+  }
+
+  return h(
+    "div",
+    {
+      className: "m-command-backdrop",
+      onMouseDown: (event) => {
+        if (event.target === event.currentTarget) onClose?.();
+      },
+    },
+    h(
+      "section",
+      {
+        ...props,
+        ref: panelRef,
+        id,
+        className: joinClasses("m-command", className),
+        role: "dialog",
+        ariaModal: "true",
+        ariaLabel: "Command palette",
+      },
+      h("input", {
+        ref: inputRef,
+        type: "text",
+        className: "m-command-input",
+        placeholder,
+        value: query,
+        role: "combobox",
+        ariaExpanded: "true",
+        ariaControls: listId,
+        ariaActivedescendant: filtered.length ? `${id}-option-${activeIndex}` : undefined,
+        ariaAutocomplete: "list",
+        onInput: (event) => {
+          setQuery(event.target.value);
+          setActive(0);
+        },
+        onKeyDown: onInputKeyDown,
+      }),
+      h("ul", { id: listId, className: "m-command-list", role: "listbox" }, listChildren),
+    ),
+  );
+}

@@ -1,13 +1,7 @@
-import { h, useState } from "../../../dist/nexa.js";
-import { Alert, Card, Chip } from "../../../dist/nexa-components.js";
+import { h, useState } from "/dist/nexa.js";
+import { Alert, Card, Chip } from "/dist/nexa-components.js";
 
-const FILTERS  = ["all", "ui", "hooks", "css", "mobile"];
-const BREAKPOINTS = [
-  { label: "sm >=576px", desc: "Small tablets" },
-  { label: "md >=768px", desc: "Tablets" },
-  { label: "lg >=992px", desc: "Desktop" },
-  { label: "xl >=1200px", desc: "Wide desktop" },
-];
+import { EXPLORE_FILTERS, BREAKPOINTS } from "../data.js";
 
 export function ExploreScreen() {
   const [active, setActive] = useState("all");
@@ -18,7 +12,7 @@ export function ExploreScreen() {
     h(
       "div",
       { className: "m-cluster m-mb-4" },
-      FILTERS.map((f) =>
+      EXPLORE_FILTERS.map((f) =>
         h(Chip, { key: f, active: active === f, onClick: () => setActive(f) }, f),
       ),
     ),

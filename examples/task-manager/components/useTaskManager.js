@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "../../../dist/nexa.js";
+import { useCallback, useEffect, useRef, useState } from "/dist/nexa.js";
 
 const API =
   window.location.port === "5050" ? window.location.origin : "http://localhost:5050";

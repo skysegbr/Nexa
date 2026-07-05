@@ -7,13 +7,14 @@ import { PageContextMenu } from "./components/PageContextMenu.js";
 import { PageFileDrop }    from "./components/PageFileDrop.js";
 import { PageCodeEditor }  from "./components/PageCodeEditor.js";
 import { PageToasts }      from "./components/PageToasts.js";
-import { PageNewUI }       from "./components/new-ui/PageNewUI.js";
+import { PagePrimitives }  from "./components/primitives/PagePrimitives.js";
 import { PageCards }       from "./components/cards/PageCards.js";
 import { PageAccordion }   from "./components/accordion/PageAccordion.js";
 import { PageSlider }      from "./components/PageSlider.js";
 import { PageMenu }        from "./components/PageMenu.js";
 import { PageDataTable }   from "./components/PageDataTable.js";
 import { PageDatePicker }  from "./components/PageDatePicker.js";
+import { PageWidgets }     from "./components/widgets/PageWidgets.js";
 
 const EXAMPLE_PAGES = [
   { key: "switches",   label: "Switch & Collapse",    path: "/switches",   icon: "bi-toggle-on" },
@@ -22,13 +23,14 @@ const EXAMPLE_PAGES = [
   { key: "filedrop",   label: "File Drop",             path: "/filedrop",   icon: "bi-cloud-upload" },
   { key: "editor",     label: "Code Editor",           path: "/editor",     icon: "bi-code-slash" },
   { key: "toasts",     label: "Toasts & Dialog",       path: "/toasts",     icon: "bi-bell" },
-  { key: "newui",      label: "New UI",                path: "/newui",      icon: "bi-stars" },
+  { key: "primitives", label: "UI Primitives",         path: "/primitives", icon: "bi-stars" },
   { key: "cards",      label: "Cards",                 path: "/cards",      icon: "bi-postcard" },
   { key: "accordion",  label: "Accordion",             path: "/accordion",  icon: "bi-chevron-expand" },
   { key: "slider",     label: "Slider / RangeSlider",  path: "/slider",     icon: "bi-sliders" },
   { key: "menu",       label: "Menu",                  path: "/menu",       icon: "bi-list-nested" },
   { key: "datatable",  label: "DataTable",             path: "/datatable",  icon: "bi-table" },
   { key: "datepicker", label: "DatePicker",            path: "/datepicker", icon: "bi-calendar3" },
+  { key: "widgets",    label: "Forms & Widgets",       path: "/widgets",    icon: "bi-magic" },
 ];
 
 function App() {
@@ -76,13 +78,14 @@ function renderPage(path, toast) {
   if (path === "/filedrop")  return h(PageFileDrop,   { toast });
   if (path === "/editor")    return h(PageCodeEditor);
   if (path === "/toasts")    return h(PageToasts,     { toast });
-  if (path === "/newui")     return h(PageNewUI);
+  if (path === "/primitives") return h(PagePrimitives);
   if (path === "/cards")     return h(PageCards);
   if (path === "/accordion") return h(PageAccordion);
   if (path === "/slider")     return h(PageSlider);
   if (path === "/menu")       return h(PageMenu,       { toast });
   if (path === "/datatable")  return h(PageDataTable);
   if (path === "/datepicker") return h(PageDatePicker);
+  if (path === "/widgets")    return h(PageWidgets,    { toast });
   return h(PageSwitches);
 }
 

@@ -1,11 +1,6 @@
 import { h } from "/dist/nexa.js";
 import { Button, Checkbox, Dialog, Select, Textarea, TextField } from "/dist/nexa-components.js";
-
-const statusOptions = [
-  { value: "active", label: "Active" },
-  { value: "review", label: "Under review" },
-  { value: "paused", label: "Paused" },
-];
+import { STATUS_OPTIONS } from "../data.js";
 
 export function ProjectDialog({ project, open, onClose, onSave }) {
   return h(Dialog, {
@@ -18,7 +13,7 @@ export function ProjectDialog({ project, open, onClose, onSave }) {
   },
     h("form", { className: "m-stack", onSubmit: (e) => e.preventDefault() },
       h(TextField, { id: "project-name",   label: "Project",      value: project?.name || "",        disabled: true }),
-      h(Select,    { id: "project-status", label: "Status",       value: project?.status || "active", options: statusOptions }),
+      h(Select,    { id: "project-status", label: "Status",       value: project?.status || "active", options: STATUS_OPTIONS }),
       h(Textarea,  { id: "project-notes",  label: "Review notes", value: project?.description || "", rows: 4 }),
       h(Checkbox,  { id: "project-followup", label: "Create follow-up task", checked: true }),
     ),

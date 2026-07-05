@@ -1,5 +1,5 @@
-import { h } from "../../../dist/nexa.js";
-import { Badge, Chip, Dropdown, EmptyState, Spinner, Tooltip } from "../../../dist/nexa-components.js";
+import { h } from "/dist/nexa.js";
+import { Badge, Chip, Dropdown, EmptyState, Spinner, Tooltip } from "/dist/nexa-components.js";
 
 const PRIORITY_LABEL = { high: "High", medium: "Medium", low: "Low" };
 const STATUS_LABEL = {

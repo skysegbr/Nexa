@@ -1,19 +1,13 @@
-import { h, useState } from "../../../dist/nexa.js";
-import { Badge } from "../../../dist/nexa-components.js";
+import { h, useState } from "/dist/nexa.js";
+import { Badge } from "/dist/nexa-components.js";
 
-const ITEMS = [
-  { id: 1, text: "Mobile-first grid implemented",  time: "now" },
-  { id: 2, text: "Automatic dark mode activated",  time: "2min" },
-  { id: 3, text: "AppBar and BottomNav added",      time: "5min" },
-  { id: 4, text: "useSwipe and useLongPress created", time: "10min" },
-  { id: 5, text: "ThemeToggle with localStorage",  time: "15min" },
-];
+import { ACTIVITY_ITEMS } from "../data.js";
 
 export function ActivityScreen() {
   return h(
     "ul",
     { className: "m-list" },
-    ITEMS.map((item) =>
+    ACTIVITY_ITEMS.map((item) =>
       h(
         "li",
         { key: item.id, className: "m-list-item" },

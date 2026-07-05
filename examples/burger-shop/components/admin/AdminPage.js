@@ -1,5 +1,5 @@
-import { h, useState } from "../../../../dist/nexa.js";
-import { Tabs, TabPanel } from "../../../../dist/nexa-components.js";
+import { h, useState } from "/dist/nexa.js";
+import { Tabs, TabPanel } from "/dist/nexa-components.js";
 import { AdminProdutos } from "./AdminProdutos.js";
 import { AdminPedidos }  from "./AdminPedidos.js";
 

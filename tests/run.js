@@ -4,6 +4,7 @@ import "./hooks.test.js";
 import "./ssr.test.js";
 import "./a11y.test.js";
 import "./coverage.test.js";
+import "./components-new.test.js";
 import { run } from "./runner.js";
 
 // Expose the outcome on window so a headless driver (scripts/

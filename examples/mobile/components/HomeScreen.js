@@ -1,14 +1,7 @@
-import { h, useRef, useState, useSwipe, useLongPress, useVibrate } from "../../../dist/nexa.js";
-import { Button, Card } from "../../../dist/nexa-components.js";
+import { h, useRef, useState, useSwipe, useLongPress, useVibrate } from "/dist/nexa.js";
+import { Button, Card } from "/dist/nexa-components.js";
 
-const FEATURES = [
-  { id: 1, title: "Mobile Components", body: "Native AppBar, BottomNav, BottomSheet and FAB." },
-  { id: 2, title: "Responsive Grid",   body: "12-column mobile-first grid, just like Bootstrap 5." },
-  { id: 3, title: "Dark Mode",         body: "Automatic via prefers-color-scheme + manual toggle." },
-  { id: 4, title: "Gesture Hooks",     body: "useSwipe, useLongPress, useVibrate and more." },
-  { id: 5, title: "Safe Areas",        body: "Support for notch and Dynamic Island via env()." },
-  { id: 6, title: "Touch Targets",     body: "Minimum 44px on all interactive elements." },
-];
+import { FEATURES } from "../data.js";
 
 export function HomeScreen({ onOpenSheet }) {
   const swipeRef = useRef(null);

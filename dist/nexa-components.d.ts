@@ -1,7 +1,7 @@
 /**
  * Type declarations for /dist/nexa-components.js
  *
- * All 41 component functions. Signatures derived from the actual source.
+ * All 61 component functions. Signatures derived from the actual source.
  */
 
 import type { VNode, Ref, ToastItem } from "./nexa.js";
@@ -649,4 +649,213 @@ export declare function DatePicker(props?: {
   placeholder?: string;
   className?: string;
   inputClassName?: string;
+} & ExtraProps): VNode;
+
+// ── Radio / RadioGroup ─────────────────────────────────────────────────────
+
+export declare function Radio(props?: {
+  id?: string;
+  label?: VNode;
+  help?: string;
+  error?: string;
+  className?: string;
+  inputClassName?: string;
+} & ExtraProps): VNode;
+
+export interface RadioGroupOption {
+  value: string;
+  label: VNode;
+  disabled?: boolean;
+}
+
+export declare function RadioGroup(props?: {
+  id?: string;
+  label?: VNode;
+  help?: string;
+  error?: string;
+  required?: boolean;
+  disabled?: boolean;
+  /** Radio `name` shared by the options; defaults to `id`. */
+  name?: string;
+  options?: RadioGroupOption[];
+  value?: string;
+  onChange?: (value: string) => void;
+  /** Lay the options out horizontally. */
+  inline?: boolean;
+  className?: string;
+} & ExtraProps): VNode;
+
+// ── Divider ────────────────────────────────────────────────────────────────
+
+export declare function Divider(props?: {
+  vertical?: boolean;
+  className?: string;
+} & ExtraProps): VNode;
+
+// ── Skeleton ───────────────────────────────────────────────────────────────
+
+export declare function Skeleton(props?: {
+  variant?: "rect" | "text" | "circle";
+  width?: number | string;
+  height?: number | string;
+  /** With variant "text", renders a stack of lines (last one shorter). */
+  lines?: number;
+  className?: string;
+} & ExtraProps): VNode;
+
+// ── Avatar / AvatarGroup ───────────────────────────────────────────────────
+
+export declare function Avatar(props?: {
+  src?: string;
+  alt?: string;
+  /** Used for the initials fallback and the accessible label. */
+  name?: string;
+  size?: "xs" | "sm" | "md" | "lg" | "xl";
+  className?: string;
+  children?: VNode;
+} & ExtraProps): VNode;
+
+export interface AvatarGroupItem {
+  src?: string;
+  alt?: string;
+  name?: string;
+}
+
+export declare function AvatarGroup(props?: {
+  avatars?: AvatarGroupItem[];
+  /** Avatars beyond this render as a single "+N" counter. */
+  max?: number;
+  size?: "xs" | "sm" | "md" | "lg" | "xl";
+  className?: string;
+} & ExtraProps): VNode;
+
+// ── Breadcrumb ─────────────────────────────────────────────────────────────
+
+export interface BreadcrumbItem {
+  label: VNode;
+  href?: string;
+  onClick?: (event: Event) => void;
+  icon?: VNode;
+}
+
+export declare function Breadcrumb(props?: {
+  items?: BreadcrumbItem[];
+  separator?: VNode;
+  ariaLabel?: string;
+  className?: string;
+} & ExtraProps): VNode;
+
+// ── Stat / StatGrid ────────────────────────────────────────────────────────
+
+export declare function Stat(props?: {
+  value?: VNode;
+  label?: VNode;
+  icon?: VNode;
+  /** e.g. "+12%" / "-3%" — colors itself by the leading sign. */
+  delta?: string;
+  help?: string;
+  className?: string;
+} & ExtraProps): VNode;
+
+export declare function StatGrid(props?: {
+  className?: string;
+  children?: VNode;
+} & ExtraProps): VNode;
+
+// ── NumberInput ────────────────────────────────────────────────────────────
+
+export declare function NumberInput(props?: {
+  id?: string;
+  label?: VNode;
+  help?: string;
+  error?: string;
+  required?: boolean;
+  disabled?: boolean;
+  min?: number;
+  max?: number;
+  step?: number;
+  /** null when the input is cleared. */
+  value?: number | null;
+  onChange?: (value: number | null) => void;
+  decrementLabel?: string;
+  incrementLabel?: string;
+  className?: string;
+  inputClassName?: string;
+} & ExtraProps): VNode;
+
+// ── TimePicker ─────────────────────────────────────────────────────────────
+
+export declare function TimePicker(props?: {
+  id?: string;
+  label?: VNode;
+  help?: string;
+  error?: string;
+  required?: boolean;
+  disabled?: boolean;
+  /** "HH:MM", or omit/null for no selection. */
+  value?: string | null;
+  onChange?: (value: string) => void;
+  /** "HH:MM" lower bound, inclusive. */
+  min?: string;
+  /** "HH:MM" upper bound, inclusive. */
+  max?: string;
+  /** Interval between options, in minutes. */
+  step?: number;
+  placeholder?: string;
+  className?: string;
+  inputClassName?: string;
+} & ExtraProps): VNode;
+
+// ── Popover ────────────────────────────────────────────────────────────────
+
+export declare function Popover(props?: {
+  id?: string;
+  trigger?: VNode;
+  placement?: "top" | "bottom" | "left" | "right";
+  title?: string;
+  className?: string;
+  children?: VNode;
+} & ExtraProps): VNode;
+
+// ── TreeView ───────────────────────────────────────────────────────────────
+
+export interface TreeNode {
+  id: string | number;
+  label: VNode;
+  icon?: VNode;
+  children?: TreeNode[];
+}
+
+export declare function TreeView(props?: {
+  items?: TreeNode[];
+  /** Controlled expansion — omit to let the tree manage it internally. */
+  expanded?: Array<string | number>;
+  defaultExpanded?: Array<string | number>;
+  onExpandedChange?: (expanded: Array<string | number>) => void;
+  selected?: string | number;
+  onSelect?: (id: string | number, node: TreeNode) => void;
+  ariaLabel?: string;
+  className?: string;
+} & ExtraProps): VNode;
+
+// ── CommandPalette ─────────────────────────────────────────────────────────
+
+export interface CommandItem {
+  id?: string;
+  label: string;
+  hint?: string;
+  icon?: VNode;
+  section?: string;
+  keywords?: string[];
+  onSelect?: (command: CommandItem) => void;
+}
+
+export declare function CommandPalette(props?: {
+  open?: boolean;
+  id?: string;
+  onClose?: () => void;
+  commands?: CommandItem[];
+  placeholder?: string;
+  emptyLabel?: string;
+  className?: string;
 } & ExtraProps): VNode;

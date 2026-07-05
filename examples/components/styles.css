@@ -1,5 +1,5 @@
 @import "./components/switches/PageSwitches.css";
-@import "./components/new-ui/SidebarNav.css";
+@import "./components/primitives/SidebarNav.css";
 @import "./components/accordion/PageAccordion.css";
 
 .demo-section {

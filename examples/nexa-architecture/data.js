@@ -6,7 +6,7 @@ export const ARCHITECTURE_FRAMES = [
       kind: "cover",
       eyebrow: "Nexa 0.8.0 | A View for Architects",
       heading: "A complete frontend framework, without the build chain",
-      body: "Nexa is an ESM-native JavaScript framework for building real applications straight in the browser. A runtime with VDOM, hooks, context, routing and SSR, plus a design system with 47 components. All of it with no bundler, no JSX and no mandatory build step.",
+      body: "Nexa is an ESM-native JavaScript framework for building real applications straight in the browser. A runtime with VDOM, hooks, context, routing and SSR, plus a design system with 61 components. All of it with no bundler, no JSX and no mandatory build step.",
       meta: ["Full runtime", "ESM native", "Hooks", "Routing", "SSR + hydration", "Design system"],
       hint: "Use the arrows or click any frame to navigate",
     },
@@ -37,7 +37,7 @@ export const ARCHITECTURE_FRAMES = [
       body: "The architecture separates runtime, components, design system and add-ons. The core already sustains an entire application; the team loads extra layers only when it makes sense.",
       layers: [
         { name: "dist/nexa.js", role: "VDOM, render, hooks, context, routing and SSR hydration" },
-        { name: "dist/nexa-components.js", role: "47 production-ready UI components on top of h()" },
+        { name: "dist/nexa-components.js", role: "61 production-ready UI components on top of h()" },
         { name: "dist/nexa-ui.css", role: "tokens, grid, dark mode, mobile shell and utilities" },
         { name: "dist/nexa-server.js", role: "renderToString(App) for SEO and first paint" },
         { name: "Add-ons", role: "PipelineCanvas, ZoomStage and FullCodeEditor outside the core" },

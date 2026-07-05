@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+- 14 new components in `nexa-components.js` (47 → 61 exports), each with CSS in `nexa-ui.css` (where it didn't already exist), TypeScript declarations in `dist/nexa-components.d.ts`, docs in `docs/AI_SPEC.md` §9 + README tables, and tests in `tests/components-new.test.js`:
+  - `RadioGroup`/`Radio` — the missing "choose one of N" form control. Native radios sharing a `name` (Arrow-key roving for free), one controlled `value`/`onChange` for the group, `inline` layout option, same label/help/error anatomy as the other fields. `docs/FORMS.md` documents wiring value-based controls to `useForm` via `setValue`.
+  - `NumberInput` — numeric `TextField` sibling with −/+ steppers; clamps at `min`/`max` and rounds to the step's own decimal precision (no float drift with `step: 0.1`); `value` is a number or `null` for a cleared field.
+  - `TimePicker` — `DatePicker`'s sibling for `"HH:MM"` strings: trigger + listbox of times generated between `min`/`max` every `step` minutes. Opening focuses the selected option; ArrowUp/Down/Home/End move, Enter selects, Escape closes and refocuses the trigger.
+  - `Avatar`/`AvatarGroup`, `Breadcrumb`, `Skeleton`, `Divider` — component APIs over the previously CSS-only `m-avatar`/`m-breadcrumb`/`m-skeleton`/`m-divider` primitives: initials derived from `name`, `+N` overflow counter (DOM order reversed to match the group's `row-reverse` painting trick), `aria-current="page"` on the last crumb, multi-line text skeletons, `role="separator"` vertical divider.
+  - `Stat`/`StatGrid` — KPI tiles (value + label + optional icon/help and a `delta` that colors itself by its leading sign) and their auto-fit grid wrapper.
+  - `Popover` — generic anchored panel for arbitrary interactive content (the primitive `Tooltip`/`Dropdown`/`Menu` don't cover). Four placements, Escape/outside-click close, Escape restores focus to the trigger; Tab is deliberately not trapped (non-modal).
+  - `TreeView` — WAI-ARIA tree over `{ id, label, icon?, children? }` nodes: roving tabindex across *visible* nodes, ArrowUp/Down walk, ArrowRight expands/enters, ArrowLeft collapses/climbs, Home/End jump, Enter/Space select; caret clicks toggle without selecting. Expansion is uncontrolled (`defaultExpanded`) or controlled (`expanded`/`onExpandedChange`); selection is controlled.
+  - `CommandPalette` — Ctrl/Cmd-K launcher, controlled like `Dialog` (`open`/`onClose`; the global shortcut belongs to the app). Substring filtering over label/hint/section/keywords, section headers, `aria-activedescendant` listbox driven from the always-focused input, body scroll lock and focus restoration on close.
+- `examples/components` pages for the batch: `Forms & Widgets` (`#/widgets` — RadioGroup, NumberInput, TimePicker, Stat, TreeView, Popover, CommandPalette with a real app-level Ctrl/Cmd+K binding firing toasts) and the existing `UI Primitives` page's Avatar/Breadcrumb/Skeleton demos rewritten to use the new components instead of raw `m-*` classes (plus a `Divider` demo).
+
+### Changed
+- `examples/new-components` renamed to `examples/components`, and its pages stopped being named by recency: `New UI` → `UI Primitives` (`components/primitives/`, `#/primitives`), the new batch page is `Forms & Widgets` (`components/widgets/`, `#/widgets`). Every page there is just "components" now — the folder name finally says so.
+- Examples audit against the AI_SPEC philosophy (§3/§12): `examples/nexa-deck` split from a single 159-line `app.js` into the domain-componentized layout its siblings already use (`components/Frames.js`+`.css`, `components/FrameContent.js` kind-dispatcher, `components/PresentationToolbar.js`+`.css`; `styles.css` keeps page/stage rules and `@import`s the rest); static data hardcoded inside components moved to root `data.js` files — `task-manager` (STATUS/PRIORITY/SORT options; `PRIORITY_OPTIONS` was duplicated across `FilterBar` and `TaskDrawer`), `mobile` (FEATURES, ACTIVITY_ITEMS, EXPLORE_FILTERS, BREAKPOINTS) and `complete-page` (`ProjectDialog`'s copy of the status options); lowercase `data.js` exports renamed to UPPER_CASE (`complete-page`, `form`) and `form`'s `validateContactValues()` moved out of `data.js` into `app.js` (data files hold data only); relative `../../dist/...` imports normalized to the documented `/dist/...` form (`mobile`, `task-manager`, `burger-shop` — their `server.py` already serves the repo root); `nexa-deck/index.html` still said `lang="pt-BR"` / "Apresentacao" after the content was translated — now `lang="en"` / "Nexa - Deck".
+
+### Fixed
+- `NumberInput` treats a cleared field as `null` instead of `0`: `Number(null)`/`Number("")` are both `0`, which made an empty field read as 0 and wrongly disabled the decrement stepper at `min: 0` (caught by `tests/components-new.test.js`).
+- `Breadcrumb` keys items by `item.key ?? index` instead of `href`/`label`: several crumbs sharing a placeholder `href` ("#") produced duplicate keys and corrupted reconciliation (trail rendered with items missing — caught while migrating the `UI Primitives` demos to the component).
+
 ## [0.8.0] - 2026-07-05
 
 ### Added

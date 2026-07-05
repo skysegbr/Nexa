@@ -238,7 +238,7 @@ python -m http.server 8080
 | [examples/core](./examples/core) | Engine playground: `useMemo`, `useCallback`, `useRef`, `dataset`, keyed lists |
 | [examples/form](./examples/form) | Controlled fields, validation, loading submit, reset, `useForm` |
 | [examples/complete-page](./examples/complete-page) | App-shell with sidebar, table, dialog, tabs, and toast |
-| [examples/new-components](./examples/new-components) | `Switch`, `Collapse`, `Combobox`, `ContextMenu`, `FileDropZone`, `CodeEditor`, toasts, a `Cards` page showcasing the `m-card-*` variants + `SpeedDial`, `Accordion`, `Slider`/`RangeSlider`, `Menu` with nested submenus, `DataTable`, and `DatePicker` |
+| [examples/components](./examples/components) | `Switch`, `Collapse`, `Combobox`, `ContextMenu`, `FileDropZone`, `CodeEditor`, toasts, a `Cards` page showcasing the `m-card-*` variants + `SpeedDial`, `Accordion`, `Slider`/`RangeSlider`, `Menu` with nested submenus, `DataTable`, `DatePicker`, a `Forms & Widgets` page with `RadioGroup`, `NumberInput`, `TimePicker`, `Stat`, `TreeView`, `Popover`, and `CommandPalette`, plus a `UI Primitives` page driving `Avatar`, `Breadcrumb`, `Skeleton`, and `Divider` through the component API |
 | [examples/task-manager](./examples/task-manager) | Full CRUD with Python API, filters, pagination, and drawer editing |
 | [examples/mobile](./examples/mobile) | Mobile shell: `AppBar`, `BottomNav`, `BottomSheet`, `FAB`, swipe, long press |
 | [examples/charts](./examples/charts) | SVG donut chart drawn with raw `h("svg", ...)`, plus `useErrorBoundary` catching a corrupted dataset and recovering |
@@ -771,7 +771,10 @@ version of Nexa.
 |---|---|
 | `Accordion` | `items` (`{ key, title, children, disabled? }`), `multiple`, `defaultOpen`/`open`, `onToggle` |
 | `Alert` | `variant` (info · success · warning · danger), `title` |
+| `Avatar` | `src`, `name` (initials fallback + accessible label), `size` (xs · sm · md · lg · xl) |
+| `AvatarGroup` | `avatars`, `max`, `size` — overlapping stack, extras collapse into a `+N` counter |
 | `Badge` | — |
+| `Breadcrumb` | `items` (`{ label, href?, onClick?, icon? }`), `separator` — last item gets `aria-current="page"` |
 | `Button` | `variant` (text · contained · tonal · danger), `type`, `disabled` |
 | `Card` | `padded` — combine with `m-card-media`/`-zoom`, `m-card-reveal`, `m-card-float`, `m-card-glow` (+ `-amber`/`-violet`/`-emerald`), `m-card-expand-group`/`-expand`, or `m-card-pricing` for the CSS-only card variants (see `docs/AI_SPEC.md` §9) |
 | `Checkbox` | `id`, `label`, `checked`, `onChange` |
@@ -779,10 +782,12 @@ version of Nexa.
 | `CodeEditor` | `value`, `onChange`, `mode`, `theme` — lightweight CodeMirror wrapper (see also `FullCodeEditor`) |
 | `Collapse` | `title`, `defaultOpen`/`open`, `onToggle`, `actions`, `badge` |
 | `Combobox` | `id`, `label`, `options`, `value`, `onChange`, `searchPlaceholder` |
+| `CommandPalette` | `open`, `onClose`, `commands` (`{ id, label, hint?, icon?, section?, keywords?, onSelect }`) — Ctrl/Cmd-K launcher; filtering + `aria-activedescendant` listbox |
 | `ContextMenu` | `open`, `x`, `y`, `items`, `onClose` — pairs with `useContextMenu` |
 | `DataTable` | `columns`, `rows`, `pageSize`, `sortable`, `page`/`onPageChange`, `onSort` — `Table` + `Pagination` combined, sorts the full row set then renders only the current page |
 | `DatePicker` | `label`, `value` (`"YYYY-MM-DD"` \| `null`), `onChange`, `min`/`max`, `placeholder` — trigger button + one-month calendar popover |
 | `Dialog` | `open`, `title`, `onClose`, `actions` |
+| `Divider` | `vertical` — `<hr>` or inline `role="separator"` |
 | `Drawer` | `open`, `side` (left · right), `width`, `title`, `onClose` |
 | `Dropdown` | `trigger`, `items` (`{ key, label, onClick, danger, divider }`), `align` |
 | `EmptyState` | `title`, `description`, `action` |
@@ -791,12 +796,19 @@ version of Nexa.
 | `IconButton` | `label`, `variant` |
 | `Menu` | `trigger`, `items` (`{ key, label, onClick, danger, divider, children }`) — like `Dropdown`, but any item can nest a `children` array to open a flyout submenu at any depth |
 | `Navbar` | `brand`, `items`, `actions`, `defaultOpen`/`open`, `onToggle` — collapses into a hamburger menu below 768px |
+| `NumberInput` | `id`, `label`, `min`/`max`/`step`, `value` (number \| `null`), `onChange` — numeric field with −/+ steppers; clamps and rounds to the step precision |
 | `Pagination` | `page`, `total`, `siblings`, `onChange` |
+| `Popover` | `trigger`, `placement` (top · bottom · left · right), `title` — generic anchored panel for interactive content; Escape/outside-click close |
 | `Progress` | `value`, `max`, `label` |
+| `Radio` | `id`, `label`, `checked`, `onChange` — single option, same anatomy as `Checkbox` |
+| `RadioGroup` | `id`, `label`, `options`, `value`, `onChange`, `inline` — native radios sharing a `name`, one controlled value for the group |
 | `RangeSlider` | `label`, `min`/`max`/`step`, `value` (`[lower, upper]`), `onChange`, `showValue`, `minLabel`/`maxLabel` — dual-thumb range; each thumb clamps against the other |
 | `Select` | `id`, `label`, `options`, `value`, `onChange` |
+| `Skeleton` | `variant` (rect · text · circle), `width`, `height`, `lines` — aria-hidden loading placeholder |
 | `Slider` | `label`, `min`/`max`/`step`, `value`, `onInput`, `showValue` — wraps a native `<input type="range">` |
 | `Spinner` | `label` |
+| `Stat` | `value`, `label`, `icon`, `delta` (colors by leading sign), `help` — KPI tile |
+| `StatGrid` | children — auto-fit grid wrapper for `Stat` tiles |
 | `Stepper` | `steps`, `activeStep`, `orientation` (horizontal · vertical) |
 | `Switch` | `id`, `label`, `checked`, `onChange`, `disabled` |
 | `Table` | `columns`, `rows`, `getRowKey` |
@@ -804,9 +816,11 @@ version of Nexa.
 | `Tabs` | `value`, `onChange`, `items` |
 | `Textarea` | `id`, `label`, `value`, `onInput`, `error` |
 | `TextField` | `id`, `label`, `value`, `onInput`, `error` |
+| `TimePicker` | `label`, `value` (`"HH:MM"` \| `null`), `onChange`, `min`/`max`, `step` (minutes) — trigger + listbox of stepped times |
 | `Toast` | `open`, `variant`, `title`, `message`, `onClose` |
 | `ToastStack` | `toasts`, `onClose` — renders a `useToast()` queue |
 | `Tooltip` | `content`, `position` (top · bottom · left · right) |
+| `TreeView` | `items` (`{ id, label, icon?, children? }`), `selected`/`onSelect`, `defaultExpanded` or `expanded`/`onExpandedChange` — WAI-ARIA tree with full keyboard nav |
 
 ### Mobile components
 
@@ -947,7 +961,7 @@ h(FullCodeEditor, {
 ```
 
 Requires the local CodeMirror assets (`assets/codemirror/`, vendored — no CDN);
-see [examples/new-components/index.html](./examples/new-components/index.html)
+see [examples/components/index.html](./examples/components/index.html)
 for the full list of `<script>`/`<link>` tags to include.
 
 ## CSS Framework
@@ -1101,13 +1115,15 @@ Nexa `0.8.0` covers:
 - `useWebSocket` — managed WebSocket connection with auto-reconnect
 - `useVirtualList` — windowed rendering for large lists
 
-**Components (47)**
-- General UI: `Accordion`, `Alert`, `Badge`, `Button`, `Card`, `Checkbox`, `Chip`,
-  `CodeEditor`, `Collapse`, `Combobox`, `ContextMenu`, `DataTable`, `DatePicker`,
-  `Dialog`, `Drawer`, `Dropdown`, `EmptyState`, `FileDropZone`, `FormField`,
-  `IconButton`, `Menu`, `Navbar`, `Pagination`, `Progress`, `RangeSlider`, `Select`,
-  `Slider`, `Spinner`, `Stepper`, `Switch`, `Table`, `TabPanel`, `Tabs`, `Textarea`,
-  `TextField`, `Toast`, `ToastStack`, `Tooltip`
+**Components (61)**
+- General UI: `Accordion`, `Alert`, `Avatar`, `AvatarGroup`, `Badge`, `Breadcrumb`,
+  `Button`, `Card`, `Checkbox`, `Chip`, `CodeEditor`, `Collapse`, `Combobox`,
+  `CommandPalette`, `ContextMenu`, `DataTable`, `DatePicker`, `Dialog`, `Divider`,
+  `Drawer`, `Dropdown`, `EmptyState`, `FileDropZone`, `FormField`, `IconButton`,
+  `Menu`, `Navbar`, `NumberInput`, `Pagination`, `Popover`, `Progress`, `Radio`,
+  `RadioGroup`, `RangeSlider`, `Select`, `Skeleton`, `Slider`, `Spinner`, `Stat`,
+  `StatGrid`, `Stepper`, `Switch`, `Table`, `TabPanel`, `Tabs`, `Textarea`,
+  `TextField`, `TimePicker`, `Toast`, `ToastStack`, `Tooltip`, `TreeView`
 - Mobile shell: `AppBar`, `BottomNav`, `BottomSheet`, `FAB`, `SpeedDial`,
   `SwipeableListItem`, `ThemeToggle`, `PaletteSwitcher`, `DesignSwitcher`
 

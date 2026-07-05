@@ -1,4 +1,4 @@
-import { Fragment, h, render, useCallback, useState } from "../../dist/nexa.js";
+import { Fragment, h, render, useCallback, useState } from "/dist/nexa.js";
 import {
   AppBar,
   BottomNav,
@@ -8,7 +8,7 @@ import {
   IconButton,
   ThemeToggle,
   Toast,
-} from "../../dist/nexa-components.js";
+} from "/dist/nexa-components.js";
 
 import { HomeScreen }     from "./components/HomeScreen.js";
 import { ExploreScreen }  from "./components/ExploreScreen.js";

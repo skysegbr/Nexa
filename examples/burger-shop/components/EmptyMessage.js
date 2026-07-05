@@ -1,4 +1,4 @@
-import { h } from "../../../dist/nexa.js";
+import { h } from "/dist/nexa.js";
 
 // Estado vazio reutilizado por CardapioPage, PedidoPage e AdminPedidos —
 // extraído para cá em vez de deixar `.empty` / `.empty-icon` soltos no

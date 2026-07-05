@@ -1,4 +1,5 @@
 import { h, useState, useEffect } from "/dist/nexa.js";
+import { Skeleton as SkeletonComponent, Avatar } from "/dist/nexa-components.js";
 import { USERS } from "../../data.js";
 
 function SkeletonCard() {
@@ -6,15 +7,13 @@ function SkeletonCard() {
     "div",
     { className: "m-card m-card-padded", style: { display: "grid", gap: "var(--m-space-3)" } },
     h("div", { className: "m-cluster" },
-      h("div", { className: "m-skeleton m-skeleton-circle", style: { width: 40, height: 40 } }),
+      h(SkeletonComponent, { variant: "circle", width: 40, height: 40 }),
       h("div", { style: { flex: 1, display: "grid", gap: "var(--m-space-2)" } },
-        h("div", { className: "m-skeleton m-skeleton-text", style: { width: "55%" } }),
-        h("div", { className: "m-skeleton m-skeleton-text", style: { width: "35%", height: "0.75em" } }),
+        h(SkeletonComponent, { variant: "text", width: "55%" }),
+        h(SkeletonComponent, { variant: "text", width: "35%", height: "0.75em" }),
       ),
     ),
-    h("div", { className: "m-skeleton m-skeleton-text", style: { width: "100%" } }),
-    h("div", { className: "m-skeleton m-skeleton-text", style: { width: "90%" } }),
-    h("div", { className: "m-skeleton m-skeleton-text", style: { width: "70%" } }),
+    h(SkeletonComponent, { variant: "text", lines: 3 }),
   );
 }
 
@@ -23,10 +22,7 @@ function UserCard({ user }) {
     "div",
     { className: "m-card m-card-padded m-card-hover", style: { display: "grid", gap: "var(--m-space-3)" } },
     h("div", { className: "m-cluster" },
-      h("span", {
-        className: "m-avatar m-avatar-md",
-        style: { background: user.color, color: "var(--m-text)" },
-      }, user.initials),
+      h(Avatar, { name: user.name, style: { background: user.color, color: "var(--m-text)" } }),
       h("div", null,
         h("p", { style: { margin: 0, fontWeight: 700 } }, user.name),
         h("p", { className: "m-text-sm m-text-muted", style: { margin: 0 } }, user.role),

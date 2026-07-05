@@ -1,4 +1,4 @@
-import { h } from "../../../dist/nexa.js";
+import { h } from "/dist/nexa.js";
 import { STATUS_LABELS } from "../data.js";
 
 // Pill de status do pedido, reutilizado por AcompanharPage e AdminPedidos —

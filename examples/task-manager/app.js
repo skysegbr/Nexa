@@ -1,5 +1,5 @@
-import { h, render, useState } from "../../dist/nexa.js";
-import { Alert, Button, Dropdown, Pagination, ThemeToggle, Toast } from "../../dist/nexa-components.js";
+import { h, render, useState } from "/dist/nexa.js";
+import { Alert, Button, Dropdown, Pagination, ThemeToggle, Toast } from "/dist/nexa-components.js";
 
 import { DeleteDialog } from "./components/DeleteDialog.js";
 import { FilterBar } from "./components/FilterBar.js";

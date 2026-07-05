@@ -24,7 +24,7 @@ export const FRAMES = [
       body: "Nexa arrives as three ESM files ready to import. One <script type=\"module\"> and the application is up — no Vite, Babel or npm install.",
       items: [
         "dist/nexa.js — core (h, render, hooks, context)",
-        "dist/nexa-components.js — 47 UI components",
+        "dist/nexa-components.js — 61 UI components",
         "dist/nexa-ui.css — tokens and design system",
       ],
     },
@@ -229,7 +229,7 @@ render(App, document.getElementById("app"));`,
         },
         {
           title: "To expand",
-          items: ["47 ready-made components in nexa-components.js", "Canvas, Zoom and editor as add-ons", "All on the same --m-* tokens"],
+          items: ["61 ready-made components in nexa-components.js", "Canvas, Zoom and editor as add-ons", "All on the same --m-* tokens"],
         },
       ],
     },
