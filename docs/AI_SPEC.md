@@ -411,6 +411,12 @@ re-renders), `fallback` (shown while a `lazy` route loads), and `children`.
 `useRoutes` calls `useRouter` internally; for `navigate` in the same component,
 call `useRouter()` alongside it (both stay in sync).
 
+A `lazy` route's module must expose the page component as `export default`
+(or be the component itself). **A `lazy:` route only helps if the page module
+is not also statically imported anywhere** — Nexa is no-build ESM, so any
+static `import` chain reachable from `app.js` is fetched eagerly at startup
+regardless. See "Code splitting in large apps" in §12.
+
 ### `renderToString` (server-side rendering)
 
 ```js
@@ -2125,6 +2131,73 @@ export function useProducts() {
 }
 ```
 
+### Code splitting in large apps (lazy routes)
+
+Nexa is no-build ESM: the browser fetches and executes **every module reachable
+through static `import` chains from `app.js` before first paint**. In a small
+app that's fine; in a large app (many pages/domains, or a migration from
+Angular/React where every page ends up statically imported) it means the whole
+app downloads on load. The fix is route-level code splitting — the Nexa analog
+of Angular's `loadChildren` or React's `React.lazy` + router splitting.
+
+**Default for large apps: every route-level page is a `lazy:` route.**
+
+```js
+// ❌ Loads every page at startup — static imports defeat code splitting
+import { Dashboard } from './components/dashboard/Dashboard.js';
+import { Reports }   from './components/reports/Reports.js';
+
+const routes = [
+  { path: '/dashboard', element: h(Dashboard, null) },
+  { path: '/reports',   element: h(Reports, null) },
+];
+
+// ✅ Each page downloads on first navigation to it
+const routes = [
+  { path: '/dashboard', lazy: () => import('./components/dashboard/Dashboard.js'),
+    fallback: h(Spinner, null) },
+  { path: '/reports',   lazy: () => import('./components/reports/Reports.js'),
+    fallback: h(Spinner, null) },
+];
+```
+
+Rules that make the split actually work:
+
+| Rule | Why |
+|------|-----|
+| **Delete the static imports of lazy pages** | Any remaining static `import` of the page (in `app.js` or elsewhere) makes the browser fetch it eagerly — the `lazy:` then saves nothing. The `lazy:` loader must be the *only* path to the module. |
+| **Page module has a `default` export** | `lazy` resolves `mod.default ?? mod`. |
+| **A lazy page pulls its domain with it** | Whatever the page imports statically (its components, its CSS-free siblings, its domain hook) downloads together on first navigation — that's the intended "chunk". |
+| **Shared modules must not import pages back** | If `data.js` or a shared hook imports a page, that page rides along with the shared module and the split is lost. Imports flow pages → shared, never shared → pages. |
+| **Load state is cached per route object** | Declare `routes` at module scope (not inside a component) so navigating away and back doesn't re-show the fallback. |
+
+**`createLazy` for heavy non-route components** — charts, code editors, rarely
+opened dialogs:
+
+```js
+import { createLazy, h } from '/dist/nexa.js';
+
+// Module scope — createLazy holds load state internally, so never call it
+// inside a component body (a new instance per render would never resolve).
+const Chart = createLazy(() => import('./Chart.js'), h(Spinner, null));
+
+function Metrics({ data }) {
+  return h(Chart, { data });   // downloads Chart.js on first render only
+}
+```
+
+On import failure both `lazy:` routes and `createLazy` throw — wrap a layout
+level above in `useErrorBoundary` to show a friendly retry screen.
+
+**Optional — preload on intent.** Dynamic `import()` is cached by URL, so
+warming it early makes the later navigation instant:
+
+```js
+h('a', { href: '#/reports',
+         onMouseEnter: () => import('./components/reports/Reports.js') },
+  'Reports')
+```
+
 ---
 
 ## 13. Complete minimal app (single-file demo only)
@@ -2382,3 +2455,5 @@ Before submitting any Nexa code, verify:
 - [ ] Domain hooks live inside their domain folder (`components/auth/useAuth.js`), not a top-level `hooks/`
 - [ ] A domain needing shared state owns its own `createContext` next to its hook (`cart/CartContext.js`) — providers are composed by nesting `.provide()` calls in `app.js`, never via a separate component that takes `children` as a prop
 - [ ] CSS class names use a project-wide prefix (e.g. `l-`, `tm-`, `a-`) not `m-*`
+- [ ] Large apps (many pages): route-level pages load via `lazy: () => import(...)` + `fallback`, and are **not** statically imported anywhere — a leftover static import silently defeats the split (§12)
+- [ ] `createLazy(...)` is called at module scope, never inside a component body
