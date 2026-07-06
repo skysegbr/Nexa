@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+- CSS code splitting in the core (`dist/nexa.js`): new `loadCSS(href)` export — injects `<link rel="stylesheet">` once per resolved URL, returns a promise that settles on load, treats a `<link>` already in the document as loaded, evicts failed entries so retries work, and no-ops (resolves) in DOM-less runtimes so `renderToString` stays safe. New `css:` route field on `useRoutes` (href or array, with or without `lazy:`): the route's `fallback` holds until the stylesheet *and* the lazy module are ready — a lazily loaded page never flashes unstyled. TypeScript declarations in `dist/nexa.d.ts`, tests in `tests/new-features.test.js` (dedupe by resolved URL, computed-style assertion, 404 → reject + evict) and `tests/hooks.test.js` (css+lazy holds fallback until both; css-only route renders styled, link injected once).
+- Code-splitting guidance across the docs, prompted by a real Angular 7 → Nexa migration that shipped every page eagerly: new "Code splitting in large apps (lazy routes)" section in `docs/AI_SPEC.md` §12 (route-level pages as `lazy:` routes by default, the leftover-static-import trap, `createLazy` at module scope, import direction pages → shared, preload on intent), plus a §6 note and §15 checklist items; new `docs/TUTORIAL.md` section "Splitting A Large App (Lazy Loading)"; the README `useRoutes` example and `createLazy` section carry the same warnings; the `nexa-expert` skill gained a "Code splitting (large apps / migrations)" workflow bullet.
+
 ## [0.9.0] - 2026-07-05
 
 ### Added

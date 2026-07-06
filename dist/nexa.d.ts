@@ -217,6 +217,21 @@ export declare function createLazy<P extends Record<string, unknown>>(
   fallback?: VNode,
 ): Component<P & { fallback?: VNode }>;
 
+// ── loadCSS ────────────────────────────────────────────────────────────────
+
+/**
+ * Loads a stylesheet once by injecting `<link rel="stylesheet">`; resolves
+ * when it has loaded. Deduped by resolved URL — repeat calls return the same
+ * promise, and a `<link>` already in the document counts as loaded. On error
+ * the promise rejects and the entry is evicted so a later call can retry.
+ * In a DOM-less runtime (renderToString on a server) it resolves immediately.
+ *
+ * @example
+ * await loadCSS("/components/reports/reports.css");
+ * await loadCSS(new URL("./reports.css", import.meta.url));
+ */
+export declare function loadCSS(href: string | URL): Promise<void>;
+
 // ── useId ──────────────────────────────────────────────────────────────────
 
 /**
@@ -498,7 +513,12 @@ export interface RouteObject {
   element?: VNode | ((params: Record<string, string>, outlet: VNode) => VNode);
   /** Dynamic import loader; resolved via createLazy and cached per route. */
   lazy?: () => Promise<{ default: Component } | Component>;
-  /** Fallback shown while a `lazy` route loads. */
+  /**
+   * Stylesheet href(s) loaded via loadCSS() on first activation; the fallback
+   * holds until the CSS (and lazy JS, if any) are ready.
+   */
+  css?: string | URL | Array<string | URL>;
+  /** Fallback shown while a `lazy` or `css` route loads. */
   fallback?: VNode;
   /** Nested routes; the parent renders its matched child as `outlet`. */
   children?: RouteObject[];

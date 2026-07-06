@@ -407,7 +407,10 @@ Route object fields: `path` (pattern, relative to parent), `index` (matches the
 parent's exact path), `component` (`(props) => vnode`, receives `{ params, outlet }`),
 `element` (a vnode or `(params, outlet) => vnode`), `lazy` (`() => import(...)`,
 resolved via `createLazy` and cached per route object so its load state survives
-re-renders), `fallback` (shown while a `lazy` route loads), and `children`.
+re-renders), `css` (stylesheet href or array of hrefs, loaded via `loadCSS()` on
+first activation — the fallback holds until the CSS *and* the lazy JS, if any,
+are ready; works with or without `lazy`), `fallback` (shown while a `lazy`/`css`
+route loads), and `children`.
 `useRoutes` calls `useRouter` internally; for `navigate` in the same component,
 call `useRouter()` alongside it (both stay in sync).
 
@@ -586,6 +589,13 @@ return h('div', null,
 const Chart = createLazy(() => import('./components/Chart.js'));
 const Chart = createLazy(() => import('./Chart.js'), h(Spinner, null)); // custom fallback
 // Shows fallback while loading. On error, throws — catch with useErrorBoundary.
+
+// loadCSS — load a stylesheet once, deduped by resolved URL
+await loadCSS('/components/reports/reports.css');
+await loadCSS(new URL('./reports.css', import.meta.url));
+// Injects <link rel="stylesheet"> and resolves on load; a <link> already in
+// the document counts as loaded. Rejects on error (entry evicted for retry).
+// Resolves immediately in a DOM-less runtime (renderToString on a server).
 ```
 
 ---
@@ -1889,7 +1899,7 @@ my-app/
 |------|--------|
 | **Domain = feature, not type** | `auth/`, `dashboard/`, `settings/` — never `forms/`, `modals/`, `shared/` |
 | **Paired CSS stays next to the JS** | `auth/LoginForm.js` → `auth/LoginForm.css` |
-| **`styles.css` still collects everything** | Even nested CSS is imported at root — components never import their own CSS |
+| **`styles.css` still collects everything** | Even nested CSS is imported at root — components never import their own CSS. Exception: in a large app with lazy routes, each route's domain CSS moves to a per-route `css:` collector and `styles.css` keeps only the critical shell (see "Code splitting in large apps") |
 | **Domain hook lives in its domain** | `dashboard/useDashboard.js`, not a separate `hooks/` folder |
 | **`data.js` stays at root** | Unless the project is very large, keep one `data.js`; don't split per domain |
 | **Minimum 2 files to justify a folder** | Don't create `auth/` for a single `LoginForm.js` |
@@ -2189,6 +2199,39 @@ function Metrics({ data }) {
 On import failure both `lazy:` routes and `createLazy` throw — wrap a layout
 level above in `useErrorBoundary` to show a friendly retry screen.
 
+**CSS splits too.** Lazy JS alone is not enough: the default architecture
+collects *all* component CSS into `styles.css` via `@import`, so every page's
+stylesheet still downloads up front — and `@import` chains resolve serially,
+which is even worse at scale. In a large app, keep only the critical CSS in
+`styles.css` (tokens, app shell, first-paint layout) and declare each page's
+CSS on its route with `css:`:
+
+```js
+const routes = [
+  { path: '/reports',
+    lazy: () => import('./components/reports/Reports.js'),
+    css: '/components/reports/reports.css',      // or an array of hrefs
+    fallback: h(Spinner, null) },
+];
+```
+
+The route's `fallback` holds until the stylesheet *and* the module are ready,
+so the page never flashes unstyled. `css:` also works on non-lazy routes.
+`reports.css` is the domain's collector — it `@import`s the paired component
+CSS of that domain, keeping the "components never import their own CSS" rule:
+CSS is still declared by an orchestrator, just per-route instead of globally.
+
+For a heavy non-route component, use the underlying primitive `loadCSS(href)`
+(deduped by URL, resolves on load) — e.g. via top-level `await` in the module
+that `createLazy` imports, which holds the lazy fallback until the CSS is in:
+
+```js
+// components/chart/Chart.js — loaded via createLazy(() => import('./Chart.js'))
+import { h, loadCSS } from '/dist/nexa.js';
+await loadCSS(new URL('./chart.css', import.meta.url)); // top-level await
+export default function Chart({ data }) { /* ... */ }
+```
+
 **Optional — preload on intent.** Dynamic `import()` is cached by URL, so
 warming it early makes the later navigation instant:
 
@@ -2456,4 +2499,5 @@ Before submitting any Nexa code, verify:
 - [ ] A domain needing shared state owns its own `createContext` next to its hook (`cart/CartContext.js`) — providers are composed by nesting `.provide()` calls in `app.js`, never via a separate component that takes `children` as a prop
 - [ ] CSS class names use a project-wide prefix (e.g. `l-`, `tm-`, `a-`) not `m-*`
 - [ ] Large apps (many pages): route-level pages load via `lazy: () => import(...)` + `fallback`, and are **not** statically imported anywhere — a leftover static import silently defeats the split (§12)
+- [ ] Large apps: page CSS is split too — `styles.css` keeps only the critical shell; each lazy route declares its domain CSS via `css:` (or `loadCSS`), not via a global `@import` that loads every page's styles up front (§12)
 - [ ] `createLazy(...)` is called at module scope, never inside a component body

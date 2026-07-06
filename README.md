@@ -319,6 +319,7 @@ stack trace to the console.
 | `memo(component, compare?)` | Skip re-renders when props are shallowly equal |
 | `createPortal(children, domNode)` | Render children into a different DOM node |
 | `createLazy(loader, fallback?)` | Lazily import a component with a loading fallback |
+| `loadCSS(href)` | Load a stylesheet once (deduped by URL); resolves when it has loaded |
 | `useId()` | Stable, unique ID per component instance (for accessibility) |
 
 ### `useForm` options
@@ -515,7 +516,7 @@ vibrate([100, 50, 100]); // pattern
 | `useLocalStorage(key, initialValue)` | `[value, setValue]` persisted to `localStorage`, JSON-encoded |
 | `useToast()` | `{ toasts, toast, dismiss }` — `toast.success/error/warning/info(msg, opts)` queues a toast for `ToastStack` |
 | `useRouter(options?)` | `{ path, params, navigate }` — router. `{ mode: 'hash' }` (default) or `{ mode: 'history' }` for clean URLs via the History API |
-| `useRoutes(routes, options?)` | Resolves a nested route config against the current path and returns the matched element; route fields: `path`, `index`, `component`, `element`, `lazy`, `fallback`, `children`. Calls `useRouter` internally |
+| `useRoutes(routes, options?)` | Resolves a nested route config against the current path and returns the matched element; route fields: `path`, `index`, `component`, `element`, `lazy`, `css`, `fallback`, `children`. Calls `useRouter` internally |
 | `matchPath(pattern, path, options?)` | Segment matcher used internally by `useRoutes` — `:name` captures a segment, a trailing `*` captures the rest, `{ end: false }` prefix-matches |
 | `useTranslation(dict)` | `{ t }` — `t(key, vars)` looks up `dict[key]` and interpolates `{var}` placeholders |
 | `useContextMenu()` | `{ menu, openMenu, closeMenu }` — wires a right-click handler to `ContextMenu` |
@@ -552,7 +553,10 @@ navigate("/settings?tab=profile");
 // index.html for every route) — see docs/AI_SPEC.md §6.
 const router = useRouter({ mode: "history" });
 
-// useRoutes + matchPath — nested routes, params, and lazy-per-route
+// useRoutes + matchPath — nested routes, params, and lazy-per-route.
+// A lazy page must NOT be statically imported anywhere else — a leftover
+// static import makes the browser fetch it eagerly and defeats the split
+// (see "Code splitting in large apps", docs/AI_SPEC.md §12).
 const routes = [
   { path: "/", element: h(Home, null) },
   {
@@ -560,7 +564,9 @@ const routes = [
     component: UserLayout,                        // rendered with { params, outlet }
     children: [
       { index: true, component: Profile },         // matches /users/:id exactly
-      { path: "/settings", lazy: () => import("./Settings.js"), fallback: h(Spinner, null) },
+      { path: "/settings", lazy: () => import("./Settings.js"),
+        css: "/components/settings/settings.css",   // loaded with the module; fallback holds until both are ready
+        fallback: h(Spinner, null) },
     ],
   },
   { path: "*", component: NotFound },              // catch-all — list specific routes first
@@ -691,6 +697,37 @@ h(Chart, { data, fallback: h(Spinner, null) })
 
 The module must export the component as `default` or as the module itself if
 there is no default export.
+
+Call `createLazy` at **module scope**, never inside a component body — it holds
+its load state internally, so a new instance per render would never resolve.
+And since Nexa is no-build ESM, code splitting only works when the `import()`
+loader is the *only* path to the module: any remaining static `import` of it
+fetches it eagerly at startup. In large apps, make route-level pages `lazy:`
+routes and keep heavy widgets behind `createLazy`; optionally preload on
+intent (`onMouseEnter: () => import("./Reports.js")`) — dynamic `import()` is
+cached by URL, so the later navigation resolves instantly. Full guidance:
+"Code splitting in large apps" in `docs/AI_SPEC.md` §12.
+
+### `loadCSS`
+
+The CSS half of code splitting. Loads a stylesheet once by injecting
+`<link rel="stylesheet">` and returns a promise that resolves when it has
+loaded. Deduped by resolved URL — repeat calls return the same promise, and a
+`<link>` already present in the document counts as loaded. On error the
+promise rejects and the entry is evicted so a later call can retry. In a
+DOM-less runtime (`renderToString` on a server) it resolves immediately.
+
+```js
+await loadCSS("/components/reports/reports.css");
+await loadCSS(new URL("./reports.css", import.meta.url));
+```
+
+Routes take a `css:` field (href or array) that calls `loadCSS` internally —
+the route's `fallback` holds until the stylesheet *and* the lazy module (if
+any) are ready, so a lazily loaded page never flashes unstyled. For a heavy
+non-route component, a top-level `await loadCSS(...)` inside the module that
+`createLazy` imports achieves the same: the lazy fallback stays up until the
+CSS is in.
 
 ### `useId`
 
@@ -1099,8 +1136,9 @@ Nexa `0.9.0` covers:
   state inside the memoized tree so internal `setState` always triggers correctly
 - `createPortal` — render a subtree into an arbitrary DOM node; unmount cleans up the target
 - `createLazy` — dynamic `import()` with fallback UI; re-renders all roots on load
+- `loadCSS` — load a stylesheet once, deduped by URL; the CSS half of code splitting
 - `useId` — stable, unique string ID per component instance
-- `useRoutes` + `matchPath` — nested routes with path params, an `outlet` prop, and `lazy: () => import(...)` per route
+- `useRoutes` + `matchPath` — nested routes with path params, an `outlet` prop, and `lazy: () => import(...)` + `css:` per route
 - `renderToString` + `hydrate` (`dist/nexa-server.js`) — server-side rendering with HTML-escaped output, plus client-side hydration that adopts the server DOM in place
 
 **Mobile hooks**

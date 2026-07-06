@@ -14,6 +14,7 @@ import {
   memo,
   createPortal,
   createLazy,
+  loadCSS,
   useId,
   useDebounce,
   useThrottle,
@@ -348,6 +349,50 @@ test("createLazy per-use fallback prop overrides the default fallback", async ()
   resolveLoad();
   await flush();
   await flush();
+});
+
+// ── loadCSS ────────────────────────────────────────────────
+
+test("loadCSS injects the stylesheet once, dedupes repeat calls, and applies the CSS", async () => {
+  const href = "./loadcss.fixture.css";
+  const p1 = loadCSS(href);
+  const p2 = loadCSS(href);
+  assert(p1 === p2, "expected repeat calls with the same href to return the same promise");
+
+  await p1;
+
+  const url = new URL(href, document.baseURI).href;
+  const links = [...document.querySelectorAll('link[rel="stylesheet"]')].filter(
+    (link) => link.href === url,
+  );
+  assertEqual(links.length, 1, "expected exactly one injected <link> for the href");
+
+  // Absolute and relative spellings of the same URL share the cache entry.
+  assert(loadCSS(url) === p1, "expected dedupe by resolved URL, not by raw string");
+
+  // The sheet really applies — not just a tag in <head>.
+  const probe = document.createElement("div");
+  probe.className = "loadcss-probe";
+  document.body.appendChild(probe);
+  assertEqual(getComputedStyle(probe).marginTop, "7px", "expected the loaded CSS to apply");
+  probe.remove();
+});
+
+test("loadCSS rejects on a missing stylesheet and evicts the entry so a retry is possible", async () => {
+  const href = "./does-not-exist.fixture.css";
+  const p1 = loadCSS(href);
+
+  let failed = false;
+  try {
+    await p1;
+  } catch {
+    failed = true;
+  }
+  assert(failed, "expected loadCSS to reject for a stylesheet that 404s");
+
+  const p2 = loadCSS(href);
+  assert(p2 !== p1, "expected the failed entry to be evicted so the next call retries");
+  await p2.catch(() => {}); // settle the retry so nothing rejects unhandled
 });
 
 // ── useId ──────────────────────────────────────────────────

@@ -630,7 +630,94 @@ function App() {
 render(App, document.getElementById("app"));
 ```
 
-## 14. What Nexa Covers
+## 14. Splitting A Large App (Lazy Loading)
+
+Because Nexa is ESM-native, the browser fetches **every module reachable
+through static `import` chains** before the app first paints. That is
+perfect for small and medium apps — but if your app has many pages
+(a dashboard with dozens of screens, or a project migrated from another
+framework), loading everything up front makes the first load heavy.
+
+The fix is to load each page only when the user navigates to it.
+
+**Lazy routes.** If you use `useRoutes`, mark route-level pages with
+`lazy: () => import(...)` instead of importing them at the top of the file:
+
+```js
+import { h, render, useRoutes } from "/dist/nexa.js";
+import { Spinner } from "/dist/nexa-components.js";
+
+// No static imports of Dashboard.js or Reports.js anywhere!
+const routes = [
+  { path: "/dashboard", lazy: () => import("./components/dashboard/Dashboard.js"),
+    fallback: h(Spinner, null) },
+  { path: "/reports",   lazy: () => import("./components/reports/Reports.js"),
+    fallback: h(Spinner, null) },
+];
+
+function App() {
+  return useRoutes(routes);
+}
+
+render(App, document.getElementById("app"));
+```
+
+Each page module exposes its component as `export default`, and only
+downloads on the first navigation to it — together with everything *it*
+imports, which is exactly what you want: each page carries its own domain.
+
+**The one trap to avoid:** a lazy route only helps if the `lazy:` loader is
+the *only* path to that module. If `app.js` (or any shared file) still has a
+static `import { Dashboard } from ...` left over, the browser downloads the
+page eagerly anyway and the split silently does nothing. When converting an
+existing app, deleting the old static imports is the step that actually
+makes it faster.
+
+**`createLazy` for heavy components.** For something heavy that is not a
+page — a chart library, a code editor, a dialog almost nobody opens — use
+`createLazy` at module scope (never inside a component body, since it holds
+its load state internally):
+
+```js
+import { createLazy, h } from "/dist/nexa.js";
+
+const Chart = createLazy(() => import("./Chart.js"), h("p", null, "Loading..."));
+
+function Metrics({ data }) {
+  return h(Chart, { data }); // Chart.js downloads on first render only
+}
+```
+
+**Don't forget the CSS.** Lazy JS alone is not enough: if your `styles.css`
+still `@import`s every page's stylesheet, all that CSS downloads up front
+anyway. In a large app, keep only the critical CSS in `styles.css` (tokens,
+app shell, first-paint layout) and declare each page's CSS on its route with
+the `css:` field:
+
+```js
+const routes = [
+  { path: "/reports",
+    lazy: () => import("./components/reports/Reports.js"),
+    css: "/components/reports/reports.css",
+    fallback: h(Spinner, null) },
+];
+```
+
+The fallback stays on screen until the stylesheet *and* the module are both
+ready, so the page never flashes unstyled. `reports.css` acts as the domain's
+collector — it `@import`s the paired CSS of that domain's components, keeping
+the rule that components never import their own CSS. There is also a lower
+level primitive, `loadCSS(href)`, for lazy-loading CSS outside routes.
+
+If a dynamic import fails (network error), the lazy component throws — wrap
+a level above with `useErrorBoundary` to show a retry screen. And since the
+browser caches `import()` by URL, you can preload a page when the user
+hovers its menu link: `onMouseEnter: () => import("./components/reports/Reports.js")`.
+
+For the full set of rules (import direction, per-route caching, migration
+checklists), see "Code splitting in large apps" in `docs/AI_SPEC.md` §12.
+
+## 15. What Nexa Covers
 
 Nexa is intentionally small but complete for most production use cases.
 

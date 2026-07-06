@@ -1,0 +1,5 @@
+/* Fixture for the loadCSS tests — a distinctive rule the test can observe
+   via getComputedStyle to prove the sheet really applied. */
+.loadcss-probe {
+  margin-top: 7px;
+}

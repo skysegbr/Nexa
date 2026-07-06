@@ -382,3 +382,101 @@ test("useRoutes: lazy route shows fallback then the loaded component", async () 
   await flush();
 });
 
+test("useRoutes: css + lazy route holds the fallback until both module and stylesheet are ready", async () => {
+  const prevHash = window.location.hash;
+  window.location.hash = "#/styled-lazy";
+  await flush();
+
+  function Page() {
+    return h("p", { className: "cssr-a" }, "styled");
+  }
+
+  // The deferred loader makes the pending state deterministic; the stylesheet
+  // is a real fixture fetched over HTTP, so Promise.all also gates on it.
+  let resolveLoader;
+  const loaderPromise = new Promise((resolve) => {
+    resolveLoader = resolve;
+  });
+
+  const routes = [
+    {
+      path: "/styled-lazy",
+      lazy: () => loaderPromise,
+      css: "./css-route-a.fixture.css",
+      fallback: h("p", { className: "css-fallback" }, "loading"),
+    },
+  ];
+
+  function App() {
+    return useRoutes(routes);
+  }
+
+  const container = mountPoint();
+  render(App, container);
+  await flush();
+
+  assert(container.querySelector(".css-fallback") !== null, "expected the fallback while pending");
+  assert(container.querySelector(".cssr-a") === null, "did not expect the page before resolve");
+
+  resolveLoader({ default: Page });
+  // Wait (bounded) for the stylesheet fetch + re-render to settle.
+  for (let i = 0; i < 200 && !container.querySelector(".cssr-a"); i += 1) await flush();
+
+  const page = container.querySelector(".cssr-a");
+  assert(page !== null, "expected the page after module + stylesheet resolved");
+  assert(container.querySelector(".css-fallback") === null, "expected the fallback gone");
+  assertEqual(
+    getComputedStyle(page).paddingLeft,
+    "9px",
+    "expected the route CSS to be applied by the time the page shows (no FOUC)",
+  );
+
+  window.location.hash = prevHash;
+  await flush();
+});
+
+test("useRoutes: css on a non-lazy route injects the stylesheet and renders the page styled", async () => {
+  const prevHash = window.location.hash;
+  window.location.hash = "#/styled-static";
+  await flush();
+
+  function Page() {
+    return h("p", { className: "cssr-b" }, "styled static");
+  }
+
+  const routes = [
+    {
+      path: "/styled-static",
+      component: Page,
+      css: "./css-route-b.fixture.css",
+      fallback: h("p", { className: "css-fallback" }, "loading"),
+    },
+  ];
+
+  function App() {
+    return useRoutes(routes);
+  }
+
+  const container = mountPoint();
+  render(App, container);
+  // Wait (bounded) for the stylesheet fetch + re-render to settle.
+  for (let i = 0; i < 200 && !container.querySelector(".cssr-b"); i += 1) await flush();
+
+  const page = container.querySelector(".cssr-b");
+  assert(page !== null, "expected the page once its stylesheet loaded");
+  assertEqual(
+    getComputedStyle(page).letterSpacing,
+    "3px",
+    "expected the route CSS to be applied by the time the page shows",
+  );
+
+  const url = new URL("./css-route-b.fixture.css", document.baseURI).href;
+  const links = [...document.querySelectorAll('link[rel="stylesheet"]')].filter(
+    (link) => link.href === url,
+  );
+  assertEqual(links.length, 1, "expected the route stylesheet to be injected exactly once");
+
+  window.location.hash = prevHash;
+  await flush();
+});
+

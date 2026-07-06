@@ -1,0 +1,4 @@
+/* Fixture for the useRoutes css+lazy test. */
+.cssr-a {
+  padding-left: 9px;
+}

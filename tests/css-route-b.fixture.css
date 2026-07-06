@@ -1,0 +1,4 @@
+/* Fixture for the useRoutes css-only test. */
+.cssr-b {
+  letter-spacing: 3px;
+}

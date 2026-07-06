@@ -300,6 +300,55 @@ export function createLazy(loader, fallback = null) {
   return LazyComponent;
 }
 
+// ── loadCSS ────────────────────────────────────────────────
+//
+// Loads a stylesheet once by injecting <link rel="stylesheet">. Returns a
+// Promise that resolves when the sheet has loaded. Calls are deduped by
+// resolved URL — repeat calls return the same promise, and a <link> already
+// present in the document (e.g. from index.html) counts as loaded. On error
+// the promise rejects and the failed <link> and cache entry are removed, so
+// a later call can retry.
+//
+// This is the CSS half of code splitting: a lazy page module can hold its
+// route's fallback on screen until its stylesheet is ready via top-level
+// await, or declare `css:` on the route, which calls loadCSS internally.
+//
+// Usage:
+//   await loadCSS("/components/reports/reports.css");
+//   await loadCSS(new URL("./reports.css", import.meta.url));
+
+const cssPromises = new Map();
+
+export function loadCSS(href) {
+  // No DOM (renderToString in a server runtime): nothing to inject — the
+  // server response carries its own <link> tags.
+  if (typeof document === "undefined") return Promise.resolve();
+  const url = new URL(String(href), document.baseURI).href;
+  let promise = cssPromises.get(url);
+  if (promise) return promise;
+
+  promise = new Promise((resolve, reject) => {
+    for (const existing of document.querySelectorAll('link[rel="stylesheet"]')) {
+      if (existing.href === url) {
+        resolve();
+        return;
+      }
+    }
+    const link = document.createElement("link");
+    link.rel = "stylesheet";
+    link.href = url;
+    link.onload = () => resolve();
+    link.onerror = () => {
+      link.remove();
+      cssPromises.delete(url);
+      reject(new Error(`loadCSS: failed to load ${url}`));
+    };
+    document.head.appendChild(link);
+  });
+  cssPromises.set(url, promise);
+  return promise;
+}
+
 // ── useId ──────────────────────────────────────────────────
 //
 // Returns a stable, unique ID for the component instance.
@@ -1643,12 +1692,15 @@ export function useRouter({ mode = "hash" } = {}) {
 // useRoutes(routes, { mode, notFound })  → vnode
 //   Resolves the current router path against a nested route config and returns
 //   the element to render. Route objects:
-//     { path, component, element, lazy, children, index, fallback }
+//     { path, component, element, lazy, css, children, index, fallback }
 //   - component: (props) => vnode, called with { params, outlet }.
 //   - element:   a vnode, or (params, outlet) => vnode.
 //   - lazy:      () => import(...) — resolved via createLazy, cached per route
 //                object so its load state survives re-renders. `fallback` is
 //                shown while loading.
+//   - css:       stylesheet href (or array of hrefs) loaded via loadCSS() on
+//                first activation; the fallback holds until CSS (and lazy JS,
+//                if any) are ready. Works with or without `lazy`.
 //   - children:  nested routes. The parent route's component renders its
 //                `outlet` prop where the matched child element belongs.
 //   - index:     matches the parent's exact path (empty remainder).
@@ -1689,20 +1741,32 @@ export function matchPath(pattern, path, { end = true } = {}) {
 // stable module constant.
 const lazyRouteCache = new WeakMap();
 
+function renderStaticRoute(route, props) {
+  if (route.component) return h(route.component, props);
+  if (typeof route.element === "function") return route.element(props.params, props.outlet);
+  if (route.element !== undefined) return route.element;
+  return props.outlet;
+}
+
 function renderRouteElement(route, params, outlet) {
   const props = { params, outlet };
-  if (route.lazy) {
+  if (route.lazy || route.css) {
     let Lazy = lazyRouteCache.get(route);
     if (!Lazy) {
-      Lazy = createLazy(route.lazy, route.fallback ?? null);
+      const hrefs = route.css == null ? [] : Array.isArray(route.css) ? route.css : [route.css];
+      // A css-only route still goes through createLazy so the fallback holds
+      // until its stylesheet is ready; the "module" is the static renderer.
+      const Static = (p) => renderStaticRoute(route, p);
+      const loader = () =>
+        Promise.all([route.lazy ? route.lazy() : Static, ...hrefs.map(loadCSS)]).then(
+          ([mod]) => mod,
+        );
+      Lazy = createLazy(loader, route.fallback ?? null);
       lazyRouteCache.set(route, Lazy);
     }
     return h(Lazy, props);
   }
-  if (route.component) return h(route.component, props);
-  if (typeof route.element === "function") return route.element(params, outlet);
-  if (route.element !== undefined) return route.element;
-  return outlet;
+  return renderStaticRoute(route, props);
 }
 
 function resolveRoutes(routes, path, parentParams) {
