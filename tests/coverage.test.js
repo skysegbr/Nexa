@@ -1277,3 +1277,32 @@ test("DatePicker: ArrowRight moves the roving focus by one day, and Enter select
 
   assertEqual(received, "2026-07-16");
 });
+
+test("useLocalStorage: burst of functional updates in one render window all apply", async () => {
+  const key = "nexa-test-ls-burst";
+  localStorage.removeItem(key);
+
+  let captured;
+  let setValueFn;
+  function Widget() {
+    const [value, setValue] = useLocalStorage(key, 0);
+    captured = value;
+    setValueFn = setValue;
+    return h("div", null);
+  }
+
+  render(Widget, mountPoint());
+  await flush();
+
+  // Several updates before any re-render (like drag-resize mousemove events):
+  // each must see the previous one's result, not the stale render value.
+  setValueFn((v) => v + 10);
+  setValueFn((v) => v + 10);
+  setValueFn((v) => v + 10);
+  await flush();
+
+  assertEqual(captured, 30, `expected 30, got ${captured}`);
+  assertEqual(JSON.parse(localStorage.getItem(key)), 30);
+
+  localStorage.removeItem(key);
+});

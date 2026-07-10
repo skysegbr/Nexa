@@ -346,7 +346,7 @@ export function Dialog({
     const previousOverflow = document.body.style.overflow;
 
     document.body.style.overflow = "hidden";
-    queueMicrotask(() => focusFirstElement(panelRef.current));
+    queueMicrotask(() => focusFirstElementIfOutside(panelRef.current));
 
     const onKeyDown = (event) => {
       if (event.key === "Escape") {
@@ -642,7 +642,7 @@ export function Drawer({
     const previousOverflow = document.body.style.overflow;
 
     document.body.style.overflow = "hidden";
-    queueMicrotask(() => focusFirstElement(panelRef.current));
+    queueMicrotask(() => focusFirstElementIfOutside(panelRef.current));
 
     const onKeyDown = (event) => {
       if (event.key === "Escape") {
@@ -723,7 +723,7 @@ export function Dropdown({
       return undefined;
     }
 
-    queueMicrotask(() => focusFirstElement(menuRef.current));
+    queueMicrotask(() => focusFirstElementIfOutside(menuRef.current));
 
     const onMouseDown = (event) => {
       if (wrapRef.current && !wrapRef.current.contains(event.target)) {
@@ -968,6 +968,19 @@ function hasChildren(children) {
 function finiteNumber(value, fallback) {
   const number = Number(value);
   return Number.isFinite(number) ? number : fallback;
+}
+
+// Open-path variant: used when an overlay OPENS. If focus is already inside
+// (e.g. the user is typing in an input within the dialog and the opening
+// effect re-ran), stealing it to the first focusable would interrupt them.
+// Close-path refocusing (Escape → focus the trigger inside the wrap) must NOT
+// use this: there, focus being inside the wrap is exactly the situation the
+// call exists to fix.
+function focusFirstElementIfOutside(container) {
+  if (!container || container.contains(document.activeElement)) {
+    return;
+  }
+  focusFirstElement(container);
 }
 
 function focusFirstElement(container) {
@@ -1543,7 +1556,7 @@ export function ContextMenu({
     if (!open) return undefined;
 
     const previousActive = document.activeElement;
-    queueMicrotask(() => focusFirstElement(menuRef.current));
+    queueMicrotask(() => focusFirstElementIfOutside(menuRef.current));
 
     const onMouseDown = (e) => {
       if (menuRef.current && !menuRef.current.contains(e.target)) onClose?.();
@@ -1848,7 +1861,7 @@ export function BottomSheet({
     if (!open) return undefined;
 
     const previousActive = document.activeElement;
-    queueMicrotask(() => focusFirstElement(sheetRef.current));
+    queueMicrotask(() => focusFirstElementIfOutside(sheetRef.current));
 
     const onKey = (e) => {
       if (e.key === "Escape") {
@@ -2439,7 +2452,7 @@ function MenuItemNode({ item, index, isOpen, onOpenChange, onLeafSelect, listRef
           } else if (event.key === "ArrowRight" && hasSubmenu) {
             event.preventDefault();
             openSubmenu();
-            queueMicrotask(() => focusFirstElement(submenuRef.current));
+            queueMicrotask(() => focusFirstElementIfOutside(submenuRef.current));
           } else if (event.key === "ArrowLeft" && submenu) {
             event.preventDefault();
             onCloseToParent?.();
@@ -2516,7 +2529,7 @@ export function Menu({
       return undefined;
     }
 
-    queueMicrotask(() => focusFirstElement(menuRef.current));
+    queueMicrotask(() => focusFirstElementIfOutside(menuRef.current));
 
     const onMouseDown = (event) => {
       if (wrapRef.current && !wrapRef.current.contains(event.target)) {
@@ -3547,7 +3560,7 @@ export function Popover({
   useEffect(() => {
     if (!open) return undefined;
 
-    queueMicrotask(() => focusFirstElement(panelRef.current));
+    queueMicrotask(() => focusFirstElementIfOutside(panelRef.current));
 
     const onMouseDown = (event) => {
       if (wrapRef.current && !wrapRef.current.contains(event.target)) setOpen(false);

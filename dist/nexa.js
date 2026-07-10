@@ -574,7 +574,7 @@ function createRoot(component, container) {
     container,
     hooks: [],
     hookCursor: 0,
-    childCursor: 0,
+    childCursor: new Map(),
     children: new Map(),
     nextChildren: new Set(),
     oldTree: [],
@@ -592,7 +592,7 @@ function createComponentOwner(renderRoot) {
   return {
     hooks: [],
     hookCursor: 0,
-    childCursor: 0,
+    childCursor: new Map(),
     children: new Map(),
     nextChildren: new Set(),
     renderRoot,
@@ -610,8 +610,17 @@ function requireHookOwner(hookName) {
 
 function renderComponent(type, props) {
   const parentOwner = requireHookOwner(type.name || "component");
-  const identity = componentIdentity(type, props, parentOwner.childCursor);
-  parentOwner.childCursor += 1;
+  // Unkeyed identity counts per TYPE, not across all children: h() executes
+  // components eagerly, so a conditional child (`cond && h(Spinner)`) simply
+  // never runs when falsy and can't occupy a positional slot. A global
+  // counter would shift every later sibling's identity when the conditional
+  // toggles — remounting them and resetting their hooks. Per-type counters
+  // keep unrelated siblings stable; same-type conditional siblings still
+  // need explicit keys.
+  const typeId = componentTypeId(type);
+  const index = parentOwner.childCursor.get(typeId) ?? 0;
+  parentOwner.childCursor.set(typeId, index + 1);
+  const identity = componentIdentity(typeId, props, index);
 
   let owner = parentOwner.children.get(identity);
 
@@ -662,7 +671,7 @@ function renderComponent(type, props) {
 
 function prepareHookOwner(owner) {
   owner.hookCursor = 0;
-  owner.childCursor = 0;
+  owner.childCursor = new Map();
   owner.nextChildren = new Set();
   owner.dirty = false;
   owner.contextReads = null;
@@ -677,8 +686,8 @@ function cleanupUnusedChildren(owner) {
   }
 }
 
-function componentIdentity(type, props, index) {
-  return `${componentTypeId(type)}:${props.key ?? `index-${index}`}`;
+function componentIdentity(typeId, props, index) {
+  return `${typeId}:${props.key ?? `index-${index}`}`;
 }
 
 function componentTypeId(type) {
@@ -1541,10 +1550,16 @@ export function useLocalStorage(key, initialValue) {
     }
   });
 
+  // Route through useState's updater so functional updates always see the
+  // LATEST value — a closure over `stored` would apply every update in a
+  // same-render burst (e.g. drag-resize mousemoves) to the same stale base,
+  // keeping only the last one.
   const setValue = (value) => {
-    const next = typeof value === "function" ? value(stored) : value;
-    try { localStorage.setItem(key, JSON.stringify(next)); } catch {}
-    setStored(next);
+    setStored((prev) => {
+      const next = typeof value === "function" ? value(prev) : value;
+      try { localStorage.setItem(key, JSON.stringify(next)); } catch {}
+      return next;
+    });
   };
 
   return [stored, setValue];

@@ -587,3 +587,95 @@ test("a throwing effect or cleanup is reported but does not block its siblings",
   );
   assert(unmountErrors.length > 0, "expected the thrown cleanup to be reported via console.error");
 });
+
+// ── Sibling identity vs. conditional components ──────────────────────────────
+//
+// h() executes components eagerly, so a conditional child (`cond && h(A)`)
+// never occupies a positional slot when falsy. Identity for unkeyed children
+// must therefore count per TYPE: a toggling component of one type must not
+// shift the identity — and wipe the hook state — of later siblings of other
+// types.
+
+test("conditional sibling: toggling a component does not remount later siblings of other types", async () => {
+  const log = [];
+  let setLoadingFn;
+  let bumpFn;
+
+  function Spinner() {
+    return h("span", null, "…");
+  }
+
+  function Stateful() {
+    const [count, setCount] = useState(0);
+    bumpFn = () => setCount((c) => c + 1);
+    useEffect(() => {
+      log.push("mount");
+      return () => log.push("cleanup");
+    }, []);
+    return h("p", null, `count:${count}`);
+  }
+
+  function App() {
+    const [loading, setLoading] = useState(true);
+    setLoadingFn = setLoading;
+    return h("div", null,
+      loading && h(Spinner, null),
+      h(Stateful, null),
+    );
+  }
+
+  const container = mountPoint();
+  render(App, container);
+  await flush();
+
+  bumpFn();
+  await flush();
+  assert(container.textContent.includes("count:1"), "expected state update before toggle");
+  assertEqual(log.join(","), "mount", "expected a single mount before toggle");
+
+  // Toggling the Spinner away must keep Stateful's identity: no cleanup, no
+  // second mount, and its state survives.
+  setLoadingFn(false);
+  await flush();
+  assertEqual(log.join(","), "mount", `expected no remount after toggle, got: ${log.join(",")}`);
+  assert(container.textContent.includes("count:1"), "expected state to survive the toggle");
+
+  setLoadingFn(true);
+  await flush();
+  assertEqual(log.join(","), "mount", `expected no remount after toggling back, got: ${log.join(",")}`);
+  assert(container.textContent.includes("count:1"), "expected state to survive toggling back");
+});
+
+test("conditional sibling: unkeyed same-type siblings after the conditional still reset (keys required)", async () => {
+  // Documents the remaining limitation: per-type counters can't tell same-type
+  // siblings apart, so a toggling component DOES shift identity within its own
+  // type. This is the case that still needs explicit keys.
+  let setShowFn;
+  const counts = [];
+
+  function Counter({ label }) {
+    const [count, setCount] = useState(0);
+    counts.push(`${label}:${count}`);
+    useEffect(() => { setCount(1); }, []);
+    return h("i", null, label);
+  }
+
+  function App() {
+    const [show, setShow] = useState(true);
+    setShowFn = setShow;
+    return h("div", null,
+      show && h(Counter, { label: "a" }),
+      h(Counter, { label: "b" }),
+    );
+  }
+
+  render(App, mountPoint());
+  await flush();
+  counts.length = 0;
+
+  setShowFn(false);
+  await flush();
+  // "b" slides into index 0 of its type and inherits the old "a" state — the
+  // documented reason the spec mandates keys on conditional same-type lists.
+  assert(counts.some((c) => c.startsWith("b:")), "expected b to render after toggle");
+});

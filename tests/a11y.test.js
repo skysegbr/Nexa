@@ -374,3 +374,31 @@ test("Drawer: focuses first element on open, traps Tab, restores focus on close"
   await flush();
   assertEqual(document.activeElement, opener, "Escape closes the drawer and restores focus to the opener");
 });
+
+test("Dialog: does not steal focus from an element already inside it", async () => {
+  let setTickFn;
+
+  function App() {
+    const [, setTick] = useState(0);
+    setTickFn = setTick;
+    return h(
+      Dialog,
+      { open: true, onClose: () => {}, title: "Form" },
+      h("input", { id: "dlg-inner-input", type: "text" }),
+    );
+  }
+
+  const container = mountPoint();
+  render(App, container);
+  await flush();
+
+  const input = document.getElementById("dlg-inner-input");
+  input.focus();
+  assertEqual(document.activeElement, input, "expected the input to take focus");
+
+  // A re-render while the user is typing must not move focus back to the
+  // dialog's first focusable (the close button).
+  setTickFn((t) => t + 1);
+  await flush();
+  assertEqual(document.activeElement, input, "expected focus to stay on the input after re-render");
+});
