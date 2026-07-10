@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.10.1] - 2026-07-10
+
 ### Fixed
 - Component identity for unkeyed children now counts per component TYPE instead of using one global positional counter (`dist/nexa.js`, `renderComponent`). Because `h()` executes components eagerly, a conditional child (`loading && h(Spinner)`) occupies no slot when falsy; with the global counter, toggling it shifted the identity of every later sibling — remounting them, wiping their hook state, and re-running their effects (symptom in practice: a `Dialog` re-running its focus-trap effect and stealing focus from an input while the user typed). Same-type conditional siblings still require explicit keys, as documented. Regression tests in `tests/engine.test.js`.
 - `useLocalStorage` setter now routes functional updates through the underlying `useState` updater instead of a closure over the rendered value, so a burst of updates within one render window (e.g. drag-resize `mousemove` events) accumulates instead of each applying to the same stale base. Regression test in `tests/coverage.test.js`.
