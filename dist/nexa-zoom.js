@@ -196,7 +196,6 @@ export function ZoomStage({
     ctrlRef.current = ctrl;
     ctrl.jumpTo(seq[curIndex]);
     return () => { ctrl.destroy(); ctrlRef.current = null; };
-    // eslint-disable-next-line
   }, []);
 
   useEffect(() => {
