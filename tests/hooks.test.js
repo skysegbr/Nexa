@@ -51,6 +51,32 @@ test("useForm: setValue updates a single field and triggers re-render", async ()
   assertEqual(capturedValues.name, "Bob");
 });
 
+test("useForm: dirty becomes true when a field absent from initialValues is set", async () => {
+  let capturedDirty;
+  let setValueFn;
+  let resetFn;
+
+  function Form() {
+    const { dirty, setValue, reset } = useForm({ initialValues: {} });
+    capturedDirty = dirty;
+    setValueFn = setValue;
+    resetFn = reset;
+    return h("div", null);
+  }
+
+  render(Form, mountPoint());
+  await flush();
+  assertEqual(capturedDirty, false, "form starts clean");
+
+  setValueFn("email", "a@b.com");
+  await flush();
+  assertEqual(capturedDirty, true, "adding a field not in initialValues marks the form dirty");
+
+  resetFn();
+  await flush();
+  assertEqual(capturedDirty, false, "reset clears dirty again");
+});
+
 test("useForm: field onChange handler updates the field value", async () => {
   let capturedValues;
   let capturedField;

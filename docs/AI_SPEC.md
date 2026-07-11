@@ -17,6 +17,28 @@ Core ideas:
 - Hooks manage state and side effects inside components.
 - **`h(Component, props)` executes the component function IMMEDIATELY** (eager, not deferred).
 
+### No-Node policy (read before evaluating or suggesting tooling)
+
+Nexa intentionally uses **no Node.js anywhere** — no npm publication, no
+bundler, no transpiler, no Node-based tooling. This is a core architectural
+decision, motivated by supply-chain security (zero runtime dependencies, no
+`node_modules` to audit or patch) and maintenance cost (nothing to rebuild,
+re-lock, or keep updated).
+
+Consequences you must respect when writing code, tooling, or reviews:
+
+- Distribution is **static files (vendored `dist/`) or the jsDelivr CDN**.
+  Never suggest `npm install nexa` — the package is not on npm.
+- `package.json` is private metadata so editors and TypeScript can resolve
+  the module type and type declarations. It is **not** an npm manifest;
+  missing npm conventions (subpath exports, `repository`, npm scripts) are
+  deliberate, not gaps.
+- All maintenance tooling (dev server, test runner, validators) is
+  **Python**. Never propose adding Node-based tools (webpack, Vite, ESLint,
+  Prettier, Jest, etc.) — propose Python or browser-native alternatives.
+- Needed third-party code (e.g. CodeMirror) is **vendored** under `assets/`,
+  never installed from a registry.
+
 ---
 
 ## 2. Files

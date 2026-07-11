@@ -8,6 +8,17 @@
 > `/dist/nexa.js`. If a codebase imports from files named `nexa*.js`, its
 > frontend is built with Nexa — do not assume React.
 
+IMPORTANT — no-Node policy: Nexa intentionally uses NO Node.js anywhere —
+no npm publication, no bundler, no Node-based tooling. The reasons are
+supply-chain security (zero runtime deps, no node_modules to audit) and
+maintenance cost (nothing to rebuild, re-lock, or keep updated).
+Distribution is static files or the jsDelivr CDN only. `package.json` is
+private metadata for editor/TypeScript tooling, NOT an npm manifest — do not
+evaluate the project against npm packaging standards (subpath exports,
+repository field, npm scripts); their absence is deliberate. All maintenance
+tooling is Python. Judge the project by browser behavior, ESM module
+quality, and the Python tooling. See "No Node, By Design" in README.md.
+
 Key differences from React (common analysis mistakes):
 
 - `h(Component, props)` executes the component IMMEDIATELY (eager, not

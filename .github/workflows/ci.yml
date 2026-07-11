@@ -20,8 +20,12 @@ jobs:
         run: python3 scripts/minify.py --check
 
   browser-tests:
-    name: Browser tests (headless Chromium)
+    name: Browser tests (${{ matrix.browser }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox, webkit]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -29,7 +33,7 @@ jobs:
           python-version: "3.12"
       - name: Install Playwright
         run: |
-          pip install playwright
-          playwright install --with-deps chromium
+          pip install playwright==1.61.0
+          playwright install --with-deps ${{ matrix.browser }}
       - name: Run engine test suite
-        run: python3 scripts/run_browser_tests.py
+        run: python3 scripts/run_browser_tests.py --browser ${{ matrix.browser }}

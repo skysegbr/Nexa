@@ -829,10 +829,21 @@ test("useRouter (history mode) does not intercept a same-page fragment link", as
 // re-runs (cleanup + reattach) after every render instead.
 
 function fireSwipeLeft(el) {
-  const start = new Touch({ identifier: 1, target: el, clientX: 200, clientY: 100 });
-  const end = new Touch({ identifier: 1, target: el, clientX: 100, clientY: 100 });
-  el.dispatchEvent(new TouchEvent("touchstart", { touches: [start], bubbles: true }));
-  el.dispatchEvent(new TouchEvent("touchend", { changedTouches: [end], bubbles: true }));
+  if (typeof Touch === "function" && typeof TouchEvent === "function") {
+    const start = new Touch({ identifier: 1, target: el, clientX: 200, clientY: 100 });
+    const end = new Touch({ identifier: 1, target: el, clientX: 100, clientY: 100 });
+    el.dispatchEvent(new TouchEvent("touchstart", { touches: [start], bubbles: true }));
+    el.dispatchEvent(new TouchEvent("touchend", { changedTouches: [end], bubbles: true }));
+  } else {
+    // Firefox desktop has no Touch/TouchEvent constructors; synthesize plain
+    // events carrying the touch-list shape the hook reads.
+    const start = new Event("touchstart", { bubbles: true });
+    start.touches = [{ identifier: 1, target: el, clientX: 200, clientY: 100 }];
+    const end = new Event("touchend", { bubbles: true });
+    end.changedTouches = [{ identifier: 1, target: el, clientX: 100, clientY: 100 }];
+    el.dispatchEvent(start);
+    el.dispatchEvent(end);
+  }
 }
 
 test("useSwipe attaches its listener once the ref's target mounts on a later render", async () => {

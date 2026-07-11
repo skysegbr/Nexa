@@ -454,9 +454,8 @@ export function useForm({
     initialValuesRef.current && typeof initialValuesRef.current === "object"
       ? initialValuesRef.current
       : {};
-  const dirty = Object.keys(baseline).some(
-    (key) => !Object.is(values[key], baseline[key]),
-  );
+  const dirty = [...new Set([...Object.keys(baseline), ...Object.keys(values)])]
+    .some((key) => !Object.is(values[key], baseline[key]));
 
   const field = (name, options = {}) => {
     const { onChange, onInput, onBlur, ...fieldOptions } = options;
@@ -2081,21 +2080,32 @@ export function useHistory(initial, { limit = 50 } = {}) {
 //
 // Data fetching with loading / error / data states.
 // Re-fetches whenever `url` changes. Pass null/undefined to skip.
+// `options` is any fetch() init object (Headers, FormData, and functions are
+// passed through untouched). Each request reads the latest render's options,
+// but changing options alone does NOT trigger a new request — call refetch()
+// or change `url` for that. A user-supplied options.signal is honored: it is
+// chained into the internal AbortController, so either can cancel.
 // Usage:
 //   const { data, loading, error, refetch } = useFetch("/api/nodes");
 
 export function useFetch(url, options = {}) {
   const [state, setState] = useState({ data: null, loading: !!url, error: null });
-  const abortRef  = useRef(null);
-  const optionStr = JSON.stringify(options);
+  const abortRef   = useRef(null);
+  const optionsRef = useRef(options);
+  optionsRef.current = options;
 
   const run = useCallback((targetUrl) => {
     if (!targetUrl) { setState({ data: null, loading: false, error: null }); return; }
     if (abortRef.current) abortRef.current.abort();
     const ctrl = new AbortController();
     abortRef.current = ctrl;
+    const { signal: userSignal, ...init } = optionsRef.current ?? {};
+    if (userSignal) {
+      if (userSignal.aborted) ctrl.abort();
+      else userSignal.addEventListener("abort", () => ctrl.abort(), { once: true });
+    }
     setState((s) => ({ ...s, loading: true, error: null }));
-    fetch(targetUrl, { signal: ctrl.signal, ...JSON.parse(optionStr) })
+    fetch(targetUrl, { ...init, signal: ctrl.signal })
       .then((r) => {
         if (!r.ok) throw new Error(`${r.status} ${r.statusText}`);
         return r.json();
@@ -2105,7 +2115,7 @@ export function useFetch(url, options = {}) {
         if (err.name === "AbortError") return;
         setState({ data: null, loading: false, error: err.message ?? String(err) });
       });
-  }, [optionStr]);
+  }, []);
 
   useEffect(() => { run(url); return () => abortRef.current?.abort(); }, [url]);
 

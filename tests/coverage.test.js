@@ -92,6 +92,108 @@ test("useFetch: without a url, never calls fetch and resolves with no data/error
   }
 });
 
+test("useFetch: Headers instances and functions in options reach fetch untouched", async () => {
+  const originalFetch = window.fetch;
+  let capturedInit;
+  window.fetch = async (url, init) => {
+    capturedInit = init;
+    return { ok: true, status: 200, statusText: "OK", json: async () => ({}) };
+  };
+
+  try {
+    const headers = new Headers({ "X-Token": "abc123" });
+    const circular = { name: "node" };
+    circular.self = circular;
+
+    function Widget() {
+      useFetch("/api/thing", { method: "POST", headers, body: circular.name, meta: circular });
+      return h("div", null);
+    }
+
+    render(Widget, mountPoint());
+    await flush();
+
+    assert(capturedInit.headers === headers, "the exact Headers instance is passed through");
+    assertEqual(capturedInit.headers.get("X-Token"), "abc123");
+    assertEqual(capturedInit.method, "POST");
+    assert(capturedInit.meta.self === capturedInit.meta, "circular options render without crashing");
+  } finally {
+    window.fetch = originalFetch;
+  }
+});
+
+test("useFetch: a user-supplied options.signal cancels the request without replacing the internal one", async () => {
+  const originalFetch = window.fetch;
+  let capturedInit;
+  window.fetch = (url, init) => {
+    capturedInit = init;
+    return new Promise((resolve, reject) => {
+      init.signal.addEventListener("abort", () => {
+        reject(Object.assign(new Error("aborted"), { name: "AbortError" }));
+      });
+    });
+  };
+
+  try {
+    const userCtrl = new AbortController();
+    let captured;
+    function Widget() {
+      captured = useFetch("/api/slow", { signal: userCtrl.signal });
+      return h("div", null);
+    }
+
+    render(Widget, mountPoint());
+    await flush();
+
+    assert(capturedInit.signal instanceof AbortSignal, "fetch receives a real AbortSignal");
+    assert(capturedInit.signal !== userCtrl.signal, "internal signal is not replaced by the user's");
+    assertEqual(captured.loading, true);
+
+    userCtrl.abort();
+    await flush();
+
+    assert(capturedInit.signal.aborted, "user abort propagates to the internal controller");
+    assertEqual(captured.loading, true, "abort leaves state untouched (no error surfaced)");
+    assertEqual(captured.error, null);
+  } finally {
+    window.fetch = originalFetch;
+  }
+});
+
+test("useFetch: refetch uses the options from the latest render", async () => {
+  const originalFetch = window.fetch;
+  const seenTokens = [];
+  window.fetch = async (url, init) => {
+    seenTokens.push(init.headers["X-Token"]);
+    return { ok: true, status: 200, statusText: "OK", json: async () => ({}) };
+  };
+
+  try {
+    let captured;
+    let setTokenFn;
+    function Widget() {
+      const [token, setToken] = useState("v1");
+      setTokenFn = setToken;
+      captured = useFetch("/api/thing", { headers: { "X-Token": token } });
+      return h("div", null);
+    }
+
+    render(Widget, mountPoint());
+    await flush();
+    assertEqual(seenTokens[0], "v1");
+
+    setTokenFn("v2");
+    await flush();
+    captured.refetch();
+    await flush();
+
+    assertEqual(seenTokens.length, 2, "changing options alone does not refetch; refetch() does");
+    assertEqual(seenTokens[1], "v2", "refetch picks up the latest options");
+  } finally {
+    window.fetch = originalFetch;
+  }
+});
+
 // ── useLocalStorage ─────────────────────────────────────────────────────────
 
 test("useLocalStorage: falls back to initialValue when nothing is stored", async () => {

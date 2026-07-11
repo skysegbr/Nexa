@@ -3,19 +3,25 @@
 Nexa dev server with live reload.
 
 Usage:
-  python server.py          # port 8000
-  python server.py 3000     # custom port
+  python server.py                    # port 8000, localhost only
+  python server.py 3000               # custom port
+  python server.py --host 0.0.0.0     # expose on the network (e.g. to test
+                                      # on a phone) — the whole repo becomes
+                                      # readable on the LAN, use with care
 
 Serves the current directory via HTTP and sends an SSE event to all
 connected browsers whenever a .js/.css/.html/.json file changes.
 The browser client (dist/nexa-hmr.js) listens for that event and reloads the page.
 
+Binds to 127.0.0.1 by default so the served directory (including dotfiles
+and Git metadata) is never exposed to the local network by accident.
+
 No external dependencies — standard Python 3 library only.
 """
 
+import argparse
 import http.server
 import json
-import sys
 import threading
 import time
 from pathlib import Path
@@ -26,13 +32,20 @@ def _find_free_port(start: int) -> int:
     port = start
     while port < 65535:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            if s.connect_ex(("", port)) != 0:
+            if s.connect_ex(("127.0.0.1", port)) != 0:
                 return port
         port += 1
     raise OSError("No free port found")
 
-_requested_port = int(sys.argv[1]) if len(sys.argv) > 1 else 8000
-PORT = _requested_port if len(sys.argv) > 1 else _find_free_port(_requested_port)
+_parser = argparse.ArgumentParser(description="Nexa dev server with live reload.")
+_parser.add_argument("port", nargs="?", type=int, default=None,
+                     help="port to listen on (default: first free port from 8000)")
+_parser.add_argument("--host", default="127.0.0.1",
+                     help="interface to bind (default: 127.0.0.1; "
+                          "use 0.0.0.0 to expose on the network)")
+_args = _parser.parse_args()
+HOST = _args.host
+PORT = _args.port if _args.port is not None else _find_free_port(8000)
 WATCH_EXTENSIONS = {".js", ".css", ".html", ".json"}
 POLL_INTERVAL = 0.5
 SKIP_DIRS = {"node_modules", ".git", "__pycache__", ".cache"}
@@ -131,8 +144,11 @@ class _Server(http.server.ThreadingHTTPServer):
 
 if __name__ == "__main__":
     threading.Thread(target=_watch, daemon=True).start()
-    with _Server(("", PORT), _Handler) as httpd:
+    with _Server((HOST, PORT), _Handler) as httpd:
         print(f"[Nexa HMR] http://localhost:{PORT}", flush=True)
+        if HOST not in ("127.0.0.1", "localhost"):
+            print(f"[Nexa HMR] WARNING: bound to {HOST} — the whole directory "
+                  "is reachable from the network", flush=True)
         print("[Nexa HMR] add to your HTML (dev only):", flush=True)
         print('[Nexa HMR]   <script src="/dist/nexa-hmr.js"></script>', flush=True)
         try:

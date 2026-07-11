@@ -11,13 +11,14 @@ The only dependency beyond the standard library is playwright
 project's no-Node rule intact.
 
 Usage:
-    python3 scripts/run_browser_tests.py [repo-root]
+    python3 scripts/run_browser_tests.py [repo-root] [--browser chromium|firefox|webkit]
 
 Exit code 0 when every test passes, 1 otherwise.
 """
 
 from __future__ import annotations
 
+import argparse
 import http.server
 import sys
 import threading
@@ -34,6 +35,7 @@ except ImportError:
     sys.exit(2)
 
 RESULTS_TIMEOUT_MS = 30_000
+BROWSERS = ("chromium", "firefox", "webkit")
 
 
 class QuietHandler(http.server.SimpleHTTPRequestHandler):
@@ -49,7 +51,15 @@ def serve(root: Path) -> tuple[http.server.ThreadingHTTPServer, int]:
 
 
 def main() -> int:
-    root = Path(sys.argv[1] if len(sys.argv) > 1 else ".").resolve()
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument("root", nargs="?", default=".",
+                        help="repo root to serve (default: current directory)")
+    parser.add_argument("--browser", choices=BROWSERS, default="chromium",
+                        help="playwright browser to run the suite in "
+                             "(default: chromium; install it first with "
+                             "`playwright install <browser>`)")
+    args = parser.parse_args()
+    root = Path(args.root).resolve()
 
     if not (root / "tests" / "index.html").exists():
         print(f"tests/index.html not found under {root}", file=sys.stderr)
@@ -59,7 +69,7 @@ def main() -> int:
 
     try:
         with sync_playwright() as p:
-            browser = p.chromium.launch()
+            browser = getattr(p, args.browser).launch()
             page = browser.new_page()
 
             # Surface page-level errors (module parse failures, unhandled
@@ -84,7 +94,7 @@ def main() -> int:
         suffix = f" — {r['error']}" if r.get("error") else ""
         print(f"{mark} {r['name']}{suffix}")
 
-    print(f"\n{len(passed)}/{len(results)} passed")
+    print(f"\n{len(passed)}/{len(results)} passed ({args.browser})")
     return 0 if not failed and results else 1
 
 
