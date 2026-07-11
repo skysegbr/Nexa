@@ -2,7 +2,7 @@
 // RadioGroup, Avatar/AvatarGroup, Breadcrumb, Skeleton, Divider, Stat,
 // NumberInput, TimePicker, Popover, TreeView, CommandPalette.
 
-import { h, render, useState } from "../dist/nexa.js";
+import { h, render, unmount, useState } from "../dist/nexa.js";
 import {
   Radio,
   RadioGroup,
@@ -463,4 +463,39 @@ test("CommandPalette: Escape closes without running anything", async () => {
   await flush();
   assertEqual(container.querySelector(".m-command"), null);
   assertEqual(ran.length, 0);
+});
+
+// ── FullCodeEditor: toolbar language select ──────────────────────────────────
+// (imported from its own dist file; runs without CodeMirror on the page —
+// the toolbar renders regardless.)
+
+test("FullCodeEditor: language select covers the default list and keeps unknown modes visible", async () => {
+  const { FullCodeEditor, DEFAULT_LANGUAGES } = await import("../dist/nexa-editor.js");
+
+  function App() {
+    return h(FullCodeEditor, { value: "", language: "sql", showSnippets: false });
+  }
+  const container = mountPoint();
+  render(App, container);
+  await flush();
+
+  const select = container.querySelector(".nce-lang-select");
+  assert(select, "expected the language select to render");
+  assertEqual(select.value, "sql", "expected the sql mode to be selected");
+  const values = [...select.options].map((o) => o.value);
+  for (const lang of DEFAULT_LANGUAGES) {
+    assert(values.includes(lang.value), `expected default list to include ${lang.value}`);
+  }
+  assert(values.includes("text/plain"), "expected a plain-text option");
+  unmount(container);
+
+  // Unknown mode: appended as a raw option instead of rendering blank.
+  function Weird() {
+    return h(FullCodeEditor, { value: "", language: "brainfuck", showSnippets: false });
+  }
+  const container2 = mountPoint();
+  render(Weird, container2);
+  await flush();
+  const select2 = container2.querySelector(".nce-lang-select");
+  assertEqual(select2.value, "brainfuck", "expected the unknown mode to stay selected");
 });

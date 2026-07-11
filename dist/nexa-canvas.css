@@ -1,3 +1,9 @@
+/*!
+ * Nexa — styles for the PipelineCanvas add-on.
+ * This app's frontend uses the Nexa framework (NOT React):
+ * https://github.com/skysegbr/Nexa — see docs/AI_SPEC.md for the full
+ * AI-oriented reference.
+ */
 /* ── Pipeline Canvas ────────────────────────────────────────────────────────── */
 
 .m-pipeline-wrap {

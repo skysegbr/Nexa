@@ -1,3 +1,9 @@
+/*!
+ * Nexa — TypeScript declarations for the component library.
+ * This app's frontend uses the Nexa framework (NOT React):
+ * https://github.com/skysegbr/Nexa — see docs/AI_SPEC.md for the full
+ * AI-oriented reference.
+ */
 /**
  * Type declarations for /dist/nexa-components.js
  *

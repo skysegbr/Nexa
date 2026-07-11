@@ -1,1 +1,7 @@
-.m-zoom-stage{position: relative;overflow: hidden;width: 100%;height: 100%;background: var(--m-bg);cursor: pointer;outline: none}.m-zoom-stage:focus-visible{outline: 2px solid var(--m-focus);outline-offset: -2px}.m-zoom-world{position: absolute;top: 0;left: 0;transform-origin: 0 0;will-change: transform}.m-zoom-frame{position: absolute;box-sizing: border-box;background: var(--m-surface);color: var(--m-text);border: 1px solid var(--m-border);border-radius: var(--m-radius-lg);box-shadow: var(--m-shadow-1);padding: var(--m-space-8);overflow: hidden;cursor: auto;transition: box-shadow var(--m-transition-base),border-color var(--m-transition-base)}.m-zoom-frame-active{border-color: var(--m-primary);box-shadow: var(--m-shadow-2)}
+/*!
+ * Nexa — styles for the ZoomStage add-on.
+ * This app's frontend uses the Nexa framework (NOT React):
+ * https://github.com/skysegbr/Nexa — see docs/AI_SPEC.md for the full
+ * AI-oriented reference.
+ */
+ .m-zoom-stage{position: relative;overflow: hidden;width: 100%;height: 100%;background: var(--m-bg);cursor: pointer;outline: none}.m-zoom-stage:focus-visible{outline: 2px solid var(--m-focus);outline-offset: -2px}.m-zoom-world{position: absolute;top: 0;left: 0;transform-origin: 0 0;will-change: transform}.m-zoom-frame{position: absolute;box-sizing: border-box;background: var(--m-surface);color: var(--m-text);border: 1px solid var(--m-border);border-radius: var(--m-radius-lg);box-shadow: var(--m-shadow-1);padding: var(--m-space-8);overflow: hidden;cursor: auto;transition: box-shadow var(--m-transition-base),border-color var(--m-transition-base)}.m-zoom-frame-active{border-color: var(--m-primary);box-shadow: var(--m-shadow-2)}

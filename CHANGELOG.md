@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+- AI-identification banners (`/*! … */`) at the top of every `dist/` file (JS, CSS and `.d.ts`): apps vendor these files, and AI tools analyzing such apps used to misread the frontend as generic JS/React. The banner names the framework, states the key "NOT React" semantics (eager `h()`, `ctx.provide`, no JSX/bundler) and points to `docs/AI_SPEC.md`. The minifier now preserves `/*!` banners in `.min.*` outputs (previously it stripped all comments). New `llms.txt` at the repo root summarizes the framework, the common analysis mistakes and the doc map for AI crawlers/assistants.
+- `FullCodeEditor` autocomplete now works for every language, not just Python: the hint merges words already present in the buffer (via CodeMirror's `anyword-hint` addon, when the host page loads it) with a per-language keyword list (`python`, `javascript`, `sql`, `shell`, `go`, `rust`, `css`, `yaml`, C-like — MIME modes like `text/x-java` alias into the right list). Same autotrigger behavior as before (2+ chars, Ctrl+Space).
+- `FullCodeEditor` new `onLint` prop: `async (code, language) → [{ line, col, message, severity }]` (1-based). When provided and the host page loads CodeMirror's `addon/lint`, diagnostics render as inline squiggles + gutter markers as you type (async, 600 ms debounce), and re-lint runs on language switch.
+
+### Fixed
+- `FullCodeEditor`'s toolbar language select covered only five languages (python/cython/golang/rust/kotlin — two of which aren't even real CodeMirror mode names), so any other mode ("javascript", "shell", …) rendered as a blank pill. It now defaults to a 20-language `DEFAULT_LANGUAGES` list (exported) of real CodeMirror modes/MIMEs including SQL, YAML, Shell, Dockerfile and plain text, accepts a `languages` prop to override the options, and always appends the current `language` as a raw option when it's missing from the list — the select can no longer render blank. Regression test in `tests/components-new.test.js`.
+
 ## [0.10.1] - 2026-07-10
 
 ### Fixed

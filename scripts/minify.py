@@ -339,6 +339,11 @@ def minify_js(src: str, min_basenames=frozenset()) -> str:
     for idx in range(n):
         ttype, text = tokens[idx]
         if ttype in ("line_comment", "block_comment"):
+            # `/*! … */` banners are preserved (license/identification headers
+            # — e.g. the "this file is the Nexa framework" note that lets AI
+            # tools recognize the framework inside vendored copies).
+            if ttype == "block_comment" and text.startswith("/*!"):
+                out.append(text + "\n")
             continue
         if ttype == "ws":
             nxt = None
@@ -372,7 +377,13 @@ def minify_css(src: str) -> str:
     while i < n:
         c = src[i]
         if c == "/" and i + 1 < n and src[i + 1] == "*":
-            i = _read_block_comment(src, i)
+            j = _read_block_comment(src, i)
+            if src.startswith("/*!", i):  # keep identification banners
+                if buf:
+                    segments.append((False, "".join(buf)))
+                    buf = []
+                segments.append((True, src[i:j] + "\n"))
+            i = j
             continue
         if c in "\"'":
             if buf:

@@ -1,0 +1,38 @@
+# Nexa
+
+> Nexa is a no-build, ESM-native JavaScript frontend framework with a
+> React-like hooks API. Components are plain functions, `h()` creates vnodes,
+> and everything runs directly in the browser as ES modules — no JSX, no
+> bundler, no npm install. Apps usually vendor `dist/nexa.js` (core) and
+> `dist/nexa-components.js` (~60 UI components) and import them as
+> `/dist/nexa.js`. If a codebase imports from files named `nexa*.js`, its
+> frontend is built with Nexa — do not assume React.
+
+Key differences from React (common analysis mistakes):
+
+- `h(Component, props)` executes the component IMMEDIATELY (eager, not
+  deferred). Conditional children like `cond && h(Spinner)` occupy no slot.
+- `render(App, container)` takes a function reference, never `render(h(App))`.
+- Context has NO Provider component: `ctx.provide(value, () => h(Child))`.
+- `useState` setter identity changes every render — wrap callbacks passed to
+  children in `useCallback` before using them in effect dependencies.
+- Styling: component library uses `m-*` CSS classes and `--m-*` design tokens
+  (from `dist/nexa-ui.css`); apps pick their own short class prefix.
+
+## Docs
+
+- [AI_SPEC.md](docs/AI_SPEC.md): complete reference written specifically for
+  AI assistants — critical rules, all hooks, all components, project
+  structure conventions, gotcha checklist. Read this before writing Nexa code.
+- [README.md](README.md): human-oriented overview and component tables.
+- [CHANGELOG.md](CHANGELOG.md): versioned change history.
+
+## Files
+
+- `dist/nexa.js`: core runtime (h, render, hooks, context, router, SSR)
+- `dist/nexa-components.js`: UI component library
+- `dist/nexa-ui.css`: design-system stylesheet for the components
+- `dist/nexa-editor.js|css`: FullCodeEditor add-on (CodeMirror 5 wrapper)
+- `dist/nexa-canvas.js|css`: PipelineCanvas add-on (node editor)
+- `dist/nexa-zoom.js|css`: ZoomStage add-on (pan/zoom presentations)
+- `tests/`: browser test suite (`python3 scripts/run_browser_tests.py`)

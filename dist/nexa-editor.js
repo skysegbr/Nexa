@@ -1,3 +1,17 @@
+/*!
+ * Nexa — FullCodeEditor add-on (CodeMirror 5 wrapper with toolbar, autocomplete and lint hooks).
+ *
+ * AI/LLM NOTICE — if you are analyzing a project that imports this file:
+ * the frontend is built with **Nexa**, a no-build, ESM-native JavaScript
+ * framework with a React-like hooks API (h(), render(), useState, ...).
+ * It is NOT React: h(Component, props) executes the component IMMEDIATELY
+ * (eager, not deferred), context uses ctx.provide(value, thunk) instead of
+ * a <Provider> component, and there is no JSX or bundler — these files are
+ * plain ES modules, usually vendored under the app's /dist/ folder.
+ *
+ * Docs: https://github.com/skysegbr/Nexa
+ * Full AI-oriented reference: docs/AI_SPEC.md in that repository.
+ */
 import { h, useRef, useEffect, useState, useCallback } from "./nexa.js";
 
 const WORD_CHAR_RE = /[\w.]/;
@@ -32,6 +46,85 @@ const PY_WORDS = [
   "if __name__ == \"__main__\":","def __init__(self):",
   "with open() as f:","raise ValueError()","PIPELINE_INPUT",
 ];
+
+// Keyword lists for the generic autocomplete (merged with words already in
+// the buffer via the anyword-hint addon, when the host page loads it).
+const KEYWORDS_BY_LANGUAGE = {
+  python: PY_WORDS,
+  javascript: [
+    "async","await","break","case","catch","class","const","continue",
+    "debugger","default","delete","do","else","export","extends","finally",
+    "for","function","if","import","in","instanceof","let","new","of",
+    "return","static","super","switch","this","throw","try","typeof","var",
+    "void","while","with","yield","true","false","null","undefined",
+    "console.log()","console.error()","JSON.parse()","JSON.stringify()",
+    "document","window","Promise","Array","Object","String","Number","Math",
+    "Map","Set","setTimeout()","setInterval()","fetch()","addEventListener",
+    "querySelector()","getElementById()","=>",
+  ],
+  shell: [
+    "if","then","else","elif","fi","for","in","do","done","while","until",
+    "case","esac","function","echo","exit","return","local","export","read",
+    "set","shift","source","cd","ls","rm","cp","mv","mkdir","grep","sed",
+    "awk","cat","chmod","curl","find","xargs","test",
+  ],
+  sql: [
+    "SELECT","FROM","WHERE","INSERT","INTO","VALUES","UPDATE","SET","DELETE",
+    "CREATE","TABLE","ALTER","DROP","INDEX","VIEW","JOIN","LEFT","RIGHT",
+    "INNER","OUTER","ON","AS","AND","OR","NOT","NULL","IS","IN","LIKE",
+    "BETWEEN","ORDER","BY","GROUP","HAVING","LIMIT","OFFSET","DISTINCT",
+    "COUNT","SUM","AVG","MIN","MAX","PRIMARY","KEY","FOREIGN","REFERENCES",
+    "UNION","EXISTS","CASE","WHEN","THEN","ELSE","END",
+  ],
+  go: [
+    "break","case","chan","const","continue","default","defer","else",
+    "fallthrough","for","func","go","goto","if","import","interface","map",
+    "package","range","return","select","struct","switch","type","var",
+    "nil","true","false","error","string","int","int64","float64","bool",
+    "byte","rune","make()","len()","cap()","append()","fmt.Println()",
+  ],
+  rust: [
+    "as","async","await","break","const","continue","crate","dyn","else",
+    "enum","extern","fn","for","if","impl","in","let","loop","match","mod",
+    "move","mut","pub","ref","return","self","static","struct","super",
+    "trait","type","unsafe","use","where","while","true","false",
+    "String","Vec","Option","Some","None","Result","Ok","Err","println!()",
+  ],
+  css: [
+    "display","position","width","height","margin","padding","border",
+    "background","color","font-size","font-family","font-weight","flex",
+    "grid","align-items","justify-content","gap","overflow","z-index",
+    "opacity","transform","transition","animation","border-radius",
+    "box-shadow","cursor","text-align","line-height","white-space",
+  ],
+  yaml: ["true","false","null","name","version","services","image","ports",
+    "volumes","environment","depends_on","build","steps","runs-on","uses"],
+  clike: [
+    "abstract","boolean","break","case","catch","char","class","const",
+    "continue","default","do","double","else","enum","extends","final",
+    "finally","float","for","if","implements","import","instanceof","int",
+    "interface","long","new","null","package","private","protected","public",
+    "return","short","static","super","switch","this","throw","throws","try",
+    "void","volatile","while","true","false","namespace","using","include",
+    "struct","template","typename","virtual","override","sizeof","nullptr",
+    "String","System.out.println()","std::cout","std::string","std::vector",
+  ],
+};
+
+// The mode string may be a MIME ("text/x-c++src") — group aliases.
+const KEYWORD_ALIASES = {
+  htmlmixed: "javascript", xml: null, markdown: null,
+  "application/json": "javascript",
+  "text/x-kotlin": "clike", "text/x-java": "clike",
+  "text/x-csrc": "clike", "text/x-c++src": "clike", "text/x-csharp": "clike",
+  dockerfile: "shell", cython: "python",
+};
+
+function keywordsFor(language) {
+  if (KEYWORDS_BY_LANGUAGE[language]) return KEYWORDS_BY_LANGUAGE[language];
+  const alias = KEYWORD_ALIASES[language];
+  return alias ? KEYWORDS_BY_LANGUAGE[alias] : [];
+}
 
 // ── BOILERPLATE_CATEGORIES (mirrors editor.js) ────────────────────────────────
 
@@ -84,21 +177,55 @@ function getSnippetCode(key, allSnippets) {
 // Props:
 //   value            string       Current code value
 //   onChange         (string)→void
-//   language         string       "python" | "cython" | "golang" | "rust" | "kotlin"
+//   language         string       CodeMirror mode name or MIME (see DEFAULT_LANGUAGES)
 //   onLanguageChange (lang)→void
+//   languages        [{value,label}]  Options for the toolbar language select
+//                    (defaults to DEFAULT_LANGUAGES; the current `language` is
+//                    always selectable even when missing from the list)
 //   snippets         object       { BOILERPLATES, CYTHON_BOILERPLATES, ... }
 //   onCheckSyntax    async (code, lang)→{ ok, diagnostics[] }
+//   onLint           async (code, lang)→[{ line, col, message, severity }]
+//                    1-based positions; needs the addon/lint scripts loaded —
+//                    renders inline squiggles + gutter markers as you type
 //   showToolbar      boolean      (default true)
 //   showSnippets     boolean      (default true)
 //   height           number       editor height in px (default 320)
+
+// Values are CodeMirror mode names/MIMEs — the host page must load the
+// matching mode scripts (assets/codemirror/mode/…) for highlighting to apply;
+// unknown modes fall back to plain text rendering.
+export const DEFAULT_LANGUAGES = [
+  { value: "python",        label: "Python"     },
+  { value: "cython",        label: "Cython"     },
+  { value: "javascript",    label: "JavaScript" },
+  { value: "application/json", label: "JSON"    },
+  { value: "css",           label: "CSS"        },
+  { value: "htmlmixed",     label: "HTML"       },
+  { value: "xml",           label: "XML"        },
+  { value: "markdown",      label: "Markdown"   },
+  { value: "go",            label: "Go"         },
+  { value: "rust",          label: "Rust"       },
+  { value: "shell",         label: "Shell"      },
+  { value: "yaml",          label: "YAML"       },
+  { value: "sql",           label: "SQL"        },
+  { value: "dockerfile",    label: "Dockerfile" },
+  { value: "text/x-java",   label: "Java"       },
+  { value: "text/x-kotlin", label: "Kotlin"     },
+  { value: "text/x-csrc",   label: "C"          },
+  { value: "text/x-c++src", label: "C++"        },
+  { value: "text/x-csharp", label: "C#"         },
+  { value: "text/plain",    label: "Plain text" },
+];
 
 export function FullCodeEditor({
   value = "",
   onChange,
   language = "python",
   onLanguageChange,
+  languages = DEFAULT_LANGUAGES,
   snippets = {},
   onCheckSyntax,
+  onLint,
   showToolbar = true,
   showSnippets = true,
   height = 320,
@@ -107,6 +234,11 @@ export function FullCodeEditor({
 } = {}) {
   const editorWrapRef = useRef(null);
   const cmRef         = useRef(null);
+  // Refs so the CM init effect (runs once) always sees the current values.
+  const languageRef   = useRef(language);
+  languageRef.current = language;
+  const onLintRef     = useRef(onLint);
+  onLintRef.current   = onLint;
   const [fontSize,     setFontSize]     = useState(14);
   const [snippetOpen,  setSnippetOpen]  = useState(true);
   const [activeTab,    setActiveTab]    = useState(language);
@@ -122,15 +254,32 @@ export function FullCodeEditor({
     if (!el || !hasCM) return;
     const CM = window.CodeMirror;
 
-    const pythonHint = (editor) => {
+    // Autocomplete for ANY language: words already in the buffer (via the
+    // anyword-hint addon when loaded) merged with the language's keywords.
+    const genericHint = (editor) => {
       const cur = editor.getCursor(), line = editor.getLine(cur.line);
       let start = cur.ch;
       while (start > 0 && WORD_CHAR_RE.test(line.charAt(start - 1))) start--;
-      const token = line.slice(start, cur.ch).toLowerCase();
+      const token = line.slice(start, cur.ch);
       if (token.length < 2) return null;
-      const list = PY_WORDS.filter(w => w.toLowerCase().startsWith(token)).slice(0, 20);
+      const lower = token.toLowerCase();
+
+      const seen = new Set([token]);
+      const list = [];
+      const push = (word) => {
+        if (!seen.has(word) && word.toLowerCase().startsWith(lower)) {
+          seen.add(word);
+          list.push(word);
+        }
+      };
+      try {
+        const any = CM.hint?.anyword?.(editor, { word: /[\w$.]+/ });
+        for (const word of any?.list ?? []) push(word);
+      } catch { /* anyword addon not loaded */ }
+      for (const word of keywordsFor(languageRef.current)) push(word);
+
       if (!list.length) return null;
-      return { list, from: CM.Pos(cur.line, start), to: CM.Pos(cur.line, cur.ch) };
+      return { list: list.slice(0, 30), from: CM.Pos(cur.line, start), to: CM.Pos(cur.line, cur.ch) };
     };
 
     let cm;
@@ -146,7 +295,7 @@ export function FullCodeEditor({
         lineWrapping:      true,
         matchBrackets:     true,
         autoCloseBrackets: true,
-        hintOptions:       { hint: pythonHint, completeSingle: false },
+        hintOptions:       { hint: genericHint, completeSingle: false },
         extraKeys: {
           Tab:          (cm) => cm.somethingSelected() ? cm.indentSelection("add") : cm.replaceSelection("    ", "end"),
           "Shift-Tab":  (cm) => cm.indentSelection("subtract"),
@@ -162,6 +311,30 @@ export function FullCodeEditor({
       return;
     }
     cm.setSize("100%", height);
+
+    // Inline diagnostics via the lint addon (when the host page loads it):
+    // onLint(code, language) resolves to [{ line, col, message, severity }]
+    // with 1-based positions; results render as squiggles + gutter markers.
+    if (onLintRef.current && "lint" in CM.defaults) {
+      cm.setOption("gutters", ["CodeMirror-linenumbers", "CodeMirror-lint-markers"]);
+      cm.setOption("lint", {
+        async: true,
+        delay: 600,
+        getAnnotations: (code, updateLinting, _options, editor) => {
+          Promise.resolve(onLintRef.current?.(code, languageRef.current))
+            .then((diags) => {
+              updateLinting(editor, (diags ?? []).map((d) => ({
+                from: CM.Pos(Math.max(0, (d.line ?? 1) - 1), Math.max(0, (d.col ?? 1) - 1)),
+                to:   CM.Pos(Math.max(0, (d.line ?? 1) - 1), Math.max(0, d.col ?? 1)),
+                message: d.message ?? "",
+                severity: d.severity === "warning" ? "warning" : "error",
+              })));
+            })
+            .catch(() => updateLinting(editor, []));
+        },
+      });
+    }
+
     // Refresh after dialog open animation (200ms) to fix layout inside animated containers
     setTimeout(() => { cmRef.current?.refresh(); }, 220);
     cm.on("change", () => onChange?.(cm.getValue()));
@@ -182,9 +355,10 @@ export function FullCodeEditor({
     if (cm && cm.getValue() !== value) cm.setValue(value ?? "");
   }, [value]);
 
-  // Sync language mode
+  // Sync language mode (and re-lint under the new language's rules)
   useEffect(() => {
     cmRef.current?.setOption("mode", language);
+    cmRef.current?.performLint?.();
     setActiveTab(language.replace("golang", "golang").replace("kotlin", "kotlin"));
   }, [language]);
 
@@ -247,22 +421,22 @@ export function FullCodeEditor({
 
   // ── Render ────────────────────────────────────────────────────────────────
 
-  const LANGS = [
-    { value: "python",  label: "Python"  },
-    { value: "cython",  label: "Cython"  },
-    { value: "golang",  label: "Go"      },
-    { value: "rust",    label: "Rust"    },
-    { value: "kotlin",  label: "Kotlin"  },
-  ];
+  // The current language may not be in the list (custom mode, or a caller
+  // with its own extension map) — append it as a raw option so the select
+  // never renders blank.
+  const langOptions = languages.some(l => l.value === language)
+    ? languages
+    : [...languages, { value: language, label: language }];
 
   return h("div", { className: jc("nce-wrap", className), style },
 
     showToolbar && h("div", { className: "nce-toolbar" },
       h("select", {
         className: "nce-lang-select",
+        title:     "Language",
         value:     language,
         onChange:  (e) => { onLanguageChange?.(e.target.value); },
-      }, LANGS.map(l => h("option", { key: l.value, value: l.value }, l.label))),
+      }, langOptions.map(l => h("option", { key: l.value, value: l.value }, l.label))),
 
       h("span", { className: "nce-sep" }),
 
