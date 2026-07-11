@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
-- `tutorials/`: auto-generated video tutorials. Each folder is a tutorial "player" page (a real Nexa app: code pane, live demo, live form-state inspector, captions) plus a `record.py` that drives the page with real typing/clicks via Playwright and saves the screen recording — regenerating the video after any change is one command, with the same Python-only dependency as the test suite. First tutorial: `useform` (46 s, English captions) covering initialValues, `field()`, `validateOnBlur`, `dirty`/`touched` and `handleSubmit`.
+- `tutorials/`: auto-generated video tutorials. Each folder is a tutorial "player" page (a real Nexa app: code pane, live demo, live form-state inspector, captions) plus a `record.py` that drives the page with real typing/clicks via Playwright and saves the screen recording — regenerating the video after any change is one command, with the same Python-only dependency as the test suite. First tutorials: `useform` (46 s, English captions) covering initialValues, `field()`, `validateOnBlur`, `dirty`/`touched` and `handleSubmit`; and `basic` (~40 s), a first-app walkthrough that embeds `examples/basic` live in an iframe — no-build entry point, components as plain functions, `useState` + props, and `useTheme`/`ThemeToggle` flipping dark mode on camera.
 
 ## [0.12.1] - 2026-07-11
 

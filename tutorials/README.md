@@ -18,4 +18,5 @@ steps from the console with `__setStep(n)`.
 
 | Tutorial | Video | Covers |
 |---|---|---|
+| [basic](./basic/) | `basic-tutorial.webm` (~40 s) | Your first Nexa app (`examples/basic` live in an iframe): the no-build entry point, components as plain functions, `useState` + props, `useTheme`/`ThemeToggle` |
 | [useform](./useform/) | `useform-tutorial.webm` (46 s) | `useForm`: initialValues, `field()`, validation with `validateOnBlur`, `dirty`/`touched`, `handleSubmit` blocking invalid submits |
