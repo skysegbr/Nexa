@@ -347,6 +347,11 @@ const [theme, setTheme] = useLocalStorage('theme', 'light');
 const { data, loading, error, refetch } = useFetch('/api/users');
 // Pass null/undefined as url to skip fetching
 // refetch() re-runs the same request on demand
+// Second arg is a fetch() init object, forwarded untouched (Headers,
+// FormData, functions survive). Requests always use the latest render's
+// options, but changing options alone does NOT refetch — call refetch()
+// or change the url. A user options.signal is chained into the internal
+// AbortController (either can cancel).
 ```
 
 ### `useToast`

@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+- `useFetch` no longer round-trips `options` through `JSON.stringify`: `Headers`, `FormData`, and functions now reach `fetch()` untouched, circular objects no longer crash the render, and a user-supplied `options.signal` is chained into the internal `AbortController` (either can cancel) instead of replacing it and breaking unmount cancellation. Each request reads the latest render's options; changing options alone still does not refetch — `refetch()` or a `url` change does (now documented). Three regression tests in `tests/coverage.test.js`.
+- `useForm`'s `dirty` now compares the union of initial and current value keys, so a field added dynamically via `setValue` on a form started with empty `initialValues` marks the form dirty. Regression test in `tests/hooks.test.js`.
+
+### Changed
+- `server.py` (dev server) binds `127.0.0.1` by default instead of all interfaces, so the served directory — including Git metadata when run from the repo root — is no longer exposed to the local network by accident. Pass `--host 0.0.0.0` explicitly (prints a warning) to test from other devices.
+- CI now runs the browser suite on Chromium, Firefox, and WebKit (matrix) with Playwright pinned to 1.61.0; `scripts/run_browser_tests.py` gained a `--browser chromium|firefox|webkit` flag. The swipe test helper falls back to plain `Event` objects on browsers without `Touch`/`TouchEvent` constructors (Firefox desktop).
+- The no-Node policy is now documented explicitly: new "No Node, By Design" section in the README, a policy block in `llms.txt` and `docs/AI_SPEC.md` §1, and `package.json` is marked `"private": true` with a note that it exists only as editor/TypeScript metadata, not an npm manifest.
+
 ## [0.11.1] - 2026-07-10
 
 ### Changed

@@ -326,7 +326,10 @@ The same suite also runs headlessly (used by CI — see
 ```bash
 pip install playwright && playwright install chromium   # once
 python3 scripts/run_browser_tests.py
+python3 scripts/run_browser_tests.py --browser firefox  # also: webkit
 ```
+
+CI runs the full suite on Chromium, Firefox, and WebKit.
 
 The suite covers state updates, effect ordering/cleanup, memoization, keyed
 reconciliation, SVG/HTML namespace switching, `useErrorBoundary`, and all new
@@ -562,7 +565,7 @@ vibrate([100, 50, 100]); // pattern
 | `useTranslation(dict)` | `{ t }` — `t(key, vars)` looks up `dict[key]` and interpolates `{var}` placeholders |
 | `useContextMenu()` | `{ menu, openMenu, closeMenu }` — wires a right-click handler to `ContextMenu` |
 | `useHistory(initial, options)` | `{ state, set, undo, redo, canUndo, canRedo }` — undo/redo wrapper around a state value |
-| `useFetch(url, options)` | `{ data, loading, error, refetch }` — fetches JSON, aborts in-flight requests, re-fetches on `url` change |
+| `useFetch(url, options)` | `{ data, loading, error, refetch }` — fetches JSON, aborts in-flight requests, re-fetches on `url` change; `options` is a plain fetch init (used as-is; `refetch()` picks up the latest one) |
 | `useDebounce(value, delay)` | Returns a copy of `value` that only updates after `delay` ms of silence |
 | `useThrottle(fn, delay)` | Returns a throttled version of `fn` (trailing call always fires) |
 | `useMediaQuery(query)` | `true` while the CSS media query matches, updates reactively |
@@ -793,9 +796,14 @@ live reload. It polls the working directory for changes to `.js`, `.css`,
 `.html`, and `.json` files and notifies all connected browsers via SSE.
 
 ```bash
-python server.py          # port 8000
-python server.py 3000     # custom port
+python server.py                  # port 8000, localhost only
+python server.py 3000             # custom port
+python server.py --host 0.0.0.0   # expose on the LAN (e.g. phone testing)
 ```
+
+By default the server binds `127.0.0.1`, so the served directory (which
+includes Git metadata when run from the repo root) is never reachable from
+the network unless you pass `--host` explicitly.
 
 Add the HMR client to your HTML (development only):
 

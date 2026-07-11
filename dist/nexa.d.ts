@@ -650,8 +650,11 @@ export declare function useHistory<T>(
 /**
  * Fetch JSON from `url`; re-fetches whenever `url` changes.
  * Pass `null`/`undefined` to skip fetching entirely.
- * `options` is forwarded to `fetch()` (stringified once to prevent
- * infinite-loop re-renders caused by object reference churn).
+ * `options` is any fetch() init object, forwarded untouched (Headers,
+ * FormData, functions all survive). Each request reads the latest render's
+ * options, but changing options alone does not trigger a new request —
+ * call refetch() or change `url`. A user-supplied `options.signal` is
+ * chained into the internal AbortController, so either can cancel.
  *
  * @example
  * const { data, loading, error, refetch } = useFetch<User[]>('/api/users');
