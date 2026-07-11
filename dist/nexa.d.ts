@@ -731,12 +731,13 @@ export declare function useIntersectionObserver(
 /**
  * Manages a WebSocket connection with automatic reconnection.
  * `send(data)` serializes objects to JSON automatically.
+ * Pass `null`/`undefined` as `url` to stay disconnected (status `"closed"`).
  *
  * @example
  * const { status, lastMessage, send } = useWebSocket('wss://api.example.com/ws');
  */
 export declare function useWebSocket(
-  url: string,
+  url: string | null | undefined,
   options?: {
     onMessage?: (event: MessageEvent) => void;
     onOpen?: (event: Event) => void;
