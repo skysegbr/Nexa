@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+- `useWebSocket` had a reconnect race: the old socket's `close` event arrives asynchronously, after a `url` change had already re-armed the shared "active" flag — so the stale handler scheduled a reconnect to the OLD url, leaving two live sockets and letting the old one clobber `status`. Each connection generation now carries its own effect-scoped flag, so a late close from a previous generation is ignored. Handlers also read callbacks and reconnect options from a per-render ref, so `onMessage`/`onOpen`/`onClose`/`onError` no longer see stale props and `reconnect`/`reconnectDelay` changes take effect. Five regression tests drive a fake `WebSocket` through connect/reconnect/url-change/unmount.
+- `useIntersectionObserver` keyed its effect off `[ref.current]`, which can never detect the target changing (deps are evaluated before the render's patch updates the ref — the same anti-pattern fixed in `useSwipe`/`useLongPress`/`useVirtualList` in 0.8.0, missed in this hook). A conditionally-rendered target now gets observed when it mounts. The fix tracks the observed element's identity instead of dropping the deps array, because re-creating the observer every render would re-fire the initial observation → `setEntry` → re-render → infinite loop. Regression test with a fake `IntersectionObserver` asserts attach-on-later-mount and no observer churn.
+- `useThrottle` never cancelled a pending trailing call, so `fn` (usually a setState) could fire after the component unmounted. The timer is now cleared on unmount. Regression test added.
+
+### Added
+- Test suite for the canvas add-ons (`tests/addons.test.js`, 15 tests — they previously had none): PipelineCanvas node/connection rendering and prop-driven sync, edit/delete buttons, select + Delete key, port-drag connecting (including self-connection rejection), connection delete via double-click, `controllerRef`/`zoomStep` transforms, and unmount cleanup; ZoomStage frame layout and paint order, camera fit math on mount and after `goTo`, `controllerRef` navigation with `onIndexChange`, bounds no-ops, keyboard navigation (including the form-field guard), `advanceOnClick`, and the `path` prop.
+
+### Changed
+- Example backends (task-manager, burger-shop, burger-shop-fastapi) now bind `127.0.0.1` instead of `0.0.0.0` and carry an explicit "DEMO ONLY — NOT FOR PRODUCTION" notice (in-memory store, no auth).
+
 ## [0.12.0] - 2026-07-11
 
 ### Fixed

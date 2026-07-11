@@ -536,6 +536,28 @@ test("useThrottle fires immediately on first call and then throttles within the 
   assertEqual(calls.join(","), "a,c", "expected trailing call to fire after the throttle window");
 });
 
+test("useThrottle cancels a pending trailing call when the component unmounts", async () => {
+  const calls = [];
+  let throttled;
+
+  function Widget() {
+    throttled = useThrottle((v) => calls.push(v), 50);
+    return h("span", null, "x");
+  }
+
+  const container = mountPoint();
+  render(Widget, container);
+  await flush();
+
+  throttled("a"); // fires immediately
+  throttled("b"); // queued as the trailing call
+  assertEqual(calls.join(","), "a");
+
+  unmount(container);
+  await sleep(70);
+  assertEqual(calls.join(","), "a", "expected the trailing call to be cancelled on unmount");
+});
+
 // ── useMediaQuery ──────────────────────────────────────────
 
 test("useMediaQuery returns true for 'all' and false for 'not all'", async () => {
@@ -582,6 +604,54 @@ test("useIntersectionObserver returns null before the first observation fires", 
   assertEqual(firstRenderEntry, null, "expected useIntersectionObserver to return null on the first render, before the observer fires");
 });
 
+test("useIntersectionObserver attaches once the ref's target mounts on a later render, without observer churn", async () => {
+  const RealIO = window.IntersectionObserver;
+  const instances = [];
+  window.IntersectionObserver = class {
+    constructor(cb, options) {
+      this.cb = cb;
+      this.options = options;
+      this.observed = [];
+      instances.push(this);
+    }
+    observe(el) { this.observed.push(el); }
+    disconnect() { this.disconnected = true; }
+  };
+
+  try {
+    let setShow;
+    const ref = { current: null };
+
+    function Widget() {
+      const [show, setShowState] = useState(false);
+      setShow = setShowState;
+      useIntersectionObserver(ref);
+      return show ? h("div", { ref, id: "io-target" }) : h("p", null, "hidden");
+    }
+
+    const container = mountPoint();
+    render(Widget, container);
+    await flush();
+    assertEqual(instances.length, 0, "no element yet — nothing to observe");
+
+    setShow(true);
+    await flush();
+    assertEqual(instances.length, 1, "expected the observer to attach once the target mounted");
+    assertEqual(instances[0].observed[0], container.querySelector("#io-target"));
+
+    // Deliver an entry — the resulting re-render must NOT recreate the observer.
+    instances[0].cb([{ isIntersecting: true, target: instances[0].observed[0] }]);
+    await flush();
+    await flush();
+    assertEqual(instances.length, 1, "expected no observer churn on unrelated re-renders");
+
+    unmount(container);
+    assert(instances[0].disconnected, "expected the observer to disconnect on unmount");
+  } finally {
+    window.IntersectionObserver = RealIO;
+  }
+});
+
 // ── useWebSocket ───────────────────────────────────────────
 
 test("useWebSocket starts in 'closed' status when no URL is provided", async () => {
@@ -599,6 +669,182 @@ test("useWebSocket starts in 'closed' status when no URL is provided", async () 
   assertEqual(wsState.status, "closed", "expected status to be 'closed' when URL is null");
   assertEqual(wsState.lastMessage, null, "expected lastMessage to be null initially");
   assert(typeof wsState.send === "function", "expected send to be a callable function");
+});
+
+// Deterministic stand-in for window.WebSocket: tests drive open/message/close
+// through the _open/_message/_close helpers, exactly as the browser would
+// (asynchronously, via the assigned on* handlers).
+class FakeWebSocket {
+  static CONNECTING = 0;
+  static OPEN = 1;
+  static CLOSING = 2;
+  static CLOSED = 3;
+  constructor(url) {
+    this.url = url;
+    this.readyState = FakeWebSocket.CONNECTING;
+    this.sent = [];
+    FakeWebSocket.instances.push(this);
+  }
+  send(data) { this.sent.push(data); }
+  close() { this.readyState = FakeWebSocket.CLOSED; }
+  _open() { this.readyState = FakeWebSocket.OPEN; this.onopen?.({}); }
+  _message(data) { this.onmessage?.({ data }); }
+  _close() { this.readyState = FakeWebSocket.CLOSED; this.onclose?.({}); }
+}
+
+async function withFakeWebSocket(run) {
+  const RealWS = window.WebSocket;
+  FakeWebSocket.instances = [];
+  window.WebSocket = FakeWebSocket;
+  try {
+    await run(FakeWebSocket.instances);
+  } finally {
+    window.WebSocket = RealWS;
+  }
+}
+
+test("useWebSocket connects, tracks status/lastMessage, and send serializes objects", async () => {
+  await withFakeWebSocket(async (instances) => {
+    let wsState;
+    const seen = [];
+
+    function Widget() {
+      wsState = useWebSocket("wss://one.test/ws", { onMessage: (e) => seen.push(e.data) });
+      return h("span", null, wsState.status);
+    }
+
+    const container = mountPoint();
+    render(Widget, container);
+    await flush();
+
+    assertEqual(instances.length, 1);
+    assertEqual(instances[0].url, "wss://one.test/ws");
+    assertEqual(wsState.status, "connecting");
+
+    instances[0]._open();
+    await flush();
+    assertEqual(wsState.status, "open");
+
+    instances[0]._message('{"n":1}');
+    await flush();
+    assertEqual(wsState.lastMessage, '{"n":1}');
+    assertEqual(seen.join(","), '{"n":1}', "expected the onMessage callback to fire");
+
+    wsState.send({ hello: "world" });
+    wsState.send("plain");
+    assertEqual(instances[0].sent[0], '{"hello":"world"}', "expected objects to be JSON-serialized");
+    assertEqual(instances[0].sent[1], "plain");
+
+    unmount(container);
+  });
+});
+
+test("useWebSocket reconnects after a server-side close", async () => {
+  await withFakeWebSocket(async (instances) => {
+    function Widget() {
+      useWebSocket("wss://one.test/ws", { reconnectDelay: 10 });
+      return h("span", null);
+    }
+
+    const container = mountPoint();
+    render(Widget, container);
+    await flush();
+    instances[0]._open();
+    await flush();
+
+    instances[0]._close(); // dropped by the server
+    await sleep(40);
+    assertEqual(instances.length, 2, "expected a new connection after reconnectDelay");
+    assertEqual(instances[1].url, "wss://one.test/ws");
+
+    unmount(container);
+  });
+});
+
+test("useWebSocket: a url change never reconnects to the old url, even when the old socket closes late", async () => {
+  await withFakeWebSocket(async (instances) => {
+    let setUrl;
+
+    function Widget() {
+      const [url, setUrlState] = useState("wss://old.test/ws");
+      setUrl = setUrlState;
+      useWebSocket(url, { reconnectDelay: 10 });
+      return h("span", null);
+    }
+
+    const container = mountPoint();
+    render(Widget, container);
+    await flush();
+    const oldSocket = instances[0];
+    oldSocket._open();
+    await flush();
+
+    setUrl("wss://new.test/ws");
+    await flush();
+    assertEqual(instances.length, 2, "expected a fresh connection for the new url");
+    assertEqual(instances[1].url, "wss://new.test/ws");
+
+    // The browser delivers the old socket's close event only now, after the
+    // new connection is already up.
+    oldSocket._close();
+    await sleep(40);
+
+    const oldUrlConnections = instances.filter((ws) => ws.url === "wss://old.test/ws");
+    assertEqual(oldUrlConnections.length, 1, "expected the old socket's late close to never trigger a reconnect to the old url");
+
+    unmount(container);
+  });
+});
+
+test("useWebSocket closes the socket on unmount and never reconnects", async () => {
+  await withFakeWebSocket(async (instances) => {
+    function Widget() {
+      useWebSocket("wss://one.test/ws", { reconnectDelay: 10 });
+      return h("span", null);
+    }
+
+    const container = mountPoint();
+    render(Widget, container);
+    await flush();
+    instances[0]._open();
+    await flush();
+
+    unmount(container);
+    assertEqual(instances[0].readyState, FakeWebSocket.CLOSED, "expected the socket to be closed on unmount");
+
+    instances[0]._close(); // the close event lands after unmount
+    await sleep(40);
+    assertEqual(instances.length, 1, "expected no reconnect after unmount");
+  });
+});
+
+test("useWebSocket callbacks are not stale: handlers see the latest render's props", async () => {
+  await withFakeWebSocket(async (instances) => {
+    let setLabel;
+    const seen = [];
+
+    function Widget() {
+      const [label, setLabelState] = useState("first");
+      setLabel = setLabelState;
+      useWebSocket("wss://one.test/ws", { onMessage: (e) => seen.push(`${label}:${e.data}`) });
+      return h("span", null);
+    }
+
+    const container = mountPoint();
+    render(Widget, container);
+    await flush();
+    instances[0]._open();
+    await flush();
+
+    instances[0]._message("a");
+    setLabel("second");
+    await flush();
+    instances[0]._message("b");
+
+    assertEqual(seen.join(","), "first:a,second:b", "expected onMessage to read the latest render's closure");
+
+    unmount(container);
+  });
 });
 
 // ── useVirtualList ─────────────────────────────────────────

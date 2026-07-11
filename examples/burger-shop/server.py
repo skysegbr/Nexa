@@ -2,6 +2,10 @@
 Nexa Burger Shop — pure Python backend (no external dependencies).
 Run: python3 examples/burger-shop/server.py
 REST API at http://localhost:5051
+
+DEMO ONLY — NOT FOR PRODUCTION. In-memory store, no authentication, no
+input hardening. It exists to exercise the Nexa frontend; serves on
+localhost only.
 """
 
 from __future__ import annotations
@@ -456,7 +460,7 @@ class ReusableHTTPServer(HTTPServer):
 # ---------------------------------------------------------------------------
 
 if __name__ == "__main__":
-    server = ReusableHTTPServer(("0.0.0.0", 5051), Handler)
+    server = ReusableHTTPServer(("127.0.0.1", 5051), Handler)
     print("Burger Shop example running at http://localhost:5051/examples/burger-shop/")
     print("Burger Shop API running at http://localhost:5051")
     print("Endpoints:")

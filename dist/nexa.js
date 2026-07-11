@@ -2154,6 +2154,10 @@ export function useThrottle(fn, delay) {
   const lastRun = useRef(0);
   const timer = useRef(null);
 
+  // Cancel a pending trailing call on unmount — otherwise `fn` (usually a
+  // setState) fires against a dead component.
+  useEffect(() => () => clearTimeout(timer.current), []);
+
   return useCallback(
     (...args) => {
       const now = Date.now();
@@ -2222,10 +2226,25 @@ export function useIntersectionObserver(ref, {
   once = false,
 } = {}) {
   const [entry, setEntry] = useState(null);
+  const attached = useRef({ el: null, root: null, key: "", observer: null });
 
+  // A `[ref.current]` dependency can't detect the target changing: deps are
+  // evaluated while building THIS render's tree, before THIS render's patch
+  // has updated ref.current. And re-creating the observer every render would
+  // re-fire the initial observation → setEntry → render → infinite loop.
+  // So the effect runs every render but only reattaches when the target
+  // element (or an option) actually changed.
+  const key = JSON.stringify([threshold, rootMargin, once]);
   useEffect(() => {
+    const a = attached.current;
     const el = ref.current;
-    if (!el) return;
+    if (el === a.el && root === a.root && key === a.key) return;
+
+    a.observer?.disconnect();
+    a.el = el;
+    a.root = root;
+    a.key = key;
+    if (!el) { a.observer = null; return; }
 
     const observer = new IntersectionObserver(
       ([e]) => {
@@ -2234,10 +2253,11 @@ export function useIntersectionObserver(ref, {
       },
       { threshold, root, rootMargin },
     );
-
+    a.observer = observer;
     observer.observe(el);
-    return () => observer.disconnect();
-  }, [ref.current, threshold, root, rootMargin, once]);
+  });
+
+  useEffect(() => () => attached.current.observer?.disconnect(), []);
 
   return entry;
 }
@@ -2275,47 +2295,58 @@ export function useWebSocket(url, {
   const [status, setStatus] = useState(url ? "connecting" : "closed");
   const [lastMessage, setLastMessage] = useState(null);
   const wsRef = useRef(null);
-  const timerRef = useRef(null);
-  const activeRef = useRef(true);
-
-  const connect = useCallback(() => {
-    if (!url || !activeRef.current) return;
-    setStatus("connecting");
-
-    const ws = new WebSocket(url);
-    wsRef.current = ws;
-
-    ws.onopen = (e) => {
-      setStatus("open");
-      onOpen?.(e);
-    };
-
-    ws.onmessage = (e) => {
-      setLastMessage(e.data);
-      onMessage?.(e);
-    };
-
-    ws.onerror = (e) => {
-      setStatus("error");
-      onError?.(e);
-    };
-
-    ws.onclose = (e) => {
-      setStatus("closed");
-      onClose?.(e);
-      if (reconnect && activeRef.current) {
-        timerRef.current = setTimeout(connect, reconnectDelay);
-      }
-    };
-  }, [url, reconnect, reconnectDelay]);
+  const optsRef = useRef(null);
+  optsRef.current = { onMessage, onOpen, onClose, onError, reconnect, reconnectDelay };
 
   useEffect(() => {
-    activeRef.current = true;
+    if (!url) { setStatus("closed"); return; }
+    // `alive` is scoped to THIS effect run, so each connection generation has
+    // its own flag. A shared ref would race: the old socket's close event
+    // arrives asynchronously, after a url change has already re-armed the
+    // shared flag — and would schedule a reconnect to the OLD url.
+    let alive = true;
+    let timer = null;
+
+    const connect = () => {
+      if (!alive) return;
+      setStatus("connecting");
+      const ws = new WebSocket(url);
+      wsRef.current = ws;
+
+      ws.onopen = (e) => {
+        if (!alive) return;
+        setStatus("open");
+        optsRef.current.onOpen?.(e);
+      };
+
+      ws.onmessage = (e) => {
+        if (!alive) return;
+        setLastMessage(e.data);
+        optsRef.current.onMessage?.(e);
+      };
+
+      ws.onerror = (e) => {
+        if (!alive) return;
+        setStatus("error");
+        optsRef.current.onError?.(e);
+      };
+
+      ws.onclose = (e) => {
+        if (!alive) return;
+        setStatus("closed");
+        optsRef.current.onClose?.(e);
+        if (optsRef.current.reconnect) {
+          timer = setTimeout(connect, optsRef.current.reconnectDelay);
+        }
+      };
+    };
+
     connect();
     return () => {
-      activeRef.current = false;
-      clearTimeout(timerRef.current);
+      alive = false;
+      clearTimeout(timer);
       wsRef.current?.close();
+      wsRef.current = null;
     };
   }, [url]);
 

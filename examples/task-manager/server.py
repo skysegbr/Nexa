@@ -2,6 +2,10 @@
 Nexa Task Manager — pure Python backend (no external dependencies).
 Run: python server.py
 REST API at http://localhost:5050
+
+DEMO ONLY — NOT FOR PRODUCTION. In-memory store, no authentication, no
+input hardening. It exists to exercise the Nexa frontend; serves on
+localhost only.
 """
 
 from __future__ import annotations
@@ -357,7 +361,7 @@ class ReusableHTTPServer(HTTPServer):
 # ---------------------------------------------------------------------------
 
 if __name__ == "__main__":
-    server = ReusableHTTPServer(("0.0.0.0", 5050), Handler)
+    server = ReusableHTTPServer(("127.0.0.1", 5050), Handler)
     print("Task Manager example running at http://localhost:5050/examples/task-manager/")
     print("Task Manager API running at http://localhost:5050")
     print("Endpoints:")
