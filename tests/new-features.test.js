@@ -829,14 +829,19 @@ test("useRouter (history mode) does not intercept a same-page fragment link", as
 // re-runs (cleanup + reattach) after every render instead.
 
 function fireSwipeLeft(el) {
-  if (typeof Touch === "function" && typeof TouchEvent === "function") {
+  // Real Touch/TouchEvent where the browser allows constructing them
+  // (Chromium). Firefox desktop doesn't define the constructors and WebKit
+  // desktop defines them but throws "Illegal constructor", so build all four
+  // objects before dispatching and fall back to plain events carrying the
+  // touch-list shape the hook reads.
+  try {
     const start = new Touch({ identifier: 1, target: el, clientX: 200, clientY: 100 });
     const end = new Touch({ identifier: 1, target: el, clientX: 100, clientY: 100 });
-    el.dispatchEvent(new TouchEvent("touchstart", { touches: [start], bubbles: true }));
-    el.dispatchEvent(new TouchEvent("touchend", { changedTouches: [end], bubbles: true }));
-  } else {
-    // Firefox desktop has no Touch/TouchEvent constructors; synthesize plain
-    // events carrying the touch-list shape the hook reads.
+    const startEvent = new TouchEvent("touchstart", { touches: [start], bubbles: true });
+    const endEvent = new TouchEvent("touchend", { changedTouches: [end], bubbles: true });
+    el.dispatchEvent(startEvent);
+    el.dispatchEvent(endEvent);
+  } catch {
     const start = new Event("touchstart", { bubbles: true });
     start.touches = [{ identifier: 1, target: el, clientX: 200, clientY: 100 }];
     const end = new Event("touchend", { bubbles: true });
