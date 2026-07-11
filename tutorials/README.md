@@ -18,4 +18,4 @@ steps from the console with `__setStep(n)`.
 
 | Tutorial | Video | Covers |
 |---|---|---|
-| [useform](./useform/) | `useform-tutorial.webm` (46 s) | `useForm`: initialValues, `field()`, validação com `validateOnBlur`, `dirty`/`touched`, `handleSubmit` bloqueando envio inválido |
+| [useform](./useform/) | `useform-tutorial.webm` (46 s) | `useForm`: initialValues, `field()`, validation with `validateOnBlur`, `dirty`/`touched`, `handleSubmit` blocking invalid submits |

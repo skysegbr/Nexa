@@ -12,59 +12,59 @@ const STEPS = [
     title: "", code: "", caption: "",
   },
   {
-    title: "1. O hook",
+    title: "1. The hook",
     code: `import { useForm } from "/dist/nexa.js";
 
-function Cadastro() {
+function Signup() {
   const form = useForm({
-    initialValues: { nome: "", email: "", notas: "" },
-    validate,            // regras de validação
-    // validateOnBlur: true  (padrão)
+    initialValues: { name: "", email: "", notes: "" },
+    validate,            // validation rules
+    // validateOnBlur: true  (default)
   });
   // form.values, form.errors, form.dirty, ...
 }`,
-    caption: "useForm concentra tudo num único hook: valores, erros, campos tocados e estado de envio. Sem dependências, sem build — direto no navegador.",
+    caption: "useForm keeps everything in a single hook: values, errors, touched fields and submit state. No dependencies, no build step — straight in the browser.",
   },
   {
-    title: "2. Conectando campos",
+    title: "2. Wiring fields",
     code: `h(TextField, {
-  id: "nome",
-  label: "Nome",
-  ...form.field("nome"),   // value + onChange + onBlur
+  id: "name",
+  label: "Name",
+  ...form.field("name"),   // value + onChange + onBlur
 }),
 
 h(TextField, {
   id: "email",
-  label: "E-mail",
+  label: "Email",
   ...form.field("email"),
 })`,
-    caption: "field(\"nome\") devolve as props do campo — valor, onChange e onBlur. É só espalhar no componente. Repare no painel de estado: values e dirty reagem a cada tecla.",
+    caption: "field(\"name\") returns the field props — value, onChange and onBlur. Just spread them onto the component. Watch the state panel: values and dirty react to every keystroke.",
   },
   {
-    title: "3. Validação",
+    title: "3. Validation",
     code: `function validate(values) {
   return {
-    nome:  values.nome.trim()          ? "" : "Informe o nome.",
+    name:  values.name.trim()          ? "" : "Name is required.",
     email: values.email.includes("@") &&
-           values.email.includes(".")  ? "" : "E-mail inválido.",
-    notas: values.notas.length >= 12   ? "" : "Mínimo de 12 caracteres.",
+           values.email.includes(".")  ? "" : "Invalid email.",
+    notes: values.notes.length >= 12   ? "" : "At least 12 characters.",
   };
 }`,
-    caption: "A função validate devolve um erro (ou string vazia) por campo. Com validateOnBlur, o erro aparece quando o campo perde o foco — nunca antes de o usuário interagir.",
+    caption: "The validate function returns one error (or an empty string) per field. With validateOnBlur, the error shows up when the field loses focus — never before the user interacts.",
   },
   {
-    title: "4. Envio",
+    title: "4. Submitting",
     code: `h("form", { onSubmit: form.handleSubmit() }, ...)
 
-// no useForm:
+// in useForm:
 async onSubmit(values, helpers) {
-  await api.post("/cadastro", values);
-  helpers.reset();     // limpa o formulário
+  await api.post("/signup", values);
+  helpers.reset();     // clears the form
 }
 
-// handleSubmit valida antes de chamar onSubmit:
-// com erros, marca os campos e NÃO envia.`,
-    caption: "handleSubmit previne o reload, valida tudo e só chama o seu onSubmit se o formulário estiver válido. Errou? Os campos ficam marcados e nada é enviado.",
+// handleSubmit validates before calling onSubmit:
+// with errors, it marks the fields and does NOT submit.`,
+    caption: "handleSubmit prevents the reload, validates everything and only calls your onSubmit when the form is valid. Got errors? The fields get marked and nothing is sent.",
   },
   { // 5 — recap card (overlay)
     title: "", code: "", caption: "",
@@ -107,9 +107,9 @@ function highlight(code) {
 
 function validate(values) {
   return {
-    nome: values.nome.trim() ? "" : "Informe o nome.",
-    email: values.email.includes("@") && values.email.includes(".") ? "" : "E-mail inválido.",
-    notas: values.notas.length >= 12 ? "" : "Mínimo de 12 caracteres.",
+    name: values.name.trim() ? "" : "Name is required.",
+    email: values.email.includes("@") && values.email.includes(".") ? "" : "Invalid email.",
+    notes: values.notes.length >= 12 ? "" : "At least 12 characters.",
   };
 }
 
@@ -119,7 +119,7 @@ function StatePanel({ form }) {
   const compact = (obj) =>
     JSON.stringify(obj, null, 1).replace(/\n\s*/g, " ").replace(/^{ | }$/g, "");
   return h("div", { className: "tut-state" },
-    h("h4", null, "Estado do formulário (ao vivo)"),
+    h("h4", null, "Form state (live)"),
     h("pre", null,
       "values:  { ", compact(form.values), " }\n",
       "errors:  { ", h("span", { className: "tut-err" }, compact(form.errors)), " }\n",
@@ -134,7 +134,7 @@ function StatePanel({ form }) {
 function Demo() {
   const [sent, setSent] = useState(false);
   const form = useForm({
-    initialValues: { nome: "", email: "", notas: "" },
+    initialValues: { name: "", email: "", notes: "" },
     validate,
     async onSubmit(values, helpers) {
       setSent(true);
@@ -144,14 +144,14 @@ function Demo() {
 
   return h("div", { className: "tut-demo" },
     h("div", { className: "tut-form-card" },
-      h("h3", null, "Cadastro"),
+      h("h3", null, "Signup"),
       h("form", { onSubmit: form.handleSubmit() },
-        h(TextField, { id: "nome", label: "Nome", ...form.field("nome") }),
-        h(TextField, { id: "email", label: "E-mail", ...form.field("email") }),
-        h(Textarea, { id: "notas", label: "Notas", rows: 2, ...form.field("notas", { type: "textarea" }) }),
-        h(Button, { type: "submit", variant: "contained" }, "Enviar"),
+        h(TextField, { id: "name", label: "Name", ...form.field("name") }),
+        h(TextField, { id: "email", label: "Email", ...form.field("email") }),
+        h(Textarea, { id: "notes", label: "Notes", rows: 2, ...form.field("notes", { type: "textarea" }) }),
+        h(Button, { type: "submit", variant: "contained" }, "Submit"),
       ),
-      sent && h("div", { className: "tut-success" }, "✓ Cadastro enviado com sucesso!"),
+      sent && h("div", { className: "tut-success" }, "✓ Signup submitted successfully!"),
     ),
     h(StatePanel, { form }),
   );
@@ -166,23 +166,23 @@ function App() {
 
   return h("div", { className: "tut-root" },
     step === 0 && h("div", { className: "tut-overlay" },
-      h("h1", null, "Formulários com ", h("em", null, "useForm")),
-      h("p", null, "Nexa — framework frontend sem build, direto no navegador"),
+      h("h1", null, "Forms with ", h("em", null, "useForm")),
+      h("p", null, "Nexa — the no-build frontend framework, straight in the browser"),
     ),
     step === STEPS.length - 1 && h("div", { className: "tut-overlay" },
-      h("h1", null, h("em", null, "useForm"), " — recapitulando"),
+      h("h1", null, h("em", null, "useForm"), " — recap"),
       h("ul", null,
-        h("li", null, "initialValues + field() conectam os campos"),
-        h("li", null, "validate() devolve um erro por campo"),
-        h("li", null, "erros só aparecem depois da interação"),
-        h("li", null, "handleSubmit valida e bloqueia envio inválido"),
-        h("li", null, "dirty, touched e submitCount de graça"),
+        h("li", null, "initialValues + field() wire up the fields"),
+        h("li", null, "validate() returns one error per field"),
+        h("li", null, "errors only show up after interaction"),
+        h("li", null, "handleSubmit validates and blocks invalid submits"),
+        h("li", null, "dirty, touched and submitCount for free"),
       ),
       h("p", null, "github.com/skysegbr/Nexa — docs/FORMS.md"),
     ),
     h("header", { className: "tut-header" },
-      h("div", { className: "tut-brand" }, h("em", null, "Nexa"), " · Tutorial useForm"),
-      h("div", { className: "tut-stepno" }, step > 0 && step < STEPS.length - 1 ? `passo ${step} de ${STEPS.length - 2}` : ""),
+      h("div", { className: "tut-brand" }, h("em", null, "Nexa"), " · useForm tutorial"),
+      h("div", { className: "tut-stepno" }, step > 0 && step < STEPS.length - 1 ? `step ${step} of ${STEPS.length - 2}` : ""),
     ),
     h("main", { className: "tut-main" },
       h("section", { className: "tut-code" },

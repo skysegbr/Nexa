@@ -62,32 +62,32 @@ def main():
 
         # 2 — wiring fields: type for real, state panel reacts
         step(2, 2.5)
-        page.click("#nome")
-        page.type("#nome", "Ana Souza", delay=70)
+        page.click("#name")
+        page.type("#name", "Ana Souza", delay=70)
         time.sleep(1.2)
         page.click("#email")
-        page.type("#email", "ana@exemplo", delay=70)  # incomplete on purpose
+        page.type("#email", "ana@example", delay=70)  # incomplete on purpose
         time.sleep(2.5)
 
         # 3 — validation: blur the invalid email → error appears
         step(3, 2.5)
-        page.click("#nome")  # blur email → validateOnBlur kicks in
+        page.click("#name")  # blur email → validateOnBlur kicks in
         time.sleep(3.0)
         page.click("#email")
         page.type("#email", ".com", delay=90)
-        page.click("#nome")  # blur again → error clears
+        page.click("#name")  # blur again → error clears
         time.sleep(2.0)
-        page.click("#notas")
-        page.type("#notas", "Quero testar o useForm!", delay=55)
+        page.click("#notes")
+        page.type("#notes", "I want to try useForm!", delay=55)
         time.sleep(2.5)
 
         # 4 — submit: first blocked (clear notes), then success
         step(4, 2.5)
-        page.fill("#notas", "")
+        page.fill("#notes", "")
         page.click("button[type=submit]")
         time.sleep(3.0)  # blocked: errors marked, submitCount++
-        page.click("#notas")
-        page.type("#notas", "Quero testar o useForm!", delay=55)
+        page.click("#notes")
+        page.type("#notes", "I want to try useForm!", delay=55)
         page.click("button[type=submit]")
         time.sleep(3.5)  # success message + reset
 
