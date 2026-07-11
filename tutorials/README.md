@@ -20,3 +20,4 @@ steps from the console with `__setStep(n)`.
 |---|---|---|
 | [basic](./basic/) | `basic-tutorial.webm` (~40 s) | Your first Nexa app (`examples/basic` live in an iframe): the no-build entry point, components as plain functions, `useState` + props, `useTheme`/`ThemeToggle` |
 | [useform](./useform/) | `useform-tutorial.webm` (46 s) | `useForm`: initialValues, `field()`, validation with `validateOnBlur`, `dirty`/`touched`, `handleSubmit` blocking invalid submits |
+| [nexa-architecture](./nexa-architecture/) | `nexa-architecture-tutorial.webm` (~44 s) | ZoomStage (`examples/nexa-architecture` live in an iframe): frames as data on one world canvas, controlled index, `controllerRef` navigation with the camera gliding on camera, clickable frames |
