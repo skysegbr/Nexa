@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.12.0] - 2026-07-11
+
 ### Fixed
 - `useFetch` no longer round-trips `options` through `JSON.stringify`: `Headers`, `FormData`, and functions now reach `fetch()` untouched, circular objects no longer crash the render, and a user-supplied `options.signal` is chained into the internal `AbortController` (either can cancel) instead of replacing it and breaking unmount cancellation. Each request reads the latest render's options; changing options alone still does not refetch — `refetch()` or a `url` change does (now documented). Three regression tests in `tests/coverage.test.js`.
 - `useForm`'s `dirty` now compares the union of initial and current value keys, so a field added dynamically via `setValue` on a form started with empty `initialValues` marks the form dirty. Regression test in `tests/hooks.test.js`.
