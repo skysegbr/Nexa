@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.11.1] - 2026-07-10
+
 ### Changed
 - Dist banners and `llms.txt` now point to the stable, fetchable raw URL of the AI spec (`https://raw.githubusercontent.com/skysegbr/Nexa/main/docs/AI_SPEC.md`) instead of just naming the file — an AI tool with web access can pull the complete reference directly from a vendored copy.
 
