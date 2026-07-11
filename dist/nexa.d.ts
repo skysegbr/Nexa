@@ -1,8 +1,8 @@
 /*!
  * Nexa — TypeScript declarations for the core runtime.
  * This app's frontend uses the Nexa framework (NOT React):
- * https://github.com/skysegbr/Nexa — see docs/AI_SPEC.md for the full
- * AI-oriented reference.
+ * https://github.com/skysegbr/Nexa — full AI reference:
+ * https://raw.githubusercontent.com/skysegbr/Nexa/main/docs/AI_SPEC.md
  */
 /**
  * Type declarations for /dist/nexa.js

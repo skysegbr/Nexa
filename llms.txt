@@ -24,6 +24,8 @@ Key differences from React (common analysis mistakes):
 - [AI_SPEC.md](docs/AI_SPEC.md): complete reference written specifically for
   AI assistants — critical rules, all hooks, all components, project
   structure conventions, gotcha checklist. Read this before writing Nexa code.
+  Stable fetchable URL:
+  https://raw.githubusercontent.com/skysegbr/Nexa/main/docs/AI_SPEC.md
 - [README.md](README.md): human-oriented overview and component tables.
 - [CHANGELOG.md](CHANGELOG.md): versioned change history.
 

@@ -10,7 +10,8 @@
  * plain ES modules, usually vendored under the app's /dist/ folder.
  *
  * Docs: https://github.com/skysegbr/Nexa
- * Full AI-oriented reference: docs/AI_SPEC.md in that repository.
+ * Full AI reference (fetch this URL for the complete spec):
+ * https://raw.githubusercontent.com/skysegbr/Nexa/main/docs/AI_SPEC.md
  */
 // Nexa live-reload client — add to HTML ONLY in development.
 // Connects to the SSE endpoint of server.py and reloads the page when
