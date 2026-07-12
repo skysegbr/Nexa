@@ -1,0 +1,32 @@
+.me-code {
+  display: flex;
+  flex-direction: column;
+  padding: 0.9rem;
+  border: 1px solid #1d2440;
+  border-radius: 12px;
+  background: #0c1226;
+}
+
+.me-code-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.me-code-head .me-panel-title {
+  margin: 0;
+}
+
+.me-code-body {
+  margin: 0.6rem 0 0;
+  padding: 0.7rem;
+  max-height: 320px;
+  overflow: auto;
+  border-radius: 8px;
+  background: #070a18;
+  border: 1px solid #161d38;
+  color: #b7e6d9;
+  font-size: 0.72rem;
+  line-height: 1.5;
+}

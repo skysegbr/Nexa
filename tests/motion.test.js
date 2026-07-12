@@ -234,6 +234,98 @@ test("motion: stagger shifts keyframes by index", async () => {
   assertEqual(base[0].at, 0, "the source keyframes are not mutated");
 });
 
+test("motion: color tweens interpolate per RGBA channel", async () => {
+  const { tl, el } = boundTimeline({
+    tracks: {
+      box: [
+        { at: 0, backgroundColor: "rgb(0, 0, 0)", color: "#ff0000" },
+        { at: 1000, backgroundColor: "rgb(255, 255, 255)", color: "#0000ff" },
+      ],
+    },
+  });
+
+  tl.seek(500);
+  // Browsers normalize rgba(x, y, z, 1) to rgb(x, y, z) on readback.
+  assertEqual(el.style.backgroundColor, "rgb(128, 128, 128)");
+  assertEqual(el.style.color, "rgb(128, 0, 128)");
+
+  tl.seek(1000);
+  assertEqual(el.style.backgroundColor, "rgb(255, 255, 255)");
+});
+
+test("motion: set steps apply discretely and hold until the next step", async () => {
+  const { tl, el } = boundTimeline({
+    duration: 400,
+    tracks: {
+      sprite: [
+        { at: 0, set: { backgroundPosition: "0px 0px" } },
+        { at: 100, set: { backgroundPosition: "-64px 0px" } },
+        { at: 200, set: { backgroundPosition: "-128px 0px" } },
+      ],
+    },
+  });
+
+  tl.seek(50);
+  assertEqual(el.style.backgroundPosition, "0px 0px", "first frame holds until the next step");
+
+  tl.seek(100);
+  assertEqual(el.style.backgroundPosition, "-64px 0px");
+
+  tl.seek(150);
+  assertEqual(el.style.backgroundPosition, "-64px 0px", "no interpolation between steps");
+
+  tl.seek(350);
+  assertEqual(el.style.backgroundPosition, "-128px 0px", "last step holds to the end");
+});
+
+test("motion: a path keyframe follows the motion guide", async () => {
+  const { tl, el } = boundTimeline({
+    tracks: {
+      comet: [
+        { at: 0 },
+        { at: 1000, path: "M 0 0 L 100 0" },
+      ],
+    },
+  });
+
+  tl.seek(500);
+  assertEqual(el.style.transform, "translate3d(50px, 0px, 0px)");
+
+  tl.seek(1000);
+  assertEqual(el.style.transform, "translate3d(100px, 0px, 0px)");
+});
+
+test("motion: guide endpoints become x/y keyframes so later tweens continue from them", async () => {
+  const { tl, el } = boundTimeline({
+    tracks: {
+      comet: [
+        { at: 0 },
+        { at: 1000, path: "M 0 0 L 100 0" },
+        { at: 2000, x: 200, y: 50 },
+      ],
+    },
+  });
+
+  tl.seek(1500);
+  // From the guide's end (100, 0) halfway to (200, 50).
+  assertEqual(el.style.transform, "translate3d(150px, 25px, 0px)");
+});
+
+test("motion: orient rotates the element along the guide's tangent", async () => {
+  const { tl, el } = boundTimeline({
+    tracks: {
+      comet: [
+        { at: 0 },
+        { at: 1000, path: "M 0 0 L 0 100", orient: true },
+      ],
+    },
+  });
+
+  tl.seek(500);
+  const transform = el.style.transform;
+  assert(transform.includes("rotate(90deg)"), `expected tangent rotation of 90deg, got: ${transform}`);
+});
+
 test("motion: late-bound elements sync to the playhead immediately", async () => {
   const tl = createTimeline({
     tracks: { box: [{ at: 0, opacity: 0 }, { at: 1000, opacity: 1 }] },

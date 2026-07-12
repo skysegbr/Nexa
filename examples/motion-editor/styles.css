@@ -1,0 +1,105 @@
+@import url("./components/Stage.css");
+@import url("./components/TimelinePanel.css");
+@import url("./components/Inspector.css");
+@import url("./components/CodePane.css");
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: #0a0c16;
+  color: #e8ecff;
+  font-family: "Segoe UI", system-ui, sans-serif;
+}
+
+.me-app {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  max-width: 1240px;
+  min-height: 100vh;
+  margin-inline: auto;
+  padding: 1.2rem 1rem 2rem;
+}
+
+.me-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 1rem;
+}
+
+.me-brand {
+  margin: 0;
+  font-size: 1.3rem;
+}
+
+.me-brand em {
+  color: #35e0c2;
+  font-style: normal;
+}
+
+.me-hint {
+  margin: 0;
+  color: #7f8fd9;
+  font-size: 0.8rem;
+}
+
+.me-main {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 1rem;
+}
+
+@media (max-width: 900px) {
+  .me-main {
+    grid-template-columns: 1fr;
+  }
+}
+
+.me-left,
+.me-right {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.me-panel-title {
+  margin: 0 0 0.6rem;
+  font-size: 0.85rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #8fa1e8;
+}
+
+.me-btn {
+  padding: 0.4rem 0.75rem;
+  border: 1px solid #2a3560;
+  border-radius: 7px;
+  background: #121a36;
+  color: #c7d2ff;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: border-color 120ms ease, background 120ms ease;
+}
+
+.me-btn:hover,
+.me-btn:focus-visible {
+  border-color: #4f7cff;
+  background: #182350;
+}
+
+.me-btn-danger {
+  border-color: #7a2a3a;
+  color: #ff8fa3;
+}
+
+.me-btn-danger:hover,
+.me-btn-danger:focus-visible {
+  border-color: #ff4d6d;
+  background: #2a1220;
+}

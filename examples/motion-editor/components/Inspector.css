@@ -1,0 +1,40 @@
+.me-inspector {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  padding: 0.9rem;
+  border: 1px solid #1d2440;
+  border-radius: 12px;
+  background: #0c1226;
+}
+
+.me-empty {
+  margin: 0;
+  color: #5a6aa8;
+  font-size: 0.8rem;
+}
+
+.me-field {
+  display: grid;
+  grid-template-columns: 80px 1fr;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.78rem;
+  color: #8fa1e8;
+}
+
+.me-field input,
+.me-field select {
+  width: 100%;
+  padding: 0.3rem 0.45rem;
+  border: 1px solid #2a3560;
+  border-radius: 6px;
+  background: #0a0f22;
+  color: #e8ecff;
+  font-size: 0.8rem;
+}
+
+.me-inspector .me-btn-danger {
+  margin-top: 0.4rem;
+  align-self: flex-start;
+}

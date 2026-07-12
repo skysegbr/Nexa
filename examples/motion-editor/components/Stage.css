@@ -1,0 +1,44 @@
+.me-stage {
+  position: relative;
+  height: 320px;
+  overflow: hidden;
+  border: 1px solid #1d2440;
+  border-radius: 12px;
+  background:
+    linear-gradient(rgba(79, 124, 255, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(79, 124, 255, 0.06) 1px, transparent 1px),
+    radial-gradient(ellipse at 50% 0%, #101736 0%, #080b1a 75%);
+  background-size: 32px 32px, 32px 32px, cover;
+}
+
+.me-actor {
+  position: absolute;
+  top: 60px;
+  left: 60px;
+}
+
+.me-actor-box {
+  width: 56px;
+  height: 56px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #4f7cff, #35e0c2);
+  box-shadow: 0 6px 24px rgba(79, 124, 255, 0.4);
+}
+
+.me-actor-ball {
+  top: 140px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 32% 28%, #ffd166, #ef476f);
+  box-shadow: 0 6px 20px rgba(239, 71, 111, 0.4);
+}
+
+.me-actor-star {
+  top: 200px;
+  left: 200px;
+  font-size: 2.6rem;
+  line-height: 1;
+  color: #ffd166;
+  text-shadow: 0 0 18px rgba(255, 209, 102, 0.7);
+}

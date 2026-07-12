@@ -48,7 +48,8 @@ import { useEffect, useRef } from "./nexa.js";
 //   }
 //
 // Keyframe schema: { at: ms, x?, y?, scale?, scaleX?, scaleY?, rotate?,
-//   skewX?, skewY?, opacity?, ease? }
+//   skewX?, skewY?, opacity?, color?, backgroundColor?, fill?, stroke?,
+//   path?, orient?, set?, ease? }
 //   - `at` is the keyframe's time in milliseconds.
 //   - `ease` names how the playhead ARRIVES at this keyframe (the tween from
 //     the previous keyframe of each property). See `easings` for the names —
@@ -57,6 +58,16 @@ import { useEffect, useRef } from "./nexa.js";
 //     property tweens between the keyframes that DO define it.
 //   - x/y are px (translate), rotate/skewX/skewY are degrees, scale is a
 //     factor (scaleX/scaleY override it per axis).
+//   - Color props tween per RGBA channel; values are hex (#rgb, #rrggbb,
+//     #rrggbbaa) or rgb()/rgba() strings.
+//   - `path` is Flash's MOTION GUIDE: an SVG path string ("M 0 0 C ...")
+//     the element follows from the PREVIOUS keyframe to this one (x/y come
+//     from the curve; the path's start/end points become x/y keyframes for
+//     continuity). `orient: true` rotates the element along the tangent —
+//     Flash's "orient to path".
+//   - `set` is frame-by-frame animation: an object of style values applied
+//     DISCRETELY at this keyframe and held until the next `set` (no tween) —
+//     e.g. sprite sheets via backgroundPosition steps.
 //
 // MovieClips: a component with its own useTimeline() IS a movie clip —
 // nest them freely; each timeline ticks independently.
@@ -110,18 +121,117 @@ export function stagger(keyframes, eachMs, index) {
   return keyframes.map((keyframe) => ({ ...keyframe, at: keyframe.at + offset }));
 }
 
+// ── Colors ───────────────────────────────────────────────────────────────────
+
+const COLOR_PROPS = ["color", "backgroundColor", "fill", "stroke"];
+
+// #rgb / #rrggbb / #rrggbbaa / rgb() / rgba() → [r, g, b, a]. Parsed once at
+// compile time so the per-frame lerp touches only numbers.
+function parseColor(value) {
+  const text = String(value).trim();
+
+  if (text.startsWith("#")) {
+    const hex = text.slice(1);
+    if (hex.length === 3) {
+      return [
+        parseInt(hex[0] + hex[0], 16),
+        parseInt(hex[1] + hex[1], 16),
+        parseInt(hex[2] + hex[2], 16),
+        1,
+      ];
+    }
+    return [
+      parseInt(hex.slice(0, 2), 16),
+      parseInt(hex.slice(2, 4), 16),
+      parseInt(hex.slice(4, 6), 16),
+      hex.length >= 8 ? parseInt(hex.slice(6, 8), 16) / 255 : 1,
+    ];
+  }
+
+  // new RegExp(string) instead of a literal: the repo's lightweight syntax
+  // validator balances brackets and would trip on the escaped parens.
+  const match = text.match(new RegExp("^rgba?\\(([^)]+)\\)$"));
+  if (match) {
+    const parts = match[1].split(",").map((part) => parseFloat(part));
+    return [parts[0], parts[1], parts[2], parts.length > 3 ? parts[3] : 1];
+  }
+
+  throw new Error(`nexa-motion: unsupported color "${value}" — use hex or rgb()/rgba().`);
+}
+
+function lerpNumber(from, to, progress) {
+  return from + (to - from) * progress;
+}
+
+function lerpColor(from, to, progress) {
+  return [
+    Math.round(lerpNumber(from[0], to[0], progress)),
+    Math.round(lerpNumber(from[1], to[1], progress)),
+    Math.round(lerpNumber(from[2], to[2], progress)),
+    lerpNumber(from[3], to[3], progress),
+  ];
+}
+
+function rgbaString([r, g, b, a]) {
+  return `rgba(${r}, ${g}, ${b}, ${a})`;
+}
+
+// ── Motion guides (SVG paths) ────────────────────────────────────────────────
+//
+// getTotalLength/getPointAtLength need a path inside a live document on some
+// engines, so every guide shares one hidden <svg> appended lazily to <body>.
+// Timelines remove their own guide paths on destroy().
+
+let guideSvg = null;
+
+function createGuidePath(d) {
+  if (typeof document === "undefined") {
+    return null; // SSR: timelines are parked at 0 there anyway
+  }
+
+  if (!guideSvg) {
+    guideSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    guideSvg.setAttribute("aria-hidden", "true");
+    guideSvg.style.cssText = "position:absolute;width:0;height:0;overflow:hidden";
+    document.body.appendChild(guideSvg);
+  }
+
+  const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  path.setAttribute("d", d);
+  guideSvg.appendChild(path);
+  return { path, total: path.getTotalLength() };
+}
+
 // ── Track compilation ────────────────────────────────────────────────────────
 
 const TWEEN_PROPS = ["x", "y", "rotate", "skewX", "skewY", "scale", "scaleX", "scaleY", "opacity"];
 const TRANSFORM_PROPS = new Set(["x", "y", "rotate", "skewX", "skewY", "scale", "scaleX", "scaleY"]);
 
+function insertPoint(points, point) {
+  for (let i = 0; i < points.length; i += 1) {
+    if (points[i].at === point.at) return; // explicit keyframes win
+    if (points[i].at > point.at) {
+      points.splice(i, 0, point);
+      return;
+    }
+  }
+  points.push(point);
+}
+
 // Per track, build one sorted [{at, value, ease}] list PER PROPERTY, so a
 // keyframe that omits a property never interrupts that property's tween.
+// Colors get their own lists (per-channel lerp), `set` styles become
+// discrete steps, and `path` keyframes become motion-guide segments.
 function compileTrack(keyframes) {
   const sorted = [...keyframes].sort((a, b) => a.at - b.at);
   const perProp = new Map();
+  const perColor = new Map();
+  const steps = [];
+  const guides = [];
 
-  for (const keyframe of sorted) {
+  for (let i = 0; i < sorted.length; i += 1) {
+    const keyframe = sorted[i];
+
     for (const prop of TWEEN_PROPS) {
       if (keyframe[prop] === undefined) continue;
       let points = perProp.get(prop);
@@ -131,17 +241,73 @@ function compileTrack(keyframes) {
       }
       points.push({ at: keyframe.at, value: keyframe[prop], ease: keyframe.ease });
     }
+
+    for (const prop of COLOR_PROPS) {
+      if (keyframe[prop] === undefined) continue;
+      let points = perColor.get(prop);
+      if (!points) {
+        points = [];
+        perColor.set(prop, points);
+      }
+      points.push({ at: keyframe.at, value: parseColor(keyframe[prop]), ease: keyframe.ease });
+    }
+
+    if (keyframe.set) {
+      steps.push({ at: keyframe.at, styles: keyframe.set });
+    }
+
+    if (keyframe.path) {
+      const guide = createGuidePath(keyframe.path);
+      if (guide) {
+        guides.push({
+          fromAt: i > 0 ? sorted[i - 1].at : keyframe.at,
+          toAt: keyframe.at,
+          ease: keyframe.ease,
+          orient: keyframe.orient === true,
+          path: guide.path,
+          total: guide.total,
+        });
+      }
+    }
   }
 
-  let hasTransform = false;
+  // A guide's endpoints become x/y keyframes, so tweens before and after the
+  // curve continue exactly from where it starts/ends.
+  for (const guide of guides) {
+    const start = guide.path.getPointAtLength(0);
+    const end = guide.path.getPointAtLength(guide.total);
+    let xPoints = perProp.get("x");
+    let yPoints = perProp.get("y");
+    if (!xPoints) perProp.set("x", (xPoints = []));
+    if (!yPoints) perProp.set("y", (yPoints = []));
+    insertPoint(xPoints, { at: guide.fromAt, value: start.x });
+    insertPoint(yPoints, { at: guide.fromAt, value: start.y });
+    insertPoint(xPoints, { at: guide.toAt, value: end.x });
+    insertPoint(yPoints, { at: guide.toAt, value: end.y });
+  }
+
+  let hasTransform = guides.length > 0;
   for (const prop of perProp.keys()) {
     if (TRANSFORM_PROPS.has(prop)) hasTransform = true;
   }
 
-  return { perProp, hasTransform, hasOpacity: perProp.has("opacity") };
+  // The track's own extent — duration inference must see EVERY kind of
+  // keyframe (a color-only or steps-only track still has a length).
+  const lastAt = sorted.length ? sorted[sorted.length - 1].at : 0;
+
+  return {
+    perProp,
+    perColor,
+    steps,
+    guides,
+    lastAt,
+    hasTransform,
+    hasOpacity: perProp.has("opacity"),
+    hasOrient: guides.some((guide) => guide.orient),
+  };
 }
 
-function valueAt(points, time, defaultEase) {
+function pointsAt(points, time, defaultEase, lerp) {
   const first = points[0];
   const last = points[points.length - 1];
   if (time <= first.at) return first.value;
@@ -154,22 +320,59 @@ function valueAt(points, time, defaultEase) {
     const span = to.at - from.at;
     const progress = span === 0 ? 1 : (time - from.at) / span;
     const ease = easings[to.ease] || easings[defaultEase] || easings.linear;
-    return from.value + (to.value - from.value) * ease(progress);
+    return lerp(from.value, to.value, ease(progress));
   }
 
   return last.value;
 }
 
-// Canonical order keeps the composed transform deterministic:
-// translate → rotate → skew → scale. Only properties the track animates are
-// emitted, so tracks compose with any static CSS the element already has.
+// Computes every style this track drives at `time`, as one flat object of
+// camelCase style properties. Discrete `set` steps are assigned first and
+// tweened properties second, so a tween always wins over a conflicting set.
 function styleAt(compiled, time, defaultEase) {
+  const style = {};
+
+  // 1. Frame-by-frame steps: the last `set` at or before the playhead holds.
+  let activeStep = null;
+  for (const step of compiled.steps) {
+    if (step.at > time) break;
+    activeStep = step;
+  }
+  if (activeStep) {
+    Object.assign(style, activeStep.styles);
+  }
+
+  // 2. Color tweens.
+  for (const [prop, points] of compiled.perColor) {
+    style[prop] = rgbaString(pointsAt(points, time, defaultEase, lerpColor));
+  }
+
+  // 3. Motion guide: inside a guide span, x/y come from the curve — and
+  //    rotate from its tangent when orienting (Flash's "orient to path").
+  let guidePoint = null;
+  let guideAngle = null;
+  for (const guide of compiled.guides) {
+    if (time < guide.fromAt || time > guide.toAt) continue;
+    const span = guide.toAt - guide.fromAt;
+    const progress = span === 0 ? 1 : (time - guide.fromAt) / span;
+    const ease = easings[guide.ease] || easings[defaultEase] || easings.linear;
+    const length = ease(progress) * guide.total;
+    guidePoint = guide.path.getPointAtLength(length);
+    if (guide.orient) {
+      const ahead = guide.path.getPointAtLength(Math.min(guide.total, length + 1));
+      const behind = length + 1 > guide.total ? guide.path.getPointAtLength(Math.max(0, length - 1)) : guidePoint;
+      guideAngle = (Math.atan2(ahead.y - behind.y, ahead.x - behind.x) * 180) / Math.PI;
+    }
+    break;
+  }
+
+  // 4. Transform + opacity, composed in canonical order (translate → rotate
+  //    → skew → scale). Only properties the track animates are emitted, so
+  //    tracks compose with any static CSS the element already has.
   const value = (prop, fallback) => {
     const points = compiled.perProp.get(prop);
-    return points ? valueAt(points, time, defaultEase) : fallback;
+    return points ? pointsAt(points, time, defaultEase, lerpNumber) : fallback;
   };
-
-  const style = {};
 
   if (compiled.hasTransform) {
     const parts = [];
@@ -177,10 +380,13 @@ function styleAt(compiled, time, defaultEase) {
     // (Firefox rewrites `translate(50px, 0px)` as `translate(50px)`), and it
     // promotes the element to its own compositor layer.
     if (compiled.perProp.has("x") || compiled.perProp.has("y")) {
-      parts.push(`translate3d(${value("x", 0)}px, ${value("y", 0)}px, 0px)`);
+      const x = guidePoint ? guidePoint.x : value("x", 0);
+      const y = guidePoint ? guidePoint.y : value("y", 0);
+      parts.push(`translate3d(${x}px, ${y}px, 0px)`);
     }
-    if (compiled.perProp.has("rotate")) {
-      parts.push(`rotate(${value("rotate", 0)}deg)`);
+    if (compiled.perProp.has("rotate") || compiled.hasOrient) {
+      const rotate = guideAngle !== null ? guideAngle : value("rotate", 0);
+      parts.push(`rotate(${rotate}deg)`);
     }
     if (compiled.perProp.has("skewX") || compiled.perProp.has("skewY")) {
       parts.push(`skew(${value("skewX", 0)}deg, ${value("skewY", 0)}deg)`);
@@ -229,9 +435,7 @@ export function createTimeline(spec = {}) {
   for (const [name, keyframes] of Object.entries(spec.tracks || {})) {
     const compiled = compileTrack(keyframes);
     tracks.set(name, compiled);
-    for (const points of compiled.perProp.values()) {
-      lastKeyframeAt = Math.max(lastKeyframeAt, points[points.length - 1].at);
-    }
+    lastKeyframeAt = Math.max(lastKeyframeAt, compiled.lastAt);
   }
 
   const labels = spec.labels || {};
@@ -268,8 +472,9 @@ export function createTimeline(spec = {}) {
     if (!bound || bound.size === 0) return;
     const style = styleAt(compiled, time, defaultEase);
     for (const element of bound) {
-      if (style.transform !== undefined) element.style.transform = style.transform;
-      if (style.opacity !== undefined) element.style.opacity = style.opacity;
+      for (const key of Object.keys(style)) {
+        element.style[key] = style[key];
+      }
     }
   }
 
@@ -453,8 +658,9 @@ export function createTimeline(spec = {}) {
           const compiled = tracks.get(name);
           if (compiled) {
             const style = styleAt(compiled, time, defaultEase);
-            if (style.transform !== undefined) node.style.transform = style.transform;
-            if (style.opacity !== undefined) node.style.opacity = style.opacity;
+            for (const key of Object.keys(style)) {
+              node.style[key] = style[key];
+            }
           }
         } else {
           // Callback refs receive null without saying WHICH node unmounted,
@@ -477,6 +683,12 @@ export function createTimeline(spec = {}) {
       playing = false;
       stopTicker();
       elements.clear();
+      // Motion-guide paths live in the shared hidden <svg> — remove ours.
+      for (const compiled of tracks.values()) {
+        for (const guide of compiled.guides) {
+          guide.path.remove();
+        }
+      }
     },
   };
 

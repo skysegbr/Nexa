@@ -1628,9 +1628,21 @@ function Intro() {
 ```
 
 - **Keyframes**: `{ at: ms, x?, y?, scale?, scaleX?, scaleY?, rotate?, skewX?,
-  skewY?, opacity?, ease? }` — x/y in px, angles in deg. `ease` names how the
-  playhead ARRIVES at that keyframe; a property absent from a keyframe tweens
-  straight through it (per-property tracks).
+  skewY?, opacity?, color?, backgroundColor?, fill?, stroke?, path?, orient?,
+  set?, ease? }` — x/y in px, angles in deg. `ease` names how the playhead
+  ARRIVES at that keyframe; a property absent from a keyframe tweens straight
+  through it (per-property tracks).
+- **Color tweens**: `color`/`backgroundColor`/`fill`/`stroke` interpolate per
+  RGBA channel; values are hex (`#rgb`, `#rrggbb`, `#rrggbbaa`) or
+  `rgb()`/`rgba()` strings (parsed at compile time).
+- **Motion guides** (Flash's motion guide layer): `path: "M 0 0 C ..."` on a
+  keyframe makes the element follow that SVG path from the PREVIOUS keyframe
+  to this one; the curve's start/end become x/y keyframes so surrounding
+  tweens continue seamlessly. `orient: true` rotates along the tangent
+  (Flash's "orient to path").
+- **Frame-by-frame**: `set: { styleProp: value }` applies styles DISCRETELY
+  at the keyframe and holds them until the next `set` (no tween) — sprite
+  sheets via `backgroundPosition` steps, visibility flips, class-free state.
 - **Easings**: the classic Penner set (written for Flash!): `linear`,
   `in/out/inOutQuad`, `in/out/inOutCubic`, `in/out/inOutBack`, `outElastic`,
   `outBounce` — exported as `easings`.
@@ -1651,7 +1663,9 @@ function Intro() {
   unless `autoplay: false`.
 
 Full showcase: `examples/nexa-motion` — preloader, flying logo, letter
-cascade, SKIP INTRO, scrubber and scene-jump deck.
+cascade, SKIP INTRO, scrubber and scene-jump deck. Visual authoring:
+`examples/motion-editor` — a Flash-IDE-style timeline editor (draggable
+keyframe diamonds, scrubbing, inspector, live `useTimeline` code export).
 
 ### `PipelineCanvas`
 

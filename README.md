@@ -296,6 +296,7 @@ python -m http.server 8080
 | [examples/nexa-atlas](./examples/nexa-atlas) | Atlas-themed `ZoomStage` tour of Nexa: click any background frame to zoom straight to it, plus a live demo frame running real `useState`/`useTheme` mid-presentation |
 | [examples/nexa-architecture](./examples/nexa-architecture) | Modern `ZoomStage` presentation for solution architects: no-build runtime, technical contracts, integration paths, trade-offs, and adoption guidance |
 | [examples/nexa-motion](./examples/nexa-motion) | Flash-style animated intro on `nexa-motion`: preloader, logo flying in with `outBack`, staggered letter cascade, frame scripts, a nested looping movie clip, SKIP INTRO, and a control deck with scrubber, reverse, speed, and `gotoAndPlay` scene jumps |
+| [examples/motion-editor](./examples/motion-editor) | Visual timeline editor in the spirit of the Flash IDE: stage preview driven by the real `nexa-motion` runtime, draggable keyframe diamonds, ruler scrubbing, per-keyframe inspector (fields, easing, delete), add-at-playhead, and live `useTimeline` code export |
 | [examples/burger-shop](./examples/burger-shop) | Multi-page ordering flow with a dependency-free Python API: menu, cart/checkout, order tracking with polling, admin panel with product CRUD + image upload. `EmptyMessage`/`StatusBadge` show CSS shared by 2+ components becoming its own paired component instead of a floating class |
 | [examples/burger-shop-fastapi](./examples/burger-shop-fastapi) | Same app as burger-shop, backed by a real FastAPI + SQLModel + SQLite app instead of `http.server` — same frontend, `/dist` mounted straight from the monorepo |
 
@@ -987,14 +988,19 @@ h("img", { ref: tl.track("logo"), src: "logo.png" })
 ```
 
 Keyframes tween `x`/`y` (px), `rotate`/`skewX`/`skewY` (deg),
-`scale`/`scaleX`/`scaleY` and `opacity`; `ease` names how the playhead
-arrives at that keyframe (the classic Penner set — `outBack`, `outElastic`,
-`outBounce`, …). A component with its own `useTimeline` is a movie clip —
-nest them freely. `stagger(keyframes, eachMs, index)` builds cascade
-entrances; `createTimeline(spec)` is the imperative variant for use outside
-components. See [examples/nexa-motion](./examples/nexa-motion) for the full
-2003-intro treatment — preloader, flying logo, letter cascade, SKIP INTRO,
-and a scrubbing control deck.
+`scale`/`scaleX`/`scaleY`, `opacity` and colors
+(`color`/`backgroundColor`/`fill`/`stroke`, per-RGBA-channel); `ease` names
+how the playhead arrives at that keyframe (the classic Penner set —
+`outBack`, `outElastic`, `outBounce`, …). `path: "M 0 0 C ..."` is Flash's
+motion guide — the element follows the curve, with `orient: true` rotating
+along the tangent; `set: {...}` is frame-by-frame animation (discrete style
+steps — sprite sheets via `backgroundPosition`). A component with its own
+`useTimeline` is a movie clip — nest them freely.
+`stagger(keyframes, eachMs, index)` builds cascade entrances;
+`createTimeline(spec)` is the imperative variant for use outside components.
+See [examples/nexa-motion](./examples/nexa-motion) for the full 2003-intro
+treatment, and [examples/motion-editor](./examples/motion-editor) for the
+Flash-IDE-style visual timeline editor with live code export.
 
 ### `PipelineCanvas`
 
