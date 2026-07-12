@@ -498,6 +498,43 @@ DOM ends up identical to a fresh client render. Portals are not hydrated (create
 fresh). If hydration throws, it falls back to a clean client render. See
 `examples/ssr` for the full round-trip in the browser.
 
+### `useHead` (document title + meta tags)
+
+```js
+import { useHead } from '/dist/nexa.js';
+
+function DashboardPage() {
+  useHead({
+    title: 'Dashboard — Acme',
+    meta: [
+      { name: 'description', content: 'Sales overview' },
+      { property: 'og:title', content: 'Dashboard' },
+    ],
+  });
+  return h('main', null, /* ... */);
+}
+```
+
+- **Last writer wins** — a route page rendered after an app-level `useHead`
+  overrides the fields it declares. Nothing is removed on unmount (same
+  semantics as writing `document.title` directly), so every page should
+  declare its own head.
+- Meta tags are keyed by `name` OR `property` and updated **in place** (one
+  tag per key, marked `data-nexa-head`) — no duplicates accumulate.
+- Client: applied after the render commits (an effect).
+- Server: `renderToString()` collects the calls; `renderHeadToString()`
+  (exported from `/dist/nexa-server.js` too) then returns the
+  `<title>`/`<meta>` markup — values HTML-escaped, duplicates deduped:
+
+```js
+import { renderToString, renderHeadToString } from '/dist/nexa-server.js';
+
+const body = renderToString(App);        // must run FIRST (collects useHead calls)
+const head = renderHeadToString();       // consumes the collection
+const page = `<!doctype html><html><head>${head}</head><body>
+  <div id="app">${body}</div></body></html>`;
+```
+
 ### `useTheme`
 
 ```js
@@ -593,6 +630,24 @@ t('hello', { name: 'Ana' }) // → 'Hello, Ana!'
 // Context menu position state (pair with ContextMenu component)
 const { menu, openMenu, closeMenu } = useContextMenu();
 // openMenu(e) — call on onContextMenu; menu = { open, x, y }
+
+// Exit transitions — keeps elements mounted while their exit animation plays.
+// Nexa normally removes a DOM node the instant its vnode disappears, so a CSS
+// exit transition never runs; usePresence delays the removal by `duration` ms.
+
+// Boolean form (dialogs, banners, single elements):
+const { mounted, exiting } = usePresence(open, { duration: 200 });
+return mounted
+  ? h('div', { className: exiting ? 'toast toast-exit' : 'toast' }, 'Saved!')
+  : null;
+
+// List form (items leaving a collection) — exiting items keep their position,
+// re-adding an item mid-exit cancels it. getKey defaults to item.key ?? item.id
+// ?? the item itself:
+const rows = usePresence(todos, { duration: 200, getKey: (t) => t.id });
+return rows.map(({ key, item, exiting }) =>
+  h('li', { key, className: exiting ? 'row row-exit' : 'row' }, item.label));
+// Pair the exit class with a CSS transition/animation (see §11 utilities).
 ```
 
 ### Component utilities
@@ -605,6 +660,15 @@ const { menu, openMenu, closeMenu } = useContextMenu();
 // object, or memo boundaries below them will never skip.
 const MemoRow = memo(Row);
 const MemoRow = memo(Row, (prev, next) => prev.id === next.id);
+
+// Note on re-render scope: setState re-renders ONLY the component that owns
+// the state (and its subtree) — ancestors and siblings do not re-run. State
+// held at the root component (the function passed to render()) still
+// re-renders from the root, and a component whose output is a fragment/array
+// falls back to a root pass — one more reason to keep app.js a thin
+// orchestrator and give components a single root element. memo remains
+// useful for skipping children that receive equal props when their PARENT
+// re-renders.
 
 // createPortal — render children into a different DOM node (escapes overflow/z-index)
 return h('div', null,
@@ -778,6 +842,25 @@ h('input', { disabled: true })    // sets attribute
 h('input', { disabled: false })   // removes attribute
 h('input', { required: true })
 ```
+
+### `innerHTML` prop (raw HTML)
+
+Nexa's equivalent of React's `dangerouslySetInnerHTML` — injects a string as
+raw HTML into the element:
+
+```js
+h('article', { className: 'post', innerHTML: markdownToHtml(post.body) })
+```
+
+- **Never combine with children** on the same element — the reconciler owns
+  vnode children and the two overwrite each other (Nexa warns in the console).
+  Give the raw HTML its own dedicated leaf element.
+- Re-injected only when the string changes; removing the prop (or passing
+  `null`) clears the content.
+- Works in `renderToString` too: emitted **verbatim** (not escaped) in place
+  of children.
+- The string is **not sanitized**. Never pass user input or third-party
+  content without sanitizing it first (XSS).
 
 ---
 
@@ -2513,6 +2596,9 @@ Before submitting any Nexa code, verify:
 - [ ] Style is a camelCase object: `{ fontSize: '1rem' }` not `{ 'font-size': '1rem' }`
 - [ ] `useEffect` cleanup returns a function (not a Promise)
 - [ ] Conditional rendering uses `&&` or ternary — no returning `undefined` without `null`
+- [ ] Elements with `innerHTML` have **no children** and never receive unsanitized input
+- [ ] SSR pages call `renderToString()` **before** `renderHeadToString()` (the first collects, the second consumes)
+- [ ] Exit animations go through `usePresence` — a vnode that just disappears removes its DOM node instantly, skipping any CSS transition
 
 **Project structure (multi-section apps)**
 - [ ] Each visual section / feature is its own component file in `components/`

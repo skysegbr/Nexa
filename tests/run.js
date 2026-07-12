@@ -6,6 +6,7 @@ import "./a11y.test.js";
 import "./coverage.test.js";
 import "./components-new.test.js";
 import "./addons.test.js";
+import "./v02-features.test.js";
 import { run } from "./runner.js";
 
 // Expose the outcome on window so a headless driver (scripts/

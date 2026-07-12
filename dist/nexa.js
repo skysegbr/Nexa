@@ -35,6 +35,12 @@ let currentHookOwner = null;
 let nextComponentTypeId = 1;
 let nextIdCounter = 0;
 
+// Innermost context frame at the current point of rendering — a linked list
+// of { context, value, parent } built by ctx.provide(). Each component owner
+// snapshots this chain so a targeted re-render (see targetedRender) can
+// rebuild the exact context environment the component rendered under.
+let contextFrame = null;
+
 export function h(type, props, ...children) {
   const resolvedProps = {
     ...(props || {}),
@@ -68,6 +74,9 @@ export function render(component, container) {
     liveRoots.add(root);
   } else if (root.component !== component) {
     cleanupEffects(root);
+    for (const child of root.children.values()) {
+      markUnmounted(child);
+    }
     root.hooks = [];
     root.children.clear();
     root.component = component;
@@ -84,6 +93,7 @@ export function unmount(container) {
   }
 
   cleanupEffects(root);
+  markUnmounted(root);
   // Walk the old VDOM tree so removeVNode can clean up any portal targets
   // (portal children live in a different DOM node — replaceChildren() alone
   // would only clear the root container, leaving portal targets dirty).
@@ -113,7 +123,7 @@ export function useState(initialValue) {
 
     owner.hooks[cursor] = value;
     owner.dirty = true;
-    scheduleRender(owner.renderRoot);
+    scheduleRender(owner.renderRoot, owner);
   };
 
   owner.hookCursor += 1;
@@ -133,7 +143,7 @@ export function useReducer(reducer, initialArg, init) {
     if (Object.is(nextState, owner.hooks[cursor])) return;
     owner.hooks[cursor] = nextState;
     owner.dirty = true;
-    scheduleRender(owner.renderRoot);
+    scheduleRender(owner.renderRoot, owner);
   };
 
   owner.hookCursor += 1;
@@ -284,25 +294,38 @@ export function createLazy(loader, fallback = null) {
   let loadError = null;
   let promise = null;
 
+  // Component instances currently showing the fallback. Resolution re-renders
+  // exactly these subtrees instead of every live root.
+  const pendingOwners = new Set();
+
+  function rerenderPending() {
+    for (const owner of pendingOwners) {
+      if (!owner.unmounted && liveRoots.has(owner.renderRoot)) {
+        scheduleRender(owner.renderRoot, owner);
+      }
+    }
+    pendingOwners.clear();
+  }
+
   function LazyComponent(props) {
     if (status === 1) return Component(props);
     if (status === 2) throw loadError;
+
+    if (currentHookOwner) {
+      pendingOwners.add(currentHookOwner);
+    }
 
     if (!promise) {
       promise = loader().then(
         (mod) => {
           status = 1;
           Component = mod.default ?? mod;
-          for (const root of liveRoots) {
-            scheduleRender(root);
-          }
+          rerenderPending();
         },
         (err) => {
           status = 2;
           loadError = err;
-          for (const root of liveRoots) {
-            scheduleRender(root);
-          }
+          rerenderPending();
         },
       );
     }
@@ -596,6 +619,13 @@ function createRoot(component, container) {
     renderRoot: null,
     renderQueued: false,
     dirty: false,
+    // Subtree scheduling: owners with pending state changes, and whether
+    // something requested a from-the-root render for the next flush.
+    dirtyOwners: new Set(),
+    fullRenderQueued: false,
+    parent: null,
+    unmounted: false,
+    lastVNode: null,
   };
 
   root.renderRoot = root;
@@ -611,6 +641,15 @@ function createComponentOwner(renderRoot) {
     nextChildren: new Set(),
     renderRoot,
     dirty: false,
+    // Everything a targeted re-render needs to re-run this component outside
+    // a full root pass: what to call, with which props, under which context
+    // environment, and which live vnode its last output occupies.
+    parent: null,
+    type: null,
+    props: null,
+    contextFrame: null,
+    lastVNode: null,
+    unmounted: false,
   };
 }
 
@@ -640,10 +679,17 @@ function renderComponent(type, props) {
 
   if (!owner) {
     owner = createComponentOwner(currentRenderRoot);
+    owner.parent = parentOwner;
     parentOwner.children.set(identity, owner);
   }
 
   parentOwner.nextChildren.add(identity);
+
+  // Refresh the targeted-re-render snapshot on every pass (props and the
+  // provider environment may differ from the previous render).
+  owner.type = type;
+  owner.props = props;
+  owner.contextFrame = contextFrame;
 
   // Memo: skip re-render when props are shallowly equal and neither this
   // owner nor any of its descendants have called setState since last render.
@@ -677,6 +723,14 @@ function renderComponent(type, props) {
       owner.memoizedProps = props;
     }
     cleanupUnusedChildren(owner);
+    // A single vnode output can be swapped in place by targetedRender.
+    // Anything else (fragment array, portal, primitive — the parent wraps
+    // primitives in its own text vnode) forces a full render on this owner's
+    // next state change.
+    owner.lastVNode =
+      tree && typeof tree === "object" && !Array.isArray(tree) && tree.type !== PORTAL
+        ? tree
+        : null;
     return tree;
   } finally {
     currentHookOwner = previousOwner;
@@ -695,8 +749,18 @@ function cleanupUnusedChildren(owner) {
   for (const [identity, child] of owner.children) {
     if (!owner.nextChildren.has(identity)) {
       cleanupEffects(child);
+      markUnmounted(child);
       owner.children.delete(identity);
     }
+  }
+}
+
+// A state change on an unmounted component must not schedule work: its owner
+// was dropped from the tree, so there is nothing on screen to update.
+function markUnmounted(owner) {
+  owner.unmounted = true;
+  for (const child of owner.children.values()) {
+    markUnmounted(child);
   }
 }
 
@@ -776,39 +840,189 @@ function shallowPropsChanged(prev, next) {
   return prevKeys.some((k) => !Object.is(prev[k], next[k]));
 }
 
-function scheduleRender(root) {
+function scheduleRender(root, dirtyOwner) {
+  if (!dirtyOwner || dirtyOwner === root) {
+    root.fullRenderQueued = true;
+  } else if (dirtyOwner.unmounted) {
+    // State set on an unmounted component — nothing on screen depends on it.
+    return;
+  } else {
+    root.dirtyOwners.add(dirtyOwner);
+  }
+
   if (root.renderQueued) {
     return;
   }
 
   root.renderQueued = true;
+  queueMicrotask(() => flushRender(root));
+}
 
-  queueMicrotask(() => {
-    root.renderQueued = false;
-    prepareHookOwner(root);
-    root.pendingEffects = [];
-    currentRenderRoot = root;
-    currentHookOwner = root;
+function flushRender(root) {
+  root.renderQueued = false;
 
-    try {
-      const newTree = normalizeTree(root.component());
-      cleanupUnusedChildren(root);
-      currentRenderRoot = null;
-      currentHookOwner = null;
-      root.oldTree = patchChildren(root.container, root.oldTree, newTree);
-      runEffects(root);
-    } catch (error) {
-      currentRenderRoot = null;
-      currentHookOwner = null;
-      // Render threw outside of any useErrorBoundary guard. The DOM still
-      // reflects the last successful tree (patchChildren never ran), so the
-      // safest move is to keep that on screen and report loudly rather than
-      // rethrow into an unhandled rejection — which would both hide the
-      // error behind "Uncaught (in promise)" noise and fire again on every
-      // future render attempt that touches the same broken state.
-      console.error("Nexa: render failed — keeping the last successful UI on screen.", error);
+  // The root may have been unmounted (or its container re-rendered with a
+  // different root) between scheduling and this microtask — rendering now
+  // would resurrect DOM inside a dead container.
+  if (root.container !== null && roots.get(root.container) !== root) {
+    root.dirtyOwners.clear();
+    root.fullRenderQueued = false;
+    return;
+  }
+
+  if (root.fullRenderQueued) {
+    root.fullRenderQueued = false;
+    root.dirtyOwners.clear();
+    fullRender(root);
+    return;
+  }
+
+  const batch = new Set(root.dirtyOwners);
+  root.dirtyOwners.clear();
+
+  for (const owner of batch) {
+    if (owner.unmounted) {
+      continue;
     }
-  });
+
+    // An ancestor in the same batch re-renders this whole subtree anyway.
+    if (hasDirtyAncestorInBatch(owner, batch)) {
+      continue;
+    }
+
+    if (!targetedRender(root, owner)) {
+      // No usable tracking for this owner (first update after hydration,
+      // primitive output, detached vnode) — reconcile from the root instead.
+      fullRender(root);
+      return;
+    }
+  }
+}
+
+function hasDirtyAncestorInBatch(owner, batch) {
+  for (let parent = owner.parent; parent; parent = parent.parent) {
+    if (batch.has(parent)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function fullRender(root, carriedEffects) {
+  prepareHookOwner(root);
+  root.pendingEffects = carriedEffects || [];
+  currentRenderRoot = root;
+  currentHookOwner = root;
+
+  try {
+    const newTree = normalizeTree(root.component());
+    cleanupUnusedChildren(root);
+    currentRenderRoot = null;
+    currentHookOwner = null;
+    root.oldTree = patchChildren(root.container, root.oldTree, newTree);
+    runEffects(root);
+  } catch (error) {
+    currentRenderRoot = null;
+    currentHookOwner = null;
+    // Render threw outside of any useErrorBoundary guard. The DOM still
+    // reflects the last successful tree (patchChildren never ran), so the
+    // safest move is to keep that on screen and report loudly rather than
+    // rethrow into an unhandled rejection — which would both hide the
+    // error behind "Uncaught (in promise)" noise and fire again on every
+    // future render attempt that touches the same broken state.
+    console.error("Nexa: render failed — keeping the last successful UI on screen.", error);
+  }
+}
+
+// Re-renders a single component in place: re-runs it with its last props
+// under its snapshotted context environment, then patches its previous
+// output vnode against the new one directly in the parent DOM node — no
+// other component runs and no other DOM subtree is touched.
+//
+// Returns false when this owner cannot be re-rendered in isolation (the
+// caller falls back to fullRender).
+function targetedRender(root, owner) {
+  const oldVNode = owner.lastVNode;
+  const containerArray = oldVNode?._containerArray;
+  const parentDom = oldVNode?._dom?.parentNode;
+
+  if (!oldVNode || !containerArray || !parentDom) {
+    return false;
+  }
+
+  const index = containerArray.indexOf(oldVNode);
+  if (index === -1) {
+    return false;
+  }
+
+  // Rebuild the provider environment this component rendered under, so
+  // useContext reads inside the subtree see provided values, not defaults.
+  const frames = [];
+  for (let frame = owner.contextFrame; frame; frame = frame.parent) {
+    frames.unshift(frame);
+  }
+  for (const frame of frames) {
+    frame.context._push(frame.value);
+  }
+
+  const previousRoot = currentRenderRoot;
+  const previousOwner = currentHookOwner;
+  const previousFrame = contextFrame;
+
+  prepareHookOwner(owner);
+  root.pendingEffects = [];
+  currentRenderRoot = root;
+  currentHookOwner = owner;
+  contextFrame = owner.contextFrame;
+
+  let tree;
+  let failed = false;
+
+  try {
+    tree = owner.type(owner.props);
+    cleanupUnusedChildren(owner);
+  } catch {
+    failed = true;
+  } finally {
+    currentRenderRoot = previousRoot;
+    currentHookOwner = previousOwner;
+    contextFrame = previousFrame;
+    for (let i = frames.length - 1; i >= 0; i -= 1) {
+      frames[i].context._pop();
+    }
+  }
+
+  if (failed) {
+    // A targeted run executes outside any useErrorBoundary guard's
+    // try/catch — only a root pass re-enters the guard thunks. Re-render
+    // from the root so a boundary above this component can catch the throw
+    // (and, without one, fullRender's own catch keeps the last good UI).
+    fullRender(root, root.pendingEffects);
+    return true;
+  }
+
+  if (owner.type._isMemo) {
+    owner.memoizedOutput = tree;
+    owner.memoizedProps = owner.props;
+  }
+
+  const newChildren = normalizeTree(tree);
+
+  if (newChildren.length !== 1 || newChildren[0].type === PORTAL) {
+    // The output changed shape (fragment/portal) — only a root pass can
+    // splice that into the parent. The component already ran and its
+    // useEffect hooks already recorded their new deps, so carry the queued
+    // effects over or they would be lost (the re-run would see equal deps).
+    fullRender(root, root.pendingEffects);
+    return true;
+  }
+
+  const patched = patch(parentDom, oldVNode, newChildren[0]);
+  containerArray[index] = patched;
+  patched._containerArray = containerArray;
+  owner.lastVNode = patched;
+  runEffects(root);
+  return true;
 }
 
 function runEffects(root) {
@@ -905,6 +1119,7 @@ function createDom(vnode, parentDom) {
   updateDom(dom, {}, vnode.props);
 
   for (const child of vnode.props.children) {
+    child._containerArray = vnode.props.children;
     dom.appendChild(createDom(child, dom));
   }
 
@@ -1090,6 +1305,9 @@ function patchChildren(parent, oldChildren, newChildren) {
       parent.insertBefore(patchedChild._dom, referenceNode || null);
     }
 
+    // Track which live array holds each vnode so targetedRender can swap a
+    // component's output in place without walking the tree.
+    patchedChild._containerArray = patchedChildren;
     patchedChildren.push(patchedChild);
   }
 
@@ -1119,7 +1337,20 @@ function getKey(vnode) {
   return key === null || key === undefined ? null : String(key);
 }
 
+let warnedInnerHTMLChildren = false;
+
 function updateDom(dom, previousProps, nextProps) {
+  if (
+    !warnedInnerHTMLChildren &&
+    nextProps.innerHTML != null &&
+    nextProps.children?.some((c) => c.type !== TEXT_NODE || c.props.nodeValue !== "")
+  ) {
+    warnedInnerHTMLChildren = true;
+    console.warn(
+      "Nexa: an element received both `innerHTML` and children — the two overwrite each other. Give the element only one of them.",
+    );
+  }
+
   for (const name of Object.keys(previousProps)) {
     if (name === "children" || name === "key") {
       continue;
@@ -1165,6 +1396,15 @@ function setProp(dom, name, previousValue, nextValue) {
 
   if (name === "dataset") {
     setDataset(dom, previousValue, nextValue);
+    return;
+  }
+
+  // Raw HTML injection. The string is assigned as-is — callers are
+  // responsible for sanitizing untrusted input. Removal (nextValue null/
+  // undefined) clears the injected content; the generic removal branch
+  // below would only call removeAttribute, which leaves innerHTML intact.
+  if (name === "innerHTML") {
+    dom.innerHTML = nextValue ?? "";
     return;
   }
 
@@ -1379,19 +1619,31 @@ function eventName(propName) {
 export function createContext(defaultValue) {
   const stack = [defaultValue];
 
-  return {
+  const context = {
     provide(value, renderFn) {
       stack.push(value);
+      contextFrame = { context, value, parent: contextFrame };
       try {
         return renderFn();
       } finally {
         stack.pop();
+        contextFrame = contextFrame.parent;
       }
     },
     get _value() {
       return stack[stack.length - 1];
     },
+    // Used by targetedRender to temporarily re-enter a snapshotted provider
+    // environment outside of a full root render.
+    _push(value) {
+      stack.push(value);
+    },
+    _pop() {
+      stack.pop();
+    },
   };
+
+  return context;
 }
 
 export function useContext(context) {
@@ -1835,6 +2087,108 @@ export function useTranslation(dict = {}) {
   return { t };
 }
 
+// ── useHead ────────────────────────────────────────────────
+//
+// Declares document metadata (title + meta tags) from a component — the
+// missing piece for per-route SEO. The last component to render a given
+// field wins, so route pages naturally override app-level defaults.
+//
+//   useHead({
+//     title: "Dashboard — Acme",
+//     meta: [
+//       { name: "description", content: "Sales overview" },
+//       { property: "og:title", content: "Dashboard" },
+//     ],
+//   });
+//
+// Client: applied after the render commits (an effect). Meta tags managed by
+// useHead carry data-nexa-head and are updated in place — one tag per
+// name/property. Nothing is removed on unmount: like document.title itself,
+// metadata persists until another component declares a new value.
+//
+// Server: renderToString() collects every useHead call from the rendered
+// tree; call renderHeadToString() afterwards to get the <title>/<meta>
+// markup for the document <head>. Server-emitted tags also carry
+// data-nexa-head, so the client render finds and reuses them.
+
+let ssrHeadEntries = [];
+
+export function useHead(head) {
+  const owner = requireHookOwner("useHead");
+
+  // Server render (synthetic root, no container): effects never run there,
+  // so collect synchronously during the render pass instead.
+  if (owner.renderRoot.container === null) {
+    ssrHeadEntries.push(head || {});
+    return;
+  }
+
+  useEffect(() => {
+    applyHead(head || {});
+  }, [JSON.stringify(head ?? null)]);
+}
+
+function applyHead(head) {
+  if (head.title !== undefined && document.title !== head.title) {
+    document.title = head.title;
+  }
+
+  for (const entry of head.meta || []) {
+    const keyAttr = entry.name != null ? "name" : entry.property != null ? "property" : null;
+    if (!keyAttr) continue;
+
+    const keyValue = String(entry.name ?? entry.property);
+    let tag = null;
+
+    // Attribute values are matched in JS instead of via a CSS selector so
+    // arbitrary strings (quotes, brackets) need no escaping.
+    for (const candidate of document.head.querySelectorAll("meta")) {
+      if (candidate.getAttribute(keyAttr) === keyValue) {
+        tag = candidate;
+        break;
+      }
+    }
+
+    if (!tag) {
+      tag = document.createElement("meta");
+      tag.setAttribute(keyAttr, keyValue);
+      document.head.appendChild(tag);
+    }
+
+    tag.setAttribute("data-nexa-head", "");
+    tag.setAttribute("content", String(entry.content ?? ""));
+  }
+}
+
+export function renderHeadToString() {
+  let title;
+  const metaByKey = new Map();
+
+  for (const head of ssrHeadEntries) {
+    if (head.title !== undefined) title = head.title;
+    for (const entry of head.meta || []) {
+      const keyAttr = entry.name != null ? "name" : entry.property != null ? "property" : null;
+      if (!keyAttr) continue;
+      metaByKey.set(`${keyAttr}:${entry.name ?? entry.property}`, entry);
+    }
+  }
+
+  ssrHeadEntries = [];
+
+  const parts = [];
+  if (title !== undefined) {
+    parts.push(`<title>${escapeText(String(title))}</title>`);
+  }
+  for (const entry of metaByKey.values()) {
+    const keyAttr = entry.name != null ? "name" : "property";
+    const keyValue = escapeAttribute(String(entry.name ?? entry.property));
+    const content = escapeAttribute(String(entry.content ?? ""));
+    parts.push(`<meta ${keyAttr}="${keyValue}" content="${content}" data-nexa-head>`);
+  }
+
+  return parts.join("\n");
+}
+
 // ── useContextMenu ─────────────────────────────────────────
 
 export function useContextMenu() {
@@ -2180,6 +2534,115 @@ export function useThrottle(fn, delay) {
   );
 }
 
+// ── usePresence ────────────────────────────────────────────
+//
+// Keeps elements mounted through their exit animation. Nexa removes a DOM
+// node the instant its vnode disappears, so a CSS exit transition never gets
+// a chance to play — usePresence delays the removal by `duration` ms and
+// tells you which items are on their way out so you can apply an exit class.
+//
+// Boolean form (single element — dialogs, banners, tooltips):
+//
+//   const { mounted, exiting } = usePresence(open, { duration: 200 });
+//   return mounted
+//     ? h("div", { className: exiting ? "banner banner-exit" : "banner" }, "Saved!")
+//     : null;
+//
+// List form (items animating out of a collection):
+//
+//   const rows = usePresence(todos, { duration: 200, getKey: (t) => t.id });
+//   return rows.map(({ key, item, exiting }) =>
+//     h("li", { key, className: exiting ? "row row-exit" : "row" }, item.label));
+//
+// Exiting items keep their position in the returned list. Re-adding an item
+// while it is exiting cancels the exit. Pair the exit class with the
+// animation utility classes in nexa-ui.css or your own CSS transition.
+
+export function usePresence(source, { duration = 300, getKey = defaultPresenceKey } = {}) {
+  const isList = Array.isArray(source);
+  const [, bump] = useState(0);
+  const state = useRef(null);
+
+  if (!state.current) {
+    state.current = { entries: new Map(), timers: new Map() };
+  }
+
+  const { entries, timers } = state.current;
+  const forceRender = () => bump((n) => n + 1);
+
+  // Normalize both forms onto the keyed-entries machinery: the boolean form
+  // is a one-item list under a fixed key.
+  const items = isList ? source : source ? [true] : [];
+  const keyOf = isList ? getKey : () => "presence";
+
+  const liveKeys = new Map();
+  for (const item of items) {
+    liveKeys.set(String(keyOf(item)), item);
+  }
+
+  const result = [];
+  for (const [key, item] of liveKeys) {
+    result.push({ key, item, exiting: false });
+  }
+
+  // Present → absent: mark as exiting, remembering where the item sat in the
+  // last returned list so it holds its position while animating out.
+  for (const [key, entry] of entries) {
+    if (liveKeys.has(key)) continue;
+    const exitingEntry = { key, item: entry.item, exiting: true, index: entry.index };
+    entries.set(key, exitingEntry);
+    result.splice(Math.min(exitingEntry.index ?? result.length, result.length), 0, exitingEntry);
+  }
+
+  // Refresh bookkeeping for live items (also cancels an in-flight exit when
+  // an item comes back before its timer fires).
+  for (let index = 0; index < result.length; index += 1) {
+    const slot = result[index];
+    slot.index = index;
+    if (!slot.exiting) {
+      entries.set(slot.key, slot);
+      const timer = timers.get(slot.key);
+      if (timer) {
+        clearTimeout(timer);
+        timers.delete(slot.key);
+      }
+    }
+  }
+
+  useEffect(() => {
+    for (const [key, entry] of entries) {
+      if (!entry.exiting || timers.has(key)) continue;
+      timers.set(key, setTimeout(() => {
+        timers.delete(key);
+        entries.delete(key);
+        forceRender();
+      }, duration));
+    }
+  });
+
+  // Clear every pending timer when the owning component unmounts.
+  useEffect(() => () => {
+    for (const timer of timers.values()) {
+      clearTimeout(timer);
+    }
+    timers.clear();
+  }, []);
+
+  if (!isList) {
+    const entry = result[0];
+    return { mounted: Boolean(entry), exiting: Boolean(entry?.exiting) };
+  }
+
+  return result;
+}
+
+function defaultPresenceKey(item) {
+  if (item && typeof item === "object") {
+    return item.key ?? item.id;
+  }
+  return item;
+}
+
 // ── useMediaQuery ──────────────────────────────────────────
 //
 // Returns true while the CSS media query matches and updates reactively.
@@ -2453,6 +2916,10 @@ const VOID_ELEMENTS = new Set([
 ]);
 
 export function renderToString(input, props) {
+  // Each server render starts a fresh useHead collection; a leftover from a
+  // render that never called renderHeadToString() must not leak into this one.
+  ssrHeadEntries = [];
+
   const tree = typeof input === "function"
     ? renderComponentToTree(input, props || {})
     : normalizeTree(input);
@@ -2503,6 +2970,12 @@ function serializeVNode(vnode) {
     return `<${tag}${attributes}>`;
   }
 
+  // Raw HTML mirrors the client-side `innerHTML` prop: emitted verbatim
+  // (never escaped) and replaces children entirely.
+  if (vnode.props.innerHTML != null) {
+    return `<${tag}${attributes}>${String(vnode.props.innerHTML)}</${tag}>`;
+  }
+
   return `<${tag}${attributes}>${serializeChildren(vnode.props.children)}</${tag}>`;
 }
 
@@ -2518,7 +2991,7 @@ function serializeAttributes(props) {
   const parts = [];
 
   for (const name of Object.keys(props)) {
-    if (name === "children" || name === "key" || name === "ref") continue;
+    if (name === "children" || name === "key" || name === "ref" || name === "innerHTML") continue;
 
     const value = props[name];
 
@@ -2651,6 +3124,7 @@ function hydrateChildren(parent, newChildren) {
   let index = 0;
 
   for (const newChild of newChildren) {
+    newChild._containerArray = newChildren;
     index = hydrateNode(parent, doms, index, newChild);
   }
 
@@ -2713,7 +3187,11 @@ function hydrateNode(parent, doms, index, vnode) {
   if (candidate && candidate.nodeType === 1 && candidate.localName === vnode.type) {
     vnode._dom = candidate;
     updateDom(candidate, {}, vnode.props);
-    hydrateChildren(candidate, vnode.props.children);
+    // innerHTML elements own their subtree — hydrating children here would
+    // strip the injected markup (the vnode has no children to claim it).
+    if (vnode.props.innerHTML == null) {
+      hydrateChildren(candidate, vnode.props.children);
+    }
     if (vnode.type === "select" && "value" in vnode.props) {
       candidate.value = vnode.props.value;
     }

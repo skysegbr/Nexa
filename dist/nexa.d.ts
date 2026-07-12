@@ -51,11 +51,15 @@ export type Component<P extends Record<string, unknown> = Record<string, unknown
  * - String `type` → plain DOM element.
  * - Function `type` → calls the component **immediately** (eager evaluation).
  * - `Fragment` → flattens children with no wrapper element.
+ * - `innerHTML` prop → injects the string as raw HTML (works in
+ *   renderToString too). Never combine it with children, and sanitize
+ *   untrusted input — the string is not escaped.
  *
  * @example
  * h('p', { className: 'intro' }, 'Hello world')
  * h(Button, { variant: 'contained', onClick: save }, 'Save')
  * h(Fragment, null, h('dt', null, 'Term'), h('dd', null, 'Definition'))
+ * h('article', { innerHTML: markdownToHtml(post.body) })
  */
 export declare function h(
   type: string | typeof Fragment | Component<any>,
@@ -562,6 +566,78 @@ export declare function useRoutes(
 export declare function useTranslation(dict?: Record<string, string>): {
   t: (key: string, vars?: Record<string, unknown>) => string;
 };
+
+// ── useHead ────────────────────────────────────────────────────────────────
+
+/** One meta tag managed by useHead — keyed by `name` OR `property`. */
+export interface HeadMeta {
+  name?: string;
+  property?: string;
+  content?: string | number;
+}
+
+export interface HeadDescriptor {
+  title?: string;
+  meta?: HeadMeta[];
+}
+
+/**
+ * Declares document metadata (title + meta tags) from a component.
+ * The last component to render a given field wins, so route pages override
+ * app-level defaults. Nothing is removed on unmount.
+ *
+ * On the client the head is applied after the render commits. During
+ * renderToString() the calls are collected instead — call
+ * renderHeadToString() afterwards to get the `<title>`/`<meta>` markup.
+ *
+ * @example
+ * useHead({
+ *   title: 'Dashboard — Acme',
+ *   meta: [
+ *     { name: 'description', content: 'Sales overview' },
+ *     { property: 'og:title', content: 'Dashboard' },
+ *   ],
+ * });
+ */
+export declare function useHead(head: HeadDescriptor): void;
+
+/**
+ * Returns the `<title>`/`<meta>` markup collected by useHead calls during the
+ * last renderToString() pass, and clears the collection. Duplicate meta keys
+ * are deduped (last wins); values are HTML-escaped.
+ */
+export declare function renderHeadToString(): string;
+
+// ── usePresence ────────────────────────────────────────────────────────────
+
+export interface PresenceEntry<T> {
+  key: string;
+  item: T;
+  exiting: boolean;
+}
+
+/**
+ * Keeps elements mounted through their exit animation: a removed item stays
+ * in the output flagged `exiting: true` for `duration` ms so a CSS exit
+ * transition can play before the DOM node is dropped.
+ *
+ * Boolean form (dialogs, banners): pass visibility, get `{ mounted, exiting }`.
+ * List form: pass the array, get entries with per-item `exiting` flags;
+ * exiting items keep their position, and re-adding one cancels its exit.
+ *
+ * @example
+ * const { mounted, exiting } = usePresence(open, { duration: 200 });
+ * @example
+ * const rows = usePresence(todos, { duration: 200, getKey: (t) => t.id });
+ */
+export declare function usePresence(
+  visible: boolean,
+  options?: { duration?: number },
+): { mounted: boolean; exiting: boolean };
+export declare function usePresence<T>(
+  items: T[],
+  options?: { duration?: number; getKey?: (item: T) => string | number },
+): PresenceEntry<T>[];
 
 // ── useContextMenu ─────────────────────────────────────────────────────────
 

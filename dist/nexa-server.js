@@ -19,8 +19,9 @@
 // Bun, Node) — or the browser — can import just what it needs, and so future
 // server-only helpers have a home separate from the client core.
 //
-//   import { renderToString } from "/dist/nexa-server.js";
+//   import { renderToString, renderHeadToString } from "/dist/nexa-server.js";
 //   const html = renderToString(App);
+//   const head = renderHeadToString(); // <title>/<meta> collected by useHead
 //
 // See the `renderToString` docs in dist/nexa.js and docs/AI_SPEC.md §6.
-export { renderToString, hydrate } from "./nexa.js";
+export { renderToString, renderHeadToString, hydrate } from "./nexa.js";

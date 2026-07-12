@@ -574,6 +574,8 @@ vibrate([100, 50, 100]); // pattern
 | `useIntersectionObserver(ref, options?)` | Latest `IntersectionObserverEntry` (null before first observation) |
 | `useWebSocket(url, options?)` | `{ status, lastMessage, send }` — managed WebSocket with auto-reconnect |
 | `useVirtualList(items, options)` | `{ containerRef, virtualItems, totalHeight }` — render only the visible slice of a large list |
+| `useHead({ title, meta })` | Per-route document metadata — sets `document.title` and upserts `<meta>` tags (client), collected by `renderToString` + `renderHeadToString()` (SSR) |
+| `usePresence(visibleOrItems, options?)` | Exit transitions — keeps an element (`{ mounted, exiting }`) or list items (`[{ key, item, exiting }]`) mounted for `duration` ms so a CSS exit animation can play |
 
 ```js
 // useToast + ToastStack

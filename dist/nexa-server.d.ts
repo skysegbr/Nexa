@@ -7,4 +7,4 @@
 /**
  * Type declarations for /dist/nexa-server.js — the server-side rendering entry.
  */
-export { renderToString, hydrate } from "./nexa.js";
+export { renderToString, renderHeadToString, hydrate } from "./nexa.js";
