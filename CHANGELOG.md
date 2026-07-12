@@ -5,7 +5,7 @@ All notable changes to this project are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [0.13.0] - 2026-07-12
 
 ### Changed
 - **Targeted subtree re-renders**: `setState`/`dispatch` now re-render only the component that owns the state (and its subtree) instead of re-running the whole tree from the root. Each component owner tracks what a re-run needs — its function, last props, a snapshot of the provider environment (so `useContext` reads see provided values, not defaults), and the live vnode its last output occupies — and the scheduler patches that vnode in place, batching multiple dirty owners per microtask and skipping owners whose ancestor is also dirty. Automatic fallback to a full root pass covers the cases in-place swapping can't: fragment/portal output, primitive returns, the first update after `hydrate`, and renders that throw (so a `useErrorBoundary` guard above still catches — a targeted run executes outside the guard's try/catch). Queued effects are carried across the fallback so a deps-change effect is never lost. Root-level state (the `render()` component) still renders from the root. 11 new engine tests in `tests/v02-features.test.js`; the 186 pre-existing tests pass unchanged.

@@ -1,6 +1,6 @@
 {
   "name": "nexa",
-  "version": "0.12.1",
+  "version": "0.13.0",
   "description": "Next-generation frontend framework in plain JavaScript, with no build step.",
   "private": true,
   "//": "NOT an npm package and never will be — Nexa has a strict no-Node policy (see 'No Node, By Design' in README.md). This file exists only so editors and TypeScript resolve the module type and type declarations. Distribution is vendored dist/ files or the jsDelivr CDN.",
