@@ -1,0 +1,67 @@
+.fx-deck {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  width: min(920px, 100%);
+  padding: 0.9rem 1rem;
+  border: 1px solid #1d2440;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #0c1226, #080b1a);
+}
+
+.fx-deck-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.fx-btn {
+  padding: 0.45rem 0.85rem;
+  border: 1px solid #2a3560;
+  border-radius: 7px;
+  background: #121a36;
+  color: #c7d2ff;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: background 120ms ease, border-color 120ms ease;
+}
+
+.fx-btn:hover,
+.fx-btn:focus-visible {
+  border-color: #4f7cff;
+  background: #182350;
+}
+
+.fx-btn-small {
+  padding: 0.3rem 0.6rem;
+  font-size: 0.74rem;
+}
+
+.fx-btn-active {
+  border-color: #35e0c2;
+  color: #35e0c2;
+}
+
+.fx-speed {
+  display: inline-flex;
+  gap: 0.3rem;
+  margin-left: 0.4rem;
+}
+
+.fx-clock {
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+  font-size: 0.8rem;
+  color: #7f8fd9;
+}
+
+.fx-scrub {
+  width: 100%;
+  accent-color: #35e0c2;
+}
+
+.fx-deck-scenes {
+  padding-top: 0.2rem;
+  border-top: 1px dashed #1d2440;
+}

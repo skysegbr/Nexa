@@ -1,0 +1,6 @@
+.fx-ring {
+  position: absolute;
+  inset: -14px;
+  border: 2px solid rgba(53, 224, 194, 0.8);
+  border-radius: 50%;
+}

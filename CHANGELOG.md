@@ -5,6 +5,13 @@ All notable changes to this project are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+- **`nexa-motion` add-on** (`dist/nexa-motion.js`) — Flash-style timeline animation: keyframe tracks tweening `transform`/`opacity` (x/y, rotate, skew, scale, per-axis scale), the classic Penner easing set (`outBack`, `outElastic`, `outBounce`, …), labels, frame scripts (crossing-aware, direction-aware; `gotoAndPlay` executes the target frame's script as Flash did), `loop`/`reverse()`/`setSpeed()`, and the quartet: `play() / stop() / gotoAndPlay() / gotoAndStop()`. Elements bind through `tl.track(name)` callback refs (late binders sync to the playhead instantly); one `requestAnimationFrame` ticker per timeline; SSR-safe (no rAF → stays parked). `useTimeline(spec)` wraps the imperative `createTimeline` with mount/unmount lifecycle and autoplay; a component with its own `useTimeline` is a movie clip — nest freely. `stagger(keyframes, eachMs, index)` builds cascade entrances. 18 tests in `tests/motion.test.js`.
+- `examples/nexa-motion` — the 2003 intro, reborn: fake preloader, logo flying in with `outBack`, staggered "MOTION" letter cascade, tagline, `outElastic` badge, a nested looping movie clip (pulsing ring), SKIP INTRO, and a control deck with scrubber, reverse, playback speed, and `gotoAndPlay` scene jumps driven by frame scripts.
+- Docs: `nexa-motion` quick reference in `docs/AI_SPEC.md` §10 and a "Canvas, Editor & Motion" section in the README.
+
 ## [0.13.0] - 2026-07-12
 
 ### Changed

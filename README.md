@@ -295,6 +295,7 @@ python -m http.server 8080
 | [examples/nexa-deck](./examples/nexa-deck) | Full `ZoomStage` presentation about Nexa: five frame kinds, rotated frames, a zoomed-out overview frame, `nexa-components` toolbar |
 | [examples/nexa-atlas](./examples/nexa-atlas) | Atlas-themed `ZoomStage` tour of Nexa: click any background frame to zoom straight to it, plus a live demo frame running real `useState`/`useTheme` mid-presentation |
 | [examples/nexa-architecture](./examples/nexa-architecture) | Modern `ZoomStage` presentation for solution architects: no-build runtime, technical contracts, integration paths, trade-offs, and adoption guidance |
+| [examples/nexa-motion](./examples/nexa-motion) | Flash-style animated intro on `nexa-motion`: preloader, logo flying in with `outBack`, staggered letter cascade, frame scripts, a nested looping movie clip, SKIP INTRO, and a control deck with scrubber, reverse, speed, and `gotoAndPlay` scene jumps |
 | [examples/burger-shop](./examples/burger-shop) | Multi-page ordering flow with a dependency-free Python API: menu, cart/checkout, order tracking with polling, admin panel with product CRUD + image upload. `EmptyMessage`/`StatusBadge` show CSS shared by 2+ components becoming its own paired component instead of a floating class |
 | [examples/burger-shop-fastapi](./examples/burger-shop-fastapi) | Same app as burger-shop, backed by a real FastAPI + SQLModel + SQLite app instead of `http.server` — same frontend, `/dist` mounted straight from the monorepo |
 
@@ -952,10 +953,48 @@ h(BottomNav, {
 h(FAB, { label: "New", aboveNav: true, onClick: openSheet }, "+")
 ```
 
-## Canvas & Editor
+## Canvas, Editor & Motion
 
-Three optional add-ons, each with its own dist files and stylesheet. They are
-not included in `nexa-components.js` — import them directly when you need them.
+Optional add-ons, each with its own dist files. They are not included in
+`nexa-components.js` — import them directly when you need them.
+
+### `nexa-motion` — Flash-style timelines
+
+`dist/nexa-motion.js` (no stylesheet — it tweens inline `transform`/`opacity`).
+The Macromedia Flash mental model on top of `requestAnimationFrame`: a
+timeline with keyframes, tweens and labels, frame scripts, and the API every
+Flash author knew by heart.
+
+```js
+import { useTimeline, stagger, easings } from "./dist/nexa-motion.js";
+
+const tl = useTimeline({
+  duration: 3000,
+  labels: { voo: 500 },
+  tracks: {
+    logo: [
+      { at: 0,   x: -200, opacity: 0 },
+      { at: 500, x: 0,    opacity: 1, ease: "outBack" },
+      { at: 2500, rotate: 360,        ease: "inOutCubic" },
+    ],
+  },
+  onFrame: { voo: () => playWhoosh() },
+});
+
+h("img", { ref: tl.track("logo"), src: "logo.png" })
+// tl.play() / tl.stop() / tl.gotoAndPlay("voo") / tl.gotoAndStop(1200)
+// tl.reverse() / tl.setSpeed(2) / tl.seek(ms)
+```
+
+Keyframes tween `x`/`y` (px), `rotate`/`skewX`/`skewY` (deg),
+`scale`/`scaleX`/`scaleY` and `opacity`; `ease` names how the playhead
+arrives at that keyframe (the classic Penner set — `outBack`, `outElastic`,
+`outBounce`, …). A component with its own `useTimeline` is a movie clip —
+nest them freely. `stagger(keyframes, eachMs, index)` builds cascade
+entrances; `createTimeline(spec)` is the imperative variant for use outside
+components. See [examples/nexa-motion](./examples/nexa-motion) for the full
+2003-intro treatment — preloader, flying logo, letter cascade, SKIP INTRO,
+and a scrubbing control deck.
 
 ### `PipelineCanvas`
 

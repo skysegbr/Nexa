@@ -1585,13 +1585,73 @@ h(CommandPalette, {
 
 ---
 
-## 10. Canvas & Editor Add-ons
+## 10. Canvas, Editor & Motion Add-ons
 
-Three optional add-ons, each its own `dist/nexa-<name>.js` + `.css` pair —
+Optional add-ons, each its own `dist/nexa-<name>.js` (+ `.css` where noted) —
 **not** part of `nexa-components.js`, import them directly. Full prop tables
 and a longer walkthrough live in the README's "Canvas & Editor" section;
 this is the quick-reference version so an agent that only loads this file
 still knows the API exists and how to call it.
+
+### `nexa-motion` — Flash-style timeline animation
+
+`dist/nexa-motion.js` (no CSS file — it animates inline `transform`/`opacity`).
+The Macromedia Flash mental model on browser primitives: a timeline with
+keyframes and tweens, labels, frame scripts, and `play() / stop() /
+gotoAndPlay() / gotoAndStop()`. One `requestAnimationFrame` ticker per
+timeline; only `transform` and `opacity` are tweened (GPU-friendly).
+
+```js
+import { useTimeline, createTimeline, easings, stagger } from "/dist/nexa-motion.js";
+
+function Intro() {
+  const tl = useTimeline({
+    duration: 3000,            // ms; inferred from the last keyframe if omitted
+    loop: false,               // true = forever, n = extra passes
+    labels: { voo: 500 },
+    tracks: {
+      logo: [
+        { at: 0,   x: -200, opacity: 0 },
+        { at: 500, x: 0,    opacity: 1, ease: "outBack" },
+        { at: 2500, rotate: 360,        ease: "inOutCubic" },
+      ],
+    },
+    onFrame: { voo: () => somDeEntrada() },  // frame scripts (ms or label keys)
+    onComplete: () => setDone(true),
+  });
+
+  return h("div", null,
+    h("img", { ref: tl.track("logo"), src: "logo.png" }),  // bind via ref
+    h("button", { onClick: () => tl.gotoAndPlay("voo") }, "Replay"),
+  );
+}
+```
+
+- **Keyframes**: `{ at: ms, x?, y?, scale?, scaleX?, scaleY?, rotate?, skewX?,
+  skewY?, opacity?, ease? }` — x/y in px, angles in deg. `ease` names how the
+  playhead ARRIVES at that keyframe; a property absent from a keyframe tweens
+  straight through it (per-property tracks).
+- **Easings**: the classic Penner set (written for Flash!): `linear`,
+  `in/out/inOutQuad`, `in/out/inOutCubic`, `in/out/inOutBack`, `outElastic`,
+  `outBounce` — exported as `easings`.
+- **Controller**: `play`, `stop`, `gotoAndPlay(msOrLabel)`,
+  `gotoAndStop(msOrLabel)`, `seek`, `reverse()`, `setSpeed(n)`,
+  `track(name)` → ref, `time`, `duration`, `isPlaying`, `label(name)`,
+  `destroy`.
+- **Frame scripts** fire when the playhead crosses them while playing
+  (direction-aware); `gotoAndPlay` also executes a script sitting exactly on
+  the target (as Flash did); plain seeks fire nothing.
+- **MovieClips**: a child component with its own `useTimeline` is a movie
+  clip — nest freely, each ticks independently (see `examples/nexa-motion`'s
+  pulsing ring).
+- **`stagger(keyframes, eachMs, index)`** shifts a keyframe list for cascade
+  entrances. `createTimeline(spec)` is the imperative, hook-free variant
+  (call `destroy()` yourself). `useTimeline` captures its spec on first
+  render (like `createLazy` — treat it as static) and autoplays on mount
+  unless `autoplay: false`.
+
+Full showcase: `examples/nexa-motion` — preloader, flying logo, letter
+cascade, SKIP INTRO, scrubber and scene-jump deck.
 
 ### `PipelineCanvas`
 
