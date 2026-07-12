@@ -1,6 +1,7 @@
 .me-stage {
   position: relative;
-  height: 320px;
+  flex: 1;
+  min-height: 240px;
   overflow: hidden;
   border: 1px solid #1d2440;
   border-radius: 12px;

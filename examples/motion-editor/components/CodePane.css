@@ -1,6 +1,8 @@
 .me-code {
   display: flex;
   flex-direction: column;
+  flex: 1;
+  min-height: 200px;
   padding: 0.9rem;
   border: 1px solid #1d2440;
   border-radius: 12px;
@@ -19,9 +21,10 @@
 }
 
 .me-code-body {
+  flex: 1;
+  min-height: 0;
   margin: 0.6rem 0 0;
   padding: 0.7rem;
-  max-height: 320px;
   overflow: auto;
   border-radius: 8px;
   background: #070a18;
