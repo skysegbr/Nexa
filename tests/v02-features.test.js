@@ -3,6 +3,7 @@
 
 import {
   h,
+  hydrate,
   render,
   createContext,
   createLazy,
@@ -71,8 +72,8 @@ test("innerHTML: removing the prop clears the injected content", async () => {
   assertEqual(mp.querySelector("p").textContent, "plain");
 });
 
-test("innerHTML: renderToString emits it verbatim instead of children", async () => {
-  const html = renderToString(h("div", { className: "x", innerHTML: "<b>&amp; raw</b>" }, "ignored child"));
+test("innerHTML: renderToString emits it verbatim (never escaped)", async () => {
+  const html = renderToString(h("div", { className: "x", innerHTML: "<b>&amp; raw</b>" }));
   assertEqual(html, '<div class="x"><b>&amp; raw</b></div>');
 });
 
@@ -509,6 +510,317 @@ test("subtree: createLazy resolution re-renders only the lazy owner", async () =
   await flush();
   assertEqual(mp.querySelector("mark").textContent, "loaded");
   assertEqual(appRenders, 1, "resolution must not re-render the whole app");
+});
+
+// ── regressions from the branch code review ────────────────
+
+test("review: fallback inside a memo parent still commits the update", async () => {
+  const mp = mountPoint();
+  let bump;
+
+  function Toggle() {
+    const [on, set] = useState(false);
+    bump = () => set(true);
+    return on
+      ? [h("i", { className: "fa" }, "a"), h("i", { className: "fb" }, "b")]
+      : h("button", null, "single");
+  }
+
+  const Wrap = memo(function Wrap() {
+    return h("div", null, h(Toggle));
+  });
+
+  function App() {
+    return h("main", null, h(Wrap));
+  }
+
+  render(App, mp);
+  await flush();
+  assert(mp.querySelector("button"), "starts as a single element");
+
+  bump();
+  await flush();
+  assert(!mp.querySelector("button"), "old output must be gone");
+  assert(mp.querySelector(".fa") && mp.querySelector(".fb"), "fragment output must commit through the memo parent");
+});
+
+test("review: a throw under a memo parent still reaches the error boundary", async () => {
+  const mp = mountPoint();
+  let boom;
+
+  function Bomb() {
+    const [n, set] = useState(0);
+    boom = () => set(1);
+    if (n > 0) {
+      throw new Error("bomb");
+    }
+    return h("span", null, "fine");
+  }
+
+  const Wrap = memo(function Wrap() {
+    return h("section", null, h(Bomb));
+  });
+
+  function App() {
+    const [error, , guard] = useErrorBoundary();
+    return h("div", null, error ? h("b", null, "caught") : guard(() => h(Wrap)));
+  }
+
+  render(App, mp);
+  await flush();
+  assertEqual(mp.querySelector("span").textContent, "fine");
+
+  boom();
+  await flush();
+  assertEqual(mp.querySelector("b")?.textContent, "caught", "boundary must latch through the memo parent");
+});
+
+test("review: provider change blocks memo skip so context snapshots stay fresh", async () => {
+  const mp = mountPoint();
+  const Ctx = createContext("default");
+  let setVal;
+  let reveal;
+
+  function Consumer() {
+    const [show, set] = useState(false);
+    reveal = () => set(true);
+    // Reading the context only in the revealed branch is safe in Nexa:
+    // useContext consumes no hook cursor.
+    const value = show ? useContext(Ctx) : "hidden";
+    return h("b", null, String(value));
+  }
+
+  const Wrap = memo(function Wrap() {
+    return h("section", null, h(Consumer));
+  });
+
+  function App() {
+    const [v, set] = useState("A");
+    setVal = set;
+    return h("div", null, Ctx.provide(v, () => h(Wrap)));
+  }
+
+  render(App, mp);
+  await flush();
+  assertEqual(mp.querySelector("b").textContent, "hidden");
+
+  setVal("B");
+  await flush();
+
+  reveal();
+  await flush();
+  assertEqual(
+    mp.querySelector("b").textContent,
+    "B",
+    "targeted re-render must see the value provided AFTER the memo boundary was crossed",
+  );
+});
+
+test("review: dep-less effects run exactly once per commit across the shape-change fallback", async () => {
+  const mp = mountPoint();
+  let effectRuns = 0;
+  let bump;
+
+  function Frag() {
+    const [n, set] = useState(0);
+    bump = () => set((v) => v + 1);
+    useEffect(() => {
+      effectRuns += 1;
+    });
+    return n === 0 ? h("span", null, "one") : [h("i", null, "a"), h("i", null, "b")];
+  }
+
+  function App() {
+    return h("div", null, h(Frag));
+  }
+
+  render(App, mp);
+  await flush();
+  assertEqual(effectRuns, 1);
+
+  bump();
+  await flush();
+  assertEqual(mp.querySelectorAll("i").length, 2);
+  assertEqual(effectRuns, 2, "the carried + re-queued entries must dedupe to one run");
+});
+
+test("review: effects run only after every sibling in the batch has patched", async () => {
+  const mp = mountPoint();
+  let observed = null;
+  let bumpA;
+  let bumpB;
+
+  function A() {
+    const [n, set] = useState(0);
+    bumpA = () => set(1);
+    useEffect(() => {
+      if (n > 0) {
+        observed = mp.querySelector(".b-out").textContent;
+      }
+    }, [n]);
+    return h("span", null, String(n));
+  }
+
+  function B() {
+    const [n, set] = useState(0);
+    bumpB = () => set(1);
+    return h("em", { className: "b-out" }, String(n));
+  }
+
+  function App() {
+    return h("div", null, h(A), h(B));
+  }
+
+  render(App, mp);
+  await flush();
+
+  bumpA();
+  bumpB();
+  await flush();
+  assertEqual(observed, "1", "A's effect must see B's committed DOM, not the stale value");
+});
+
+test("review: one fallback in a batch does not re-render the other members twice", async () => {
+  const mp = mountPoint();
+  const renders = { b: 0 };
+  let bumpFrag;
+  let bumpB;
+
+  function FragToggle() {
+    const [n, set] = useState(0);
+    bumpFrag = () => set(1);
+    return n === 0 ? h("span", null, "s") : [h("i", null, "a"), h("i", null, "b")];
+  }
+
+  function Counter() {
+    renders.b += 1;
+    const [n, set] = useState(0);
+    bumpB = () => set(1);
+    return h("em", null, String(n));
+  }
+
+  function App() {
+    return h("div", null, h(FragToggle), h(Counter));
+  }
+
+  render(App, mp);
+  await flush();
+  assertEqual(renders.b, 1);
+
+  bumpFrag();
+  bumpB();
+  await flush();
+  assertEqual(mp.querySelector("em").textContent, "1");
+  assertEqual(renders.b, 2, "the root fallback already covered Counter — no second targeted pass");
+});
+
+test("review: innerHTML drops children (warning once) instead of corrupting the tree", async () => {
+  const mp = mountPoint();
+  const warns = [];
+  const originalWarn = console.warn;
+  console.warn = (...args) => warns.push(args.join(" "));
+  let toggleShow;
+
+  function Mix() {
+    const [show, set] = useState(false);
+    toggleShow = () => set(true);
+    return h(
+      "div",
+      null,
+      h("p", { innerHTML: "<u>raw</u>" }, show && h("span", { className: "ghost" }, "x")),
+      h("b", null, String(show)),
+    );
+  }
+
+  try {
+    render(Mix, mp);
+    await flush();
+    assert(mp.querySelector("u"), "raw HTML injected");
+    assertEqual(warns.length, 0, "falsy conditional children must not warn");
+
+    toggleShow();
+    await flush();
+    assertEqual(mp.querySelector("b").textContent, "true", "app keeps rendering");
+    assert(mp.querySelector("u"), "raw HTML preserved");
+    assert(!mp.querySelector(".ghost"), "conflicting child is dropped");
+    assertEqual(warns.filter((w) => w.includes("innerHTML")).length, 1, "one warning for real children");
+  } finally {
+    console.warn = originalWarn;
+  }
+});
+
+test("review: removing innerHTML with a conditional child swap does not wedge the app", async () => {
+  const mp = mountPoint();
+  let toggleRich;
+
+  function Sw() {
+    const [rich, set] = useState(true);
+    toggleRich = () => set(false);
+    return h("p", rich ? { innerHTML: "<u>r</u>" } : {}, !rich && h("span", null, "plain"));
+  }
+
+  render(Sw, mp);
+  await flush();
+  assert(mp.querySelector("u"), "starts with raw HTML");
+
+  toggleRich();
+  await flush();
+  assert(!mp.querySelector("u"), "raw content cleared");
+  assertEqual(mp.querySelector("span").textContent, "plain", "vnode children take over cleanly");
+});
+
+test("review: hydrate adopts innerHTML content without rebuilding it", async () => {
+  const mp = mountPoint();
+
+  function Page() {
+    return h("div", { className: "host", innerHTML: "<b>keep</b>" });
+  }
+
+  mp.innerHTML = renderToString(Page);
+  const before = mp.querySelector(".host b");
+  assert(before, "server markup present before hydration");
+
+  hydrate(Page, mp);
+  assert(mp.querySelector(".host b") === before, "the node inside the innerHTML region must be reused, not recreated");
+});
+
+test("review: setState on an unmounted component warns once", async () => {
+  const mp = mountPoint();
+  const warns = [];
+  const originalWarn = console.warn;
+  console.warn = (...args) => warns.push(args.join(" "));
+  let setInner;
+  let hide;
+
+  function Temp() {
+    const [n, set] = useState(0);
+    setInner = set;
+    return h("u", null, String(n));
+  }
+
+  function App() {
+    const [show, set] = useState(true);
+    hide = () => set(false);
+    return h("div", null, show ? h(Temp) : h("p", null, "gone"));
+  }
+
+  try {
+    render(App, mp);
+    await flush();
+    hide();
+    await flush();
+
+    setInner(1);
+    await flush();
+    setInner(2);
+    await flush();
+
+    const unmountedWarns = warns.filter((w) => w.includes("unmounted"));
+    assertEqual(unmountedWarns.length, 1, "exactly one diagnostic per stale owner");
+    assertEqual(mp.querySelector("p").textContent, "gone");
+  } finally {
+    console.warn = originalWarn;
+  }
 });
 
 test("subtree: independent keyed list items keep their own state", async () => {

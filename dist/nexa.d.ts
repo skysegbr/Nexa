@@ -52,8 +52,9 @@ export type Component<P extends Record<string, unknown> = Record<string, unknown
  * - Function `type` → calls the component **immediately** (eager evaluation).
  * - `Fragment` → flattens children with no wrapper element.
  * - `innerHTML` prop → injects the string as raw HTML (works in
- *   renderToString too). Never combine it with children, and sanitize
- *   untrusted input — the string is not escaped.
+ *   renderToString too). Children passed alongside it are dropped with a
+ *   console warning, and sanitize untrusted input — the string is not
+ *   escaped.
  *
  * @example
  * h('p', { className: 'intro' }, 'Hello world')

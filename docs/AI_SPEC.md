@@ -852,8 +852,8 @@ raw HTML into the element:
 h('article', { className: 'post', innerHTML: markdownToHtml(post.body) })
 ```
 
-- **Never combine with children** on the same element — the reconciler owns
-  vnode children and the two overwrite each other (Nexa warns in the console).
+- **Never combine with children** on the same element — `h()` drops the
+  children and warns in the console (raw HTML owns the whole subtree).
   Give the raw HTML its own dedicated leaf element.
 - Re-injected only when the string changes; removing the prop (or passing
   `null`) clears the content.

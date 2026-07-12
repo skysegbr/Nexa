@@ -55,10 +55,40 @@ export function h(type, props, ...children) {
     return renderComponent(type, resolvedProps);
   }
 
+  // An element with raw HTML owns its entire subtree — vnode children are
+  // dropped HERE so no code path downstream (patch, hydrate, SSR) ever sees
+  // the contradictory combination. Keeping them would leave child vnodes
+  // whose DOM nodes innerHTML assignment detaches, wedging later patches.
+  if (resolvedProps.innerHTML != null && resolvedProps.children.length > 0) {
+    warnInnerHTMLChildren(resolvedProps.children);
+    resolvedProps.children = EMPTY_CHILDREN;
+  }
+
   return {
     type,
     props: resolvedProps,
   };
+}
+
+let warnedInnerHTMLChildren = false;
+
+function warnInnerHTMLChildren(children) {
+  // Falsy conditional children (`cond && h(...)`) normalize to empty text
+  // vnodes — dropping those silently is fine; only real content warns.
+  if (warnedInnerHTMLChildren) {
+    return;
+  }
+
+  const meaningful = children.some(
+    (child) => child.type !== TEXT_NODE || child.props.nodeValue !== "",
+  );
+
+  if (meaningful) {
+    warnedInnerHTMLChildren = true;
+    console.warn(
+      "Nexa: an element received both `innerHTML` and children — the children were dropped. Give the element only one of them.",
+    );
+  }
 }
 
 export function render(component, container) {
@@ -74,9 +104,9 @@ export function render(component, container) {
     liveRoots.add(root);
   } else if (root.component !== component) {
     cleanupEffects(root);
-    for (const child of root.children.values()) {
-      markUnmounted(child);
-    }
+    // cleanupEffects marked the whole tree unmounted; this root object is
+    // being reused for the new component, so revive it.
+    root.unmounted = false;
     root.hooks = [];
     root.children.clear();
     root.component = component;
@@ -93,7 +123,6 @@ export function unmount(container) {
   }
 
   cleanupEffects(root);
-  markUnmounted(root);
   // Walk the old VDOM tree so removeVNode can clean up any portal targets
   // (portal children live in a different DOM node — replaceChildren() alone
   // would only clear the root container, leaving portal targets dirty).
@@ -312,6 +341,13 @@ export function createLazy(loader, fallback = null) {
     if (status === 2) throw loadError;
 
     if (currentHookOwner) {
+      // Prune owners that unmounted while still waiting — a loader that
+      // never settles must not pin dead subtrees for the life of the page.
+      for (const owner of pendingOwners) {
+        if (owner.unmounted) {
+          pendingOwners.delete(owner);
+        }
+      }
       pendingOwners.add(currentHookOwner);
     }
 
@@ -625,7 +661,6 @@ function createRoot(component, container) {
     fullRenderQueued: false,
     parent: null,
     unmounted: false,
-    lastVNode: null,
   };
 
   root.renderRoot = root;
@@ -686,10 +721,11 @@ function renderComponent(type, props) {
   parentOwner.nextChildren.add(identity);
 
   // Refresh the targeted-re-render snapshot on every pass (props and the
-  // provider environment may differ from the previous render).
+  // provider environment may differ from the previous render). The context
+  // frame is handled around the memo check below: the skip decision needs
+  // the PREVIOUS snapshot to detect provider changes.
   owner.type = type;
   owner.props = props;
-  owner.contextFrame = contextFrame;
 
   // Memo: skip re-render when props are shallowly equal and neither this
   // owner nor any of its descendants have called setState since last render.
@@ -706,10 +742,27 @@ function renderComponent(type, props) {
     const equal = compare
       ? compare(owner.memoizedProps, props)
       : !shallowPropsChanged(owner.memoizedProps, props);
-    if (equal && !owner.dirty && !hasDirtyDescendant(owner) && !hasStaleContextRead(owner)) {
+    // contextEnvChanged: a skipped subtree keeps its owners' contextFrame
+    // snapshots, which targeted re-renders later replay. hasStaleContextRead
+    // only covers contexts the subtree has ALREADY read — a provider value
+    // change above must also block the skip, or a descendant that reads the
+    // context for the first time during a targeted re-render (new
+    // conditional branch) would see the stale snapshot.
+    if (
+      equal &&
+      !owner.dirty &&
+      !hasDirtyDescendant(owner) &&
+      !hasStaleContextRead(owner) &&
+      !contextEnvChanged(owner.contextFrame, contextFrame)
+    ) {
+      // Values are pairwise-equal, so the fresh chain is interchangeable
+      // with the snapshot — adopt it to keep the snapshot's frames young.
+      owner.contextFrame = contextFrame;
       return owner.memoizedOutput;
     }
   }
+
+  owner.contextFrame = contextFrame;
 
   prepareHookOwner(owner);
 
@@ -749,18 +802,8 @@ function cleanupUnusedChildren(owner) {
   for (const [identity, child] of owner.children) {
     if (!owner.nextChildren.has(identity)) {
       cleanupEffects(child);
-      markUnmounted(child);
       owner.children.delete(identity);
     }
-  }
-}
-
-// A state change on an unmounted component must not schedule work: its owner
-// was dropped from the tree, so there is nothing on screen to update.
-function markUnmounted(owner) {
-  owner.unmounted = true;
-  for (const child of owner.children.values()) {
-    markUnmounted(child);
   }
 }
 
@@ -840,11 +883,22 @@ function shallowPropsChanged(prev, next) {
   return prevKeys.some((k) => !Object.is(prev[k], next[k]));
 }
 
+const warnedUnmountedOwners = new WeakSet();
+
 function scheduleRender(root, dirtyOwner) {
   if (!dirtyOwner || dirtyOwner === root) {
     root.fullRenderQueued = true;
   } else if (dirtyOwner.unmounted) {
     // State set on an unmounted component — nothing on screen depends on it.
+    // Warn once per owner: a stale setter firing usually means an effect is
+    // missing its cleanup, and the old whole-tree re-render used to mask
+    // that leak by keeping the UI in sync anyway.
+    if (!warnedUnmountedOwners.has(dirtyOwner)) {
+      warnedUnmountedOwners.add(dirtyOwner);
+      console.warn(
+        "Nexa: setState called on an unmounted component — ignored. A stale setter usually means an effect is missing its cleanup (subscription, timer, event listener).",
+      );
+    }
     return;
   } else {
     root.dirtyOwners.add(dirtyOwner);
@@ -861,10 +915,11 @@ function scheduleRender(root, dirtyOwner) {
 function flushRender(root) {
   root.renderQueued = false;
 
-  // The root may have been unmounted (or its container re-rendered with a
-  // different root) between scheduling and this microtask — rendering now
-  // would resurrect DOM inside a dead container.
-  if (root.container !== null && roots.get(root.container) !== root) {
+  // The root may have been unmounted between scheduling and this microtask —
+  // rendering now would resurrect DOM inside a dead container. This also
+  // covers server-synthetic roots (renderToString), which never join
+  // liveRoots: a setState fired during a server render is dropped here.
+  if (!liveRoots.has(root)) {
     root.dirtyOwners.clear();
     root.fullRenderQueued = false;
     return;
@@ -880,6 +935,11 @@ function flushRender(root) {
   const batch = new Set(root.dirtyOwners);
   root.dirtyOwners.clear();
 
+  // Effects are deferred until every owner in the batch has patched, so an
+  // effect never observes a sibling's not-yet-committed DOM — the same
+  // contract as a full render: commit everything, then run effects.
+  const deferredEffects = [];
+
   for (const owner of batch) {
     if (owner.unmounted) {
       continue;
@@ -890,13 +950,43 @@ function flushRender(root) {
       continue;
     }
 
-    if (!targetedRender(root, owner)) {
-      // No usable tracking for this owner (first update after hydration,
-      // primitive output, detached vnode) — reconcile from the root instead.
-      fullRender(root);
+    if (!targetedRender(root, owner, deferredEffects)) {
+      // This owner can't be swapped in place: no tracking yet (first update
+      // after hydration, primitive output, detached vnode), output changed
+      // shape, or its render threw. One root pass covers it AND the rest of
+      // the batch. Effects queued by aborted targeted runs ride along in
+      // deferredEffects so a deps-change effect is never lost; runEffects
+      // dedupes any hook the full pass queues again.
+      fullRender(root, deferredEffects);
       return;
     }
   }
+
+  root.pendingEffects = deferredEffects;
+  runEffects(root);
+}
+
+// Compares two provider environments pairwise (same contexts, in the same
+// order, with Object.is-equal values). provide() creates fresh frame objects
+// every render, so chain identity can't be used — but values usually can:
+// providers that memoize their value object compare equal here, keeping memo
+// skips effective below them (same rule as hasStaleContextRead).
+function contextEnvChanged(previous, next) {
+  let a = previous;
+  let b = next;
+
+  while (a && b) {
+    if (a === b) {
+      return false; // shared tail — identical from here up
+    }
+    if (a.context !== b.context || !Object.is(a.value, b.value)) {
+      return true;
+    }
+    a = a.parent;
+    b = b.parent;
+  }
+
+  return a !== b; // one chain is longer — a provider appeared or vanished
 }
 
 function hasDirtyAncestorInBatch(owner, batch) {
@@ -939,9 +1029,13 @@ function fullRender(root, carriedEffects) {
 // output vnode against the new one directly in the parent DOM node — no
 // other component runs and no other DOM subtree is touched.
 //
-// Returns false when this owner cannot be re-rendered in isolation (the
-// caller falls back to fullRender).
-function targetedRender(root, owner) {
+// Effects are NOT run here — they are appended to `deferredEffects` so the
+// caller can run them after the whole batch has committed.
+//
+// Returns false when this owner cannot be re-rendered in isolation (no
+// tracking, output changed shape, or the render threw); the caller then
+// performs one fullRender carrying `deferredEffects` and abandons the batch.
+function targetedRender(root, owner, deferredEffects) {
   const oldVNode = owner.lastVNode;
   const containerArray = oldVNode?._containerArray;
   const parentDom = oldVNode?._dom?.parentNode;
@@ -981,7 +1075,11 @@ function targetedRender(root, owner) {
   try {
     tree = owner.type(owner.props);
     cleanupUnusedChildren(owner);
-  } catch {
+  } catch (error) {
+    // Log here too: the fallback root pass below re-runs the component, but
+    // a non-deterministic throw (throw-once cache patterns) may not
+    // reproduce there — this error object must not vanish silently.
+    console.error("Nexa: a targeted re-render threw — retrying from the root.", error);
     failed = true;
   } finally {
     currentRenderRoot = previousRoot;
@@ -993,12 +1091,15 @@ function targetedRender(root, owner) {
   }
 
   if (failed) {
-    // A targeted run executes outside any useErrorBoundary guard's
-    // try/catch — only a root pass re-enters the guard thunks. Re-render
-    // from the root so a boundary above this component can catch the throw
-    // (and, without one, fullRender's own catch keeps the last good UI).
-    fullRender(root, root.pendingEffects);
-    return true;
+    // A targeted run executes outside any useErrorBoundary guard's try/catch
+    // — only a root pass re-enters the guard thunks. prepareHookOwner
+    // cleared the dirty flag before the run; restore it or a memo ancestor
+    // would skip this subtree during the fallback and the state change (and
+    // the error) would silently never surface. The caller performs the
+    // fullRender, carrying this aborted run's queued effects.
+    owner.dirty = true;
+    deferredEffects.push(...root.pendingEffects);
+    return false;
   }
 
   if (owner.type._isMemo) {
@@ -1010,23 +1111,55 @@ function targetedRender(root, owner) {
 
   if (newChildren.length !== 1 || newChildren[0].type === PORTAL) {
     // The output changed shape (fragment/portal) — only a root pass can
-    // splice that into the parent. The component already ran and its
-    // useEffect hooks already recorded their new deps, so carry the queued
-    // effects over or they would be lost (the re-run would see equal deps).
-    fullRender(root, root.pendingEffects);
-    return true;
+    // splice that into the parent. Same contract as the failed path above:
+    // restore the dirty flag (memo ancestors must not skip the fallback)
+    // and hand the already-queued effects to the caller — the re-run sees
+    // equal deps for stable-dep hooks and would otherwise drop them.
+    owner.dirty = true;
+    deferredEffects.push(...root.pendingEffects);
+    return false;
   }
 
   const patched = patch(parentDom, oldVNode, newChildren[0]);
   containerArray[index] = patched;
   patched._containerArray = containerArray;
   owner.lastVNode = patched;
-  runEffects(root);
+  deferredEffects.push(...root.pendingEffects);
   return true;
 }
 
 function runEffects(root) {
-  for (const { owner, cursor, effect } of root.pendingEffects) {
+  const entries = root.pendingEffects;
+
+  // A hook can be queued twice in one flush (a targeted run aborted into the
+  // full-render fallback re-runs the component, and dep-less or per-render-
+  // identity deps re-queue). Run only the LAST entry per hook, and skip
+  // owners unmounted after queueing — their cleanups already ran and a late
+  // effect would re-subscribe with nothing left to clean it up.
+  const seenCursors = new Map();
+  const toRun = [];
+
+  for (let i = entries.length - 1; i >= 0; i -= 1) {
+    const entry = entries[i];
+    if (entry.owner.unmounted) {
+      continue;
+    }
+
+    let cursors = seenCursors.get(entry.owner);
+    if (!cursors) {
+      cursors = new Set();
+      seenCursors.set(entry.owner, cursors);
+    }
+    if (cursors.has(entry.cursor)) {
+      continue;
+    }
+    cursors.add(entry.cursor);
+    toRun.push(entry);
+  }
+
+  toRun.reverse();
+
+  for (const { owner, cursor, effect } of toRun) {
     const hook = owner.hooks[cursor];
 
     if (typeof hook.cleanup === "function") {
@@ -1039,6 +1172,12 @@ function runEffects(root) {
 }
 
 function cleanupEffects(root) {
+  // Every teardown path marks the owner tree unmounted in the same walk, so
+  // a stale setState afterwards cannot schedule work against detached
+  // vnodes. render()'s component-swap branch reuses the root object and
+  // resets the flag itself.
+  root.unmounted = true;
+
   for (const hook of root.hooks) {
     if (typeof hook?.cleanup === "function") {
       runSafely(hook.cleanup, "Nexa: an effect's cleanup threw during unmount.");
@@ -1337,20 +1476,7 @@ function getKey(vnode) {
   return key === null || key === undefined ? null : String(key);
 }
 
-let warnedInnerHTMLChildren = false;
-
 function updateDom(dom, previousProps, nextProps) {
-  if (
-    !warnedInnerHTMLChildren &&
-    nextProps.innerHTML != null &&
-    nextProps.children?.some((c) => c.type !== TEXT_NODE || c.props.nodeValue !== "")
-  ) {
-    warnedInnerHTMLChildren = true;
-    console.warn(
-      "Nexa: an element received both `innerHTML` and children — the two overwrite each other. Give the element only one of them.",
-    );
-  }
-
   for (const name of Object.keys(previousProps)) {
     if (name === "children" || name === "key") {
       continue;
@@ -2133,26 +2259,37 @@ function applyHead(head) {
     document.title = head.title;
   }
 
-  for (const entry of head.meta || []) {
+  const entries = head.meta || [];
+  if (entries.length === 0) {
+    return;
+  }
+
+  // One scan of <head>, matched in JS instead of via a CSS selector so
+  // arbitrary key strings (quotes, brackets) need no escaping.
+  const existingTags = new Map();
+  for (const tag of document.head.querySelectorAll("meta")) {
+    const name = tag.getAttribute("name");
+    const property = tag.getAttribute("property");
+    if (name != null && !existingTags.has(`name:${name}`)) {
+      existingTags.set(`name:${name}`, tag);
+    }
+    if (property != null && !existingTags.has(`property:${property}`)) {
+      existingTags.set(`property:${property}`, tag);
+    }
+  }
+
+  for (const entry of entries) {
     const keyAttr = entry.name != null ? "name" : entry.property != null ? "property" : null;
     if (!keyAttr) continue;
 
     const keyValue = String(entry.name ?? entry.property);
-    let tag = null;
-
-    // Attribute values are matched in JS instead of via a CSS selector so
-    // arbitrary strings (quotes, brackets) need no escaping.
-    for (const candidate of document.head.querySelectorAll("meta")) {
-      if (candidate.getAttribute(keyAttr) === keyValue) {
-        tag = candidate;
-        break;
-      }
-    }
+    let tag = existingTags.get(`${keyAttr}:${keyValue}`);
 
     if (!tag) {
       tag = document.createElement("meta");
       tag.setAttribute(keyAttr, keyValue);
       document.head.appendChild(tag);
+      existingTags.set(`${keyAttr}:${keyValue}`, tag);
     }
 
     tag.setAttribute("data-nexa-head", "");
@@ -2586,12 +2723,13 @@ export function usePresence(source, { duration = 300, getKey = defaultPresenceKe
   }
 
   // Present → absent: mark as exiting, remembering where the item sat in the
-  // last returned list so it holds its position while animating out.
+  // last returned list so it holds its position while animating out. The
+  // stored entry is reused as-is — every entry got a numeric index in the
+  // bookkeeping pass of the render that stored it.
   for (const [key, entry] of entries) {
     if (liveKeys.has(key)) continue;
-    const exitingEntry = { key, item: entry.item, exiting: true, index: entry.index };
-    entries.set(key, exitingEntry);
-    result.splice(Math.min(exitingEntry.index ?? result.length, result.length), 0, exitingEntry);
+    entry.exiting = true;
+    result.splice(Math.min(entry.index, result.length), 0, entry);
   }
 
   // Refresh bookkeeping for live items (also cancels an in-flight exit when
@@ -3186,7 +3324,15 @@ function hydrateNode(parent, doms, index, vnode) {
   const candidate = doms[index];
   if (candidate && candidate.nodeType === 1 && candidate.localName === vnode.type) {
     vnode._dom = candidate;
-    updateDom(candidate, {}, vnode.props);
+    // Adopt, don't rebuild: seeding previousProps with the server-rendered
+    // markup makes the innerHTML assignment a no-op when the strings match,
+    // preserving node identity inside the region (iframes don't reload,
+    // media doesn't restart). A mismatch falls back to one reassignment.
+    updateDom(
+      candidate,
+      vnode.props.innerHTML != null ? { innerHTML: candidate.innerHTML } : {},
+      vnode.props,
+    );
     // innerHTML elements own their subtree — hydrating children here would
     // strip the injected markup (the vnode has no children to claim it).
     if (vnode.props.innerHTML == null) {
