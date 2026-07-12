@@ -10,7 +10,7 @@
 // (see docs/AI_SPEC.md §12/§14). A single inline app.js like this is only
 // meant as a throwaway showcase.
 
-import { h, render, useState, useRoutes, useRouter } from "/dist/nexa.min.js";
+import { h, render, useState, useRoutes, useRouter, useHead } from "/dist/nexa.min.js";
 import { Button, Card, ThemeToggle, Badge } from "/dist/nexa-components.min.js";
 
 function Nav() {
@@ -25,6 +25,9 @@ function Nav() {
 }
 
 function Home() {
+  // Per-route document metadata: each page declares its own title, so the
+  // browser tab follows the navigation (watch it while clicking the nav).
+  useHead({ title: "Home — Nexa minified" });
   return h(
     Card,
     null,
@@ -42,6 +45,7 @@ function Home() {
 }
 
 function Counter() {
+  useHead({ title: "Counter — Nexa minified" });
   const [n, setN] = useState(0);
   return h(
     Card,
@@ -56,6 +60,7 @@ function Counter() {
 }
 
 function About() {
+  useHead({ title: "About — Nexa minified" });
   return h(
     Card,
     null,

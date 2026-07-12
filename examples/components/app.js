@@ -1,4 +1,4 @@
-import { h, render, useToast, useRouter } from "/dist/nexa.js";
+import { h, render, useHead, useToast, useRouter } from "/dist/nexa.js";
 import { Navbar, ThemeToggle, PaletteSwitcher, DesignSwitcher, ToastStack, Menu, Button } from "/dist/nexa-components.js";
 
 import { PageSwitches }    from "./components/switches/PageSwitches.js";
@@ -37,6 +37,9 @@ function App() {
   const { path, navigate } = useRouter();
   const { toasts, toast }  = useToast();
   const current = EXAMPLE_PAGES.find((p) => p.path === path) ?? EXAMPLE_PAGES[0];
+
+  // Browser tab follows the selected page.
+  useHead({ title: `${current.label} — Nexa Demo` });
 
   return h(
     "div",
