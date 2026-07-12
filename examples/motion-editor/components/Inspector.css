@@ -38,3 +38,27 @@
   margin-top: 0.4rem;
   align-self: flex-start;
 }
+
+.me-subtitle {
+  margin: 0.5rem 0 0;
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #5a6aa8;
+}
+
+.me-guide-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  align-items: flex-start;
+}
+
+.me-field-check {
+  grid-template-columns: 80px auto;
+}
+
+.me-field-check input {
+  width: auto;
+  justify-self: start;
+}

@@ -1665,7 +1665,9 @@ function Intro() {
 Full showcase: `examples/nexa-motion` — preloader, flying logo, letter
 cascade, SKIP INTRO, scrubber and scene-jump deck. Visual authoring:
 `examples/motion-editor` — a Flash-IDE-style timeline editor (draggable
-keyframe diamonds, scrubbing, inspector, live `useTimeline` code export).
+keyframe diamonds with multi-selection, undo/redo via `useHistory`, motion
+guides drawn by clicking on the stage, scrubbing, inspector, live
+`useTimeline` code export).
 
 ### `PipelineCanvas`
 

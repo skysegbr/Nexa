@@ -138,3 +138,8 @@
   border-color: #b6fff0;
   box-shadow: 0 0 10px rgba(53, 224, 194, 0.9);
 }
+
+/* keyframes carrying a motion guide get the Flash guide-layer accent */
+.me-key-guide {
+  border-color: #ffd166;
+}

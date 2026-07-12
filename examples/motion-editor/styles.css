@@ -48,6 +48,21 @@ body {
   font-size: 0.8rem;
 }
 
+.me-history {
+  display: inline-flex;
+  gap: 0.4rem;
+}
+
+.me-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.me-btn:disabled:hover {
+  border-color: #2a3560;
+  background: #121a36;
+}
+
 .me-main {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 320px;

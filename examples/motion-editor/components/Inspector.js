@@ -1,23 +1,39 @@
-// The inspector: edits the selected keyframe's time, tween fields and
-// easing. An emptied field un-keys that property on this keyframe (the
-// property then tweens straight through it), mirroring nexa-motion's
-// per-property keyframe model.
+// The inspector: edits the selected keyframe's time, tween fields, easing
+// and motion guide. An emptied field un-keys that property on this keyframe
+// (the property then tweens straight through it), mirroring nexa-motion's
+// per-property keyframe model. With several keyframes selected it offers
+// the bulk actions; with one, the full editor.
 
 import { h } from "/dist/nexa.js";
 import { easings } from "/dist/nexa-motion.js";
 import { KEYFRAME_FIELDS } from "../data.js";
 
-export function Inspector({ doc, selected, onEdit, onDelete }) {
-  if (!selected) {
+export function Inspector({ doc, selected, drawing, onEdit, onDelete, onStartDrawing, onFinishDrawing, onCancelDrawing }) {
+  if (selected.length === 0) {
     return h(
       "section",
       { className: "me-inspector" },
       h("h2", { className: "me-panel-title" }, "Inspector"),
-      h("p", { className: "me-empty" }, "Select a keyframe on the timeline."),
+      h("p", { className: "me-empty" }, "Select a keyframe on the timeline (shift-click for multi)."),
     );
   }
 
-  const keyframe = doc.tracks[selected.track][selected.index];
+  if (selected.length > 1) {
+    return h(
+      "section",
+      { className: "me-inspector" },
+      h("h2", { className: "me-panel-title" }, `Inspector — ${selected.length} keyframes`),
+      h("p", { className: "me-empty" }, "Drag any selected diamond to move the group together."),
+      h(
+        "button",
+        { type: "button", className: "me-btn me-btn-danger", onClick: onDelete },
+        `delete ${selected.length} keyframes`,
+      ),
+    );
+  }
+
+  const { track, index } = selected[0];
+  const keyframe = doc.tracks[track][index];
 
   const numberField = (name, value, onValue, { step = 1, min } = {}) =>
     h(
@@ -37,7 +53,7 @@ export function Inspector({ doc, selected, onEdit, onDelete }) {
   return h(
     "section",
     { className: "me-inspector" },
-    h("h2", { className: "me-panel-title" }, `Inspector — ${selected.track} @ ${keyframe.at}ms`),
+    h("h2", { className: "me-panel-title" }, `Inspector — ${track} @ ${keyframe.at}ms`),
 
     numberField("at (ms)", keyframe.at, (v) => v !== undefined && onEdit({ at: v }), { step: 25, min: 0 }),
     KEYFRAME_FIELDS.map((field) =>
@@ -62,6 +78,52 @@ export function Inspector({ doc, selected, onEdit, onDelete }) {
           .map((name) => h("option", { key: name, value: name }, name)),
       ),
     ),
+
+    // ── motion guide (Flash's guide layer) ──
+    h("h3", { className: "me-subtitle" }, "Motion guide"),
+    drawing
+      ? h(
+          "div",
+          { className: "me-guide-actions" },
+          h("p", { className: "me-empty" }, `${drawing.points.length} point(s) — click the stage to add more.`),
+          h(
+            "button",
+            {
+              type: "button",
+              className: "me-btn",
+              disabled: drawing.points.length < 2,
+              onClick: onFinishDrawing,
+            },
+            "✓ finish guide",
+          ),
+          h("button", { type: "button", className: "me-btn", onClick: onCancelDrawing }, "✕ cancel"),
+        )
+      : h(
+          "div",
+          { className: "me-guide-actions" },
+          h(
+            "button",
+            { type: "button", className: "me-btn", onClick: onStartDrawing },
+            keyframe.path ? "✎ redraw guide" : "✎ draw guide on stage",
+          ),
+          keyframe.path &&
+            h(
+              "label",
+              { className: "me-field me-field-check" },
+              h("span", null, "orient"),
+              h("input", {
+                type: "checkbox",
+                checked: Boolean(keyframe.orient),
+                onChange: (e) => onEdit({ orient: e.target.checked || undefined }),
+              }),
+            ),
+          keyframe.path &&
+            h(
+              "button",
+              { type: "button", className: "me-btn", onClick: () => onEdit({ path: undefined, orient: undefined }) },
+              "remove guide",
+            ),
+        ),
 
     h(
       "button",

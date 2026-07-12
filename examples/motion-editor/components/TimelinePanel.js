@@ -12,7 +12,9 @@ export function TimelinePanel({
   selected,
   playheadRef,
   onSelect,
-  onMoveKeyframe,
+  onDragStart,
+  onDragPreview,
+  onDragCommit,
   onAddKeyframe,
   onSetDuration,
 }) {
@@ -46,12 +48,13 @@ export function TimelinePanel({
     setPlayhead(at);
   };
 
-  // Diamond dragging via pointer capture; the document is updated on every
-  // move so the stage preview follows the drag live.
+  // Diamond dragging via pointer capture. The panel only reports the time
+  // DELTA of the gesture — app.js applies it to the whole selection as a
+  // draft document and commits one undo step on release.
   const startDrag = (event, trackName, index) => {
     event.stopPropagation();
-    onSelect({ track: trackName, index });
-    dragRef.current = { trackName, index };
+    onDragStart({ track: trackName, index }, event.shiftKey);
+    dragRef.current = { startMs: msFromPointer(event), moved: false };
     // Pointer capture keeps the drag alive outside the diamond; not every
     // event source supports it (synthetic events, older browsers) — the
     // drag still works without it as long as the pointer stays in the lane.
@@ -62,12 +65,15 @@ export function TimelinePanel({
 
   const moveDrag = (event) => {
     if (!dragRef.current) return;
-    const { trackName, index } = dragRef.current;
-    onMoveKeyframe(trackName, index, msFromPointer(event));
+    const delta = msFromPointer(event) - dragRef.current.startMs;
+    if (delta !== 0) dragRef.current.moved = true;
+    if (dragRef.current.moved) onDragPreview(delta);
   };
 
   const endDrag = () => {
+    if (!dragRef.current) return;
     dragRef.current = null;
+    onDragCommit();
   };
 
   const pct = (at) => `${(at / doc.duration) * 100}%`;
@@ -151,9 +157,12 @@ export function TimelinePanel({
               type: "button",
               className:
                 "me-key" +
-                (selected && selected.track === actor.id && selected.index === index ? " me-key-selected" : ""),
+                (selected.some((entry) => entry.track === actor.id && entry.index === index)
+                  ? " me-key-selected"
+                  : "") +
+                (keyframe.path ? " me-key-guide" : ""),
               style: { left: pct(keyframe.at) },
-              title: `${actor.label} @ ${keyframe.at}ms`,
+              title: `${actor.label} @ ${keyframe.at}ms${keyframe.path ? " (motion guide)" : ""}`,
               onPointerDown: (e) => startDrag(e, actor.id, index),
               onPointerMove: moveDrag,
               onPointerUp: endDrag,
