@@ -27,7 +27,28 @@ const html = renderToString(App);
     caption: "renderToString(App) runs the component with no DOM and returns plain HTML — that's what a real server would send. On the right: the actual string this example produced.",
   },
   {
-    title: "2. One component, both sides",
+    title: "2. useHead — real SEO",
+    code: `function App() {
+  useHead({
+    title: "Nexa — SSR + hydrate",
+    meta: [
+      { name: "description",
+        content: "Server-side rendering demo." },
+      { property: "og:title",
+        content: "Nexa SSR demo" },
+    ],
+  });
+  // ...
+}
+
+// after renderToString(App):
+const head = renderHeadToString();
+// <title>Nexa — SSR + hydrate</title>
+// <meta name="description" content="...">`,
+    caption: "useHead declares the page's title and meta tags from inside the component. renderToString collects the calls; renderHeadToString() then returns the <head> markup the server sends — per-route SEO from the same component. On the right: the actual markup.",
+  },
+  {
+    title: "3. One component, both sides",
     code: `function App() {
   const [n, setN] = useState(3);
 
@@ -45,7 +66,7 @@ const html = renderToString(App);
     caption: "The exact same component runs on the server and in the browser. On the server, useState supplies initial values and effects simply don't run — keep browser-only work inside effects.",
   },
   {
-    title: "3. hydrate adopts the DOM",
+    title: "4. hydrate adopts the DOM",
     code: `// the string arrives "over the wire":
 mount.innerHTML = html;
 
@@ -59,7 +80,7 @@ mount.querySelector(".m-card") === cardBefore;
     caption: "hydrate(App, mount) walks the server HTML and adopts it in place — reusing nodes and wiring up event handlers. The status line on the right is this example proving the card node survived.",
   },
   {
-    title: "4. Alive after hydration",
+    title: "5. Alive after hydration",
     code: `h(Button, {
   variant: "contained",
   onClick: () => setN((v) => v + 1),
@@ -125,6 +146,7 @@ function App() {
       h("h1", null, h("em", null, "SSR"), " — recap"),
       h("ul", null,
         h("li", null, "renderToString(App): plain HTML, no DOM, values escaped"),
+        h("li", null, "useHead + renderHeadToString(): title/meta for SEO, collected server-side"),
         h("li", null, "the same component runs on both sides"),
         h("li", null, "effects don't run on the server — browser work stays there"),
         h("li", null, "hydrate() adopts the server DOM, it never recreates it"),

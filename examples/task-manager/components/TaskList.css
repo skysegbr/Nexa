@@ -17,6 +17,20 @@
 
 .tm-task-row:hover { box-shadow: var(--m-shadow-1); }
 
+/* Exit animation — applied by usePresence while a deleted task fades out.
+   Keep the duration in sync with the `duration` option in TaskList.js. */
+.tm-task-row-exit {
+  animation: tm-task-out 260ms ease forwards;
+  pointer-events: none;
+}
+
+@keyframes tm-task-out {
+  to {
+    opacity: 0;
+    transform: translateX(12px);
+  }
+}
+
 .tm-task-row-done .tm-task-title {
   color: var(--m-text-muted);
   text-decoration: line-through;

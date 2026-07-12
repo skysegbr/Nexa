@@ -1,4 +1,4 @@
-import { h } from "/dist/nexa.js";
+import { h, usePresence } from "/dist/nexa.js";
 import { Badge, Chip, Dropdown, EmptyState, Spinner, Tooltip } from "/dist/nexa-components.js";
 
 const PRIORITY_LABEL = { high: "High", medium: "Medium", low: "Low" };
@@ -13,11 +13,17 @@ const STATUS_LABEL = {
  *   tasks, loading, onEdit(task), onDelete(id), onStatusChange(id, status)
  */
 export function TaskList({ tasks, loading, onEdit, onDelete, onStatusChange }) {
+  // A deleted task stays in `rows` flagged `exiting` for the duration of the
+  // fade-out (see .tm-task-row-exit), then leaves the DOM.
+  const rows = usePresence(tasks || [], { duration: 260, getKey: (t) => t.id });
+
   if (loading) {
     return h("div", { className: "tm-loading" }, h(Spinner, { label: "Loading tasks..." }));
   }
 
-  if (!tasks || tasks.length === 0) {
+  // Checked against rows (not tasks) so the last row finishes its exit
+  // animation before the empty state takes its place.
+  if (rows.length === 0) {
     return h(EmptyState, {
       title: "No tasks found",
       description: "Try adjusting the filters or create a new task.",
@@ -27,11 +33,13 @@ export function TaskList({ tasks, loading, onEdit, onDelete, onStatusChange }) {
   return h(
     "div",
     { className: "tm-task-list" },
-    tasks.map((task) => h(TaskRow, { key: task.id, task, onEdit, onDelete, onStatusChange })),
+    rows.map(({ key, item, exiting }) =>
+      h(TaskRow, { key, task: item, exiting, onEdit, onDelete, onStatusChange }),
+    ),
   );
 }
 
-function TaskRow({ task, onEdit, onDelete, onStatusChange }) {
+function TaskRow({ task, exiting, onEdit, onDelete, onStatusChange }) {
   const isDone = task.status === "done";
   const statusItems = [
     {
@@ -68,7 +76,7 @@ function TaskRow({ task, onEdit, onDelete, onStatusChange }) {
 
   return h(
     "div",
-    { className: `tm-task-row${isDone ? " tm-task-row-done" : ""}` },
+    { className: `tm-task-row${isDone ? " tm-task-row-done" : ""}${exiting ? " tm-task-row-exit" : ""}` },
 
     // Quick completion checkbox
     h("input", {

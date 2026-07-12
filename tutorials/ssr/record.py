@@ -2,9 +2,9 @@
 """Record the SSR video tutorial.
 
 Serves the repo root (the player embeds /examples/ssr/ in an iframe), drives
-the live example — opening the raw server-HTML panel, clicking the hydrated
-buttons — and saves the Playwright screen recording as ssr-tutorial.webm
-next to this script.
+the live example — opening the raw server-HTML and useHead head-markup
+panels, clicking the hydrated buttons — and saves the Playwright screen
+recording as ssr-tutorial.webm next to this script.
 
 Requires playwright (`pip install playwright && playwright install chromium`)
 — same dependency as the test suite, no Node.
@@ -58,24 +58,35 @@ def main():
             page.evaluate(f"window.__setStep({n})")
             time.sleep(hold)
 
+        body_panel = example.locator("summary:has-text('renderToString')")
+        head_panel = example.locator("summary:has-text('renderHeadToString')")
+
         # 0 — title card
         step(0, 3.5)
 
         # 1 — renderToString: open the raw server-HTML panel on camera
         step(1, 2.5)
-        example.locator("summary").click()
+        body_panel.click()
+        example.locator("#source").scroll_into_view_if_needed()
         time.sleep(4.5)
 
-        # 2 — one component, both sides (close the panel, read the code)
+        # 2 — useHead: swap panels — close the body string, open the head markup
         step(2, 0.5)
-        example.locator("summary").click()
+        body_panel.click()
+        head_panel.click()
+        example.locator("#head-source").scroll_into_view_if_needed()
         time.sleep(6.0)
 
-        # 3 — hydrate adopts the DOM (status line proves node reuse)
-        step(3, 6.5)
+        # 3 — one component, both sides (close the panel, read the code)
+        step(3, 0.5)
+        head_panel.click()
+        time.sleep(6.0)
 
-        # 4 — alive after hydration: click the hydrated buttons for real
-        step(4, 2.0)
+        # 4 — hydrate adopts the DOM (status line proves node reuse)
+        step(4, 6.5)
+
+        # 5 — alive after hydration: click the hydrated buttons for real
+        step(5, 2.0)
         add = example.locator("button:has-text('Add')")
         for _ in range(3):
             add.click()
@@ -84,8 +95,8 @@ def main():
         example.locator("button:has-text('Reset')").click()
         time.sleep(2.2)
 
-        # 5 — recap card
-        step(5, 5.0)
+        # 6 — recap card
+        step(6, 5.0)
 
         ctx.close()  # flush the recording
         video_path = Path(page.video.path())
