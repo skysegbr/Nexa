@@ -54,34 +54,25 @@
   fill: #35e0c2;
 }
 
+/* Actors are positioned and painted from the document (inline styles);
+   only the shared chrome lives here. */
 .me-actor {
   position: absolute;
-  top: 60px;
-  left: 60px;
+  box-shadow: 0 6px 24px rgba(79, 124, 255, 0.25);
 }
 
-.me-actor-box {
-  width: 56px;
-  height: 56px;
-  border-radius: 10px;
-  background: linear-gradient(135deg, #4f7cff, #35e0c2);
-  box-shadow: 0 6px 24px rgba(79, 124, 255, 0.4);
+.me-kind-text {
+  box-shadow: none;
+  text-align: center;
+  text-shadow: 0 0 18px rgba(255, 209, 102, 0.55);
+  white-space: nowrap;
+  overflow: hidden;
 }
 
-.me-actor-ball {
-  top: 140px;
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 32% 28%, #ffd166, #ef476f);
-  box-shadow: 0 6px 20px rgba(239, 71, 111, 0.4);
-}
-
-.me-actor-star {
-  top: 200px;
-  left: 200px;
-  font-size: 2.6rem;
-  line-height: 1;
-  color: #ffd166;
-  text-shadow: 0 0 18px rgba(255, 209, 102, 0.7);
+/* rubber-band preview while a shape tool drags */
+.me-create-preview {
+  fill: rgba(79, 124, 255, 0.15);
+  stroke: #4f7cff;
+  stroke-width: 1.5;
+  stroke-dasharray: 5 4;
 }

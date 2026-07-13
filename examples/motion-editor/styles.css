@@ -3,6 +3,7 @@
 @import url("./components/Inspector.css");
 @import url("./components/CodePane.css");
 @import url("./components/ProjectBar.css");
+@import url("./components/Toolbox.css");
 
 * {
   box-sizing: border-box;
@@ -83,6 +84,14 @@ body {
   flex-direction: column;
   gap: 0.8rem;
   min-width: 0;
+  min-height: 0;
+}
+
+/* toolbox strip + stage side by side, Flash-style */
+.me-stage-row {
+  display: flex;
+  gap: 0.6rem;
+  flex: 1;
   min-height: 0;
 }
 

@@ -1,15 +1,15 @@
 // Initial document for the motion editor: three actors with a small movie
 // already on the timeline, so there is something to scrub the moment the
-// page opens.
-
-export const ACTORS = [
-  { id: "box", label: "Box", className: "me-actor-box" },
-  { id: "ball", label: "Ball", className: "me-actor-ball" },
-  { id: "star", label: "Star", className: "me-actor-star" },
-];
+// page opens. Actors are part of the document — created with the stage
+// tools, deleted from their track row, saved with the project.
 
 export const INITIAL_DOC = {
   duration: 3000,
+  actors: [
+    { id: "box", label: "Box", kind: "rect", x: 60, y: 60, w: 56, h: 56, fill: "linear-gradient(135deg, #4f7cff, #35e0c2)" },
+    { id: "ball", label: "Ball", kind: "ellipse", x: 60, y: 140, w: 44, h: 44, fill: "radial-gradient(circle at 32% 28%, #ffd166, #ef476f)" },
+    { id: "star", label: "Star", kind: "text", x: 200, y: 200, w: 48, h: 48, fill: "#ffd166", text: "★" },
+  ],
   tracks: {
     box: [
       { at: 0, x: 0, y: 0, rotate: 0, opacity: 1 },
@@ -29,6 +29,17 @@ export const INITIAL_DOC = {
     ],
   },
 };
+
+// Stage tools, Flash-style (adapted from the drawEasyNexa toolbox).
+export const TOOLS = [
+  { id: "select", label: "Select", icon: "➤" },
+  { id: "rect", label: "Rectangle", icon: "▭" },
+  { id: "ellipse", label: "Ellipse", icon: "◯" },
+  { id: "text", label: "Text", icon: "T" },
+];
+
+// Fill palette for newly created actors.
+export const FILLS = ["#4f7cff", "#35e0c2", "#ffd166", "#ef476f", "#c084fc"];
 
 // Editable tween fields shown by the inspector, in display order.
 export const KEYFRAME_FIELDS = ["x", "y", "scale", "rotate", "opacity"];

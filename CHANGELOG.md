@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - `tutorials/nexa-motion` (~40 s): the timeline replayed on camera, easing + `stagger` cascade, `gotoAndPlay` scene jumps with frame scripts driving the deck, the nested movie clip outliving the movie — and a finale inside the Motion Editor (iframe swaps mid-tutorial), playing the doc and dragging a keyframe live.
 - Motion-editor guide editing: selecting a keyframe that carries a motion guide shows the curve's anchor points as draggable handles on the stage — the drag previews live and commits one history step on release. Anchors are recovered from the path string itself (`pathAnchors`), so no editor metadata leaks into the exported code.
 - Motion-editor projects: save the current document under a name, load it back (undoable, like any edit) or reset to the starter movie — persistence on the core's `useLocalStorage` (`ProjectBar.js`).
+- Motion-editor actor creation, Flash-style (toolbox adapted from the drawEasyNexa vector editor): actors are now part of the document — a vertical tool strip (select / rectangle / ellipse / text + fill swatches) sits beside the stage; shape tools rubber-band-drag new actors into place (dashed preview), the text tool places editable text, every new actor gets its own track with a starter keyframe, rows gained a ✕ that deletes actor + track, and everything is undoable and saved with the project. Legacy saved projects inherit the starter cast on load.
 
 ## [0.13.0] - 2026-07-12
 

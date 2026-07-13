@@ -91,6 +91,22 @@
   color: #c7d2ff;
 }
 
+.me-row-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.me-row-actions {
+  display: inline-flex;
+  gap: 0.25rem;
+  flex-shrink: 0;
+}
+
+.me-btn-remove {
+  color: #ff8fa3;
+}
+
 .me-btn-add {
   padding: 0.05rem 0.5rem;
   font-size: 0.85rem;

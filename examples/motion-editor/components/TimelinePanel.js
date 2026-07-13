@@ -16,6 +16,7 @@ export function TimelinePanel({
   onDragPreview,
   onDragCommit,
   onAddKeyframe,
+  onDeleteActor,
   onSetDuration,
 }) {
   const [playhead, setPlayhead] = useState(0);
@@ -135,16 +136,30 @@ export function TimelinePanel({
         h(
           "div",
           { className: "me-row-label" },
-          actor.label,
+          h("span", { className: "me-row-name" }, actor.label),
           h(
-            "button",
-            {
-              type: "button",
-              className: "me-btn me-btn-add",
-              title: "Add keyframe at the playhead",
-              onClick: () => onAddKeyframe(actor.id),
-            },
-            "+",
+            "span",
+            { className: "me-row-actions" },
+            h(
+              "button",
+              {
+                type: "button",
+                className: "me-btn me-btn-add",
+                title: "Add keyframe at the playhead",
+                onClick: () => onAddKeyframe(actor.id),
+              },
+              "+",
+            ),
+            h(
+              "button",
+              {
+                type: "button",
+                className: "me-btn me-btn-add me-btn-remove",
+                title: `Delete ${actor.label} (actor + track)`,
+                onClick: () => onDeleteActor(actor.id),
+              },
+              "✕",
+            ),
           ),
         ),
         h(

@@ -11,8 +11,9 @@
 
 import { h, render, useEffect, useRef, useState } from "/dist/nexa.js";
 import { createTimeline } from "/dist/nexa-motion.js";
-import { ACTORS, INITIAL_DOC } from "./data.js";
+import { FILLS, INITIAL_DOC } from "./data.js";
 import { Stage } from "./components/Stage.js";
+import { Toolbox } from "./components/Toolbox.js";
 import { TimelinePanel } from "./components/TimelinePanel.js";
 import { Inspector } from "./components/Inspector.js";
 import { CodePane } from "./components/CodePane.js";
@@ -33,6 +34,13 @@ function App() {
   const playheadRef = useRef(0);
   const editor = useEditorDoc(INITIAL_DOC, playheadRef);
   const [drawing, setDrawing] = useState(null); // { track, index, points } | null
+  const [tool, setTool] = useState("select");
+  const [fill, setFill] = useState(FILLS[0]);
+
+  const createActor = (actor) => {
+    editor.addActor(actor);
+    setTool("select"); // back to selection after placing, like Flash
+  };
 
   // Controller lifecycle: rebuild on every document change, parked at the
   // same playhead so scrub position survives edits and undo.
@@ -103,19 +111,26 @@ function App() {
       h(
         "div",
         { className: "me-left" },
-        h(Stage, {
-          tl,
-          actors: ACTORS,
-          doc: editor.doc,
-          selected: editor.selected,
-          drawing,
-          onDrawPoint: addDrawingPoint,
-          onEditGuide: (track, index, path) => editor.updateKeyframe(track, index, { path }),
-        }),
+        h(
+          "div",
+          { className: "me-stage-row" },
+          h(Toolbox, { tool, onTool: setTool, fill, onFill: setFill }),
+          h(Stage, {
+            tl,
+            doc: editor.doc,
+            selected: editor.selected,
+            drawing,
+            tool,
+            fill,
+            onDrawPoint: addDrawingPoint,
+            onEditGuide: (track, index, path) => editor.updateKeyframe(track, index, { path }),
+            onCreateActor: createActor,
+          }),
+        ),
         h(TimelinePanel, {
           tl,
           doc: editor.doc,
-          actors: ACTORS,
+          actors: editor.doc.actors,
           selected: editor.selected,
           playheadRef,
           onSelect: editor.select,
@@ -123,6 +138,7 @@ function App() {
           onDragPreview: editor.dragPreview,
           onDragCommit: editor.dragCommit,
           onAddKeyframe: editor.addKeyframe,
+          onDeleteActor: editor.deleteActor,
           onSetDuration: editor.setDuration,
         }),
       ),

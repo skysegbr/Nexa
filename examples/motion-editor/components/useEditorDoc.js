@@ -143,14 +143,46 @@ export function useEditorDoc(initialDoc, playheadRef) {
     }
   };
 
+  // ── actors: created with the stage tools, deleted from their row ──
+
+  const addActor = (actor) => {
+    // Unique id/label per kind: rect-1, rect-2, ...
+    let n = 1;
+    while (effective.actors.some((a) => a.id === `${actor.kind}-${n}`)) n += 1;
+    const id = `${actor.kind}-${n}`;
+    const label = `${actor.kind[0].toUpperCase()}${actor.kind.slice(1)} ${n}`;
+    setDoc({
+      ...effective,
+      actors: [...effective.actors, { ...actor, id, label }],
+      // A starter keyframe at 0 so the new row has a diamond to work from.
+      tracks: { ...effective.tracks, [id]: [{ at: 0, x: 0, y: 0, opacity: 1 }] },
+    });
+    setSelected([{ track: id, index: 0 }]);
+  };
+
+  const deleteActor = (id) => {
+    const tracks = { ...effective.tracks };
+    delete tracks[id];
+    setDoc({
+      ...effective,
+      actors: effective.actors.filter((actor) => actor.id !== id),
+      tracks,
+    });
+    setSelected((current) => current.filter((entry) => entry.track !== id));
+  };
+
   // Loading a project (or resetting) is a normal history step — undoable.
+  // Projects saved before actors became part of the document inherit the
+  // starter cast.
   const load = (nextDoc) => {
-    setDoc(nextDoc);
+    setDoc({ ...nextDoc, actors: nextDoc.actors ?? initialDoc.actors });
     setSelected([]);
   };
 
   return {
     load,
+    addActor,
+    deleteActor,
     doc: effective,
     selected: liveSelected,
     undo,
