@@ -5,14 +5,13 @@
 // on release, not one per pixel).
 
 import { useHistory, useRef, useState } from "/dist/nexa.js";
-
-const snap = (ms) => Math.round(ms / 25) * 25;
+import { snap, selKey } from "./editorUtils.js";
 
 export function useEditorDoc(initialDoc, playheadRef) {
   const { state: doc, set: setDoc, undo, redo, canUndo, canRedo } = useHistory(initialDoc, { limit: 100 });
   const [draft, setDraft] = useState(null); // in-flight drag document
   const [selected, setSelected] = useState([]); // [{ track, index }]
-  const dragOriginRef = useRef(null); // Map "track:index" → original at
+  const dragOriginRef = useRef(null); // [{ track, index, at }] while dragging
   const clipboardRef = useRef(null);
 
   const effective = draft ?? doc;
@@ -25,9 +24,10 @@ export function useEditorDoc(initialDoc, playheadRef) {
   const updateKeyframe = (trackName, index, patch) => {
     // A no-op patch must not touch history: a blur can re-fire change with
     // the value already committed, and pushing a duplicate entry makes the
-    // next undo appear to do nothing.
-    const current = effective.tracks[trackName][index];
-    if (Object.keys(patch).every((key) => Object.is(current[key], patch[key]))) {
+    // next undo appear to do nothing. Missing entries (imported documents
+    // can be sparse) are also no-ops.
+    const current = effective.tracks[trackName]?.[index];
+    if (!current || Object.keys(patch).every((key) => Object.is(current[key], patch[key]))) {
       return;
     }
 
@@ -44,17 +44,18 @@ export function useEditorDoc(initialDoc, playheadRef) {
 
   const addKeyframe = (trackName) => {
     const at = snap(playheadRef.current);
-    const nextTrack = [...effective.tracks[trackName], { at }];
+    // Imported documents may list an actor without a tracks entry.
+    const nextTrack = [...(effective.tracks[trackName] || []), { at }];
     setDoc({ ...effective, tracks: { ...effective.tracks, [trackName]: nextTrack } });
     setSelected([{ track: trackName, index: nextTrack.length - 1 }]);
   };
 
   const deleteSelected = () => {
     if (liveSelected.length === 0) return;
-    const doomed = new Set(liveSelected.map((entry) => `${entry.track}:${entry.index}`));
+    const doomed = new Set(liveSelected.map(selKey));
     const tracks = {};
     for (const [name, keyframes] of Object.entries(effective.tracks)) {
-      tracks[name] = keyframes.filter((_, i) => !doomed.has(`${name}:${i}`));
+      tracks[name] = keyframes.filter((_, i) => !doomed.has(selKey({ track: name, index: i })));
     }
     setDoc({ ...effective, tracks });
     setSelected([]);
@@ -98,36 +99,36 @@ export function useEditorDoc(initialDoc, playheadRef) {
   const select = (entry, additive) => {
     setSelected((current) => {
       if (!additive) return [{ ...entry }];
-      const key = `${entry.track}:${entry.index}`;
-      const without = current.filter((e) => `${e.track}:${e.index}` !== key);
+      const key = selKey(entry);
+      const without = current.filter((e) => selKey(e) !== key);
       return without.length === current.length ? [...current, { ...entry }] : without;
     });
   };
 
   const dragStart = (entry, additive) => {
     // Dragging an unselected diamond selects it first (Flash behavior).
-    const key = `${entry.track}:${entry.index}`;
-    const isSelected = liveSelected.some((e) => `${e.track}:${e.index}` === key);
+    const key = selKey(entry);
+    const isSelected = liveSelected.some((e) => selKey(e) === key);
     const nextSelection = isSelected && !additive ? liveSelected : additive
-      ? [...liveSelected.filter((e) => `${e.track}:${e.index}` !== key), entry]
+      ? [...liveSelected.filter((e) => selKey(e) !== key), entry]
       : [entry];
     setSelected(nextSelection);
 
-    const origins = new Map();
-    for (const sel of nextSelection) {
-      origins.set(`${sel.track}:${sel.index}`, effective.tracks[sel.track][sel.index].at);
-    }
-    dragOriginRef.current = origins;
+    // Plain objects — no string round-trip, so track names from imported
+    // JSON can contain any character without corrupting the drag.
+    dragOriginRef.current = nextSelection.map((sel) => ({
+      track: sel.track,
+      index: sel.index,
+      at: effective.tracks[sel.track][sel.index].at,
+    }));
   };
 
   const dragPreview = (deltaMs) => {
     const origins = dragOriginRef.current;
     if (!origins) return;
     const tracks = { ...effective.tracks };
-    for (const [key, originalAt] of origins) {
-      const [trackName, indexText] = key.split(":");
-      const index = Number(indexText);
-      const nextAt = snap(Math.max(0, Math.min(effective.duration, originalAt + deltaMs)));
+    for (const { track: trackName, index, at } of origins) {
+      const nextAt = snap(Math.max(0, Math.min(effective.duration, at + deltaMs)));
       tracks[trackName] = tracks[trackName].map((keyframe, i) =>
         i === index ? { ...keyframe, at: nextAt } : keyframe,
       );
@@ -171,7 +172,26 @@ export function useEditorDoc(initialDoc, playheadRef) {
     setSelected([{ track: id, index: 0 }]);
   };
 
+  // Z-order, Flash's Arrange: actors paint in document order, so moving an
+  // actor within the array is moving it between layers. `delta` is ±1 for
+  // one step, ±Infinity for front/back.
+  const moveActorLayer = (id, delta) => {
+    const index = effective.actors.findIndex((actor) => actor.id === id);
+    if (index === -1) return;
+    const target = Math.max(0, Math.min(effective.actors.length - 1, delta === Infinity ? effective.actors.length - 1 : delta === -Infinity ? 0 : index + delta));
+    if (target === index) return;
+    const actors = [...effective.actors];
+    const [moved] = actors.splice(index, 1);
+    actors.splice(target, 0, moved);
+    setDoc({ ...effective, actors });
+  };
+
   const deleteActor = (id) => {
+    // Unknown id (stale selection): committing anyway would push a
+    // content-identical history entry — the "undo does nothing" bug.
+    if (!effective.actors.some((actor) => actor.id === id)) {
+      return;
+    }
     const tracks = { ...effective.tracks };
     delete tracks[id];
     setDoc({
@@ -184,9 +204,17 @@ export function useEditorDoc(initialDoc, playheadRef) {
 
   // Loading a project (or resetting) is a normal history step — undoable.
   // Projects saved before actors became part of the document inherit the
-  // starter cast.
+  // starter cast, and every actor is guaranteed a tracks entry so sparse
+  // imported documents can't crash keyframe mutations.
   const load = (nextDoc) => {
-    setDoc({ ...nextDoc, actors: nextDoc.actors ?? initialDoc.actors });
+    const actors = nextDoc.actors ?? initialDoc.actors;
+    const tracks = { ...nextDoc.tracks };
+    for (const actor of actors) {
+      if (!tracks[actor.id]) {
+        tracks[actor.id] = [];
+      }
+    }
+    setDoc({ ...nextDoc, actors, tracks });
     setSelected([]);
   };
 
@@ -197,8 +225,12 @@ export function useEditorDoc(initialDoc, playheadRef) {
     addActor,
     deleteActor,
     updateActor,
+    moveActorLayer,
     clearSelection,
     doc: effective,
+    // The committed document (no in-flight drag draft): rebuild triggers key
+    // off this so a drag preview doesn't recompile the runtime per pixel.
+    committedDoc: doc,
     selected: liveSelected,
     undo,
     redo,

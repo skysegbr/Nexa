@@ -1,7 +1,11 @@
 // Live code export: the current document rendered as ready-to-paste
 // useTimeline() source. What you scrubbed is what you ship.
 
-import { h, useState } from "/dist/nexa.js";
+import { h, useMemo, useState } from "/dist/nexa.js";
+
+// new RegExp(string) instead of a literal: the repo's lightweight syntax
+// validator balances brackets and would trip on the character class.
+const IDENTIFIER_RE = new RegExp("^[A-Za-z_$][A-Za-z0-9_$]*$");
 
 function formatKeyframe(keyframe) {
   const parts = Object.entries(keyframe).map(([key, value]) =>
@@ -18,7 +22,11 @@ export function generateCode(doc) {
   ];
 
   for (const [name, keyframes] of Object.entries(doc.tracks)) {
-    lines.push(`    ${name}: [`);
+    // Editor-generated track names (rect-1, text-2) are not valid JS
+    // identifiers — quote them or the "ready-to-paste" code is a
+    // SyntaxError.
+    const key = IDENTIFIER_RE.test(name) ? name : JSON.stringify(name);
+    lines.push(`    ${key}: [`);
     for (const keyframe of [...keyframes].sort((a, b) => a.at - b.at)) {
       lines.push(formatKeyframe(keyframe));
     }
@@ -31,7 +39,7 @@ export function generateCode(doc) {
 
 export function CodePane({ doc }) {
   const [copied, setCopied] = useState(false);
-  const code = generateCode(doc);
+  const code = useMemo(() => generateCode(doc), [doc]);
 
   const copy = () => {
     navigator.clipboard?.writeText(code).then(() => {

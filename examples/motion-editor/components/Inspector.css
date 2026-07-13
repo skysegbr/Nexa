@@ -63,6 +63,16 @@
   justify-self: start;
 }
 
+.me-arrange-row {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.me-btn-small {
+  padding: 0.25rem 0.55rem;
+  font-size: 0.78rem;
+}
+
 .me-fill-row {
   display: flex;
   align-items: center;

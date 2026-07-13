@@ -326,6 +326,80 @@ test("motion: orient rotates the element along the guide's tangent", async () =>
   assert(transform.includes("rotate(90deg)"), `expected tangent rotation of 90deg, got: ${transform}`);
 });
 
+test("motion: a typo'd onFrame key throws instead of poisoning the duration with NaN", async () => {
+  let threw = null;
+  try {
+    createTimeline({
+      labels: { final: 1000 },
+      tracks: { a: [{ at: 0, x: 0 }] },
+      onFrame: { finale: () => {} }, // typo: not a label, not a number
+    });
+  } catch (error) {
+    threw = error;
+  }
+  assert(threw, "unknown onFrame keys must throw at construction");
+  assert(String(threw.message).includes("finale"), `error should name the key, got: ${threw?.message}`);
+});
+
+test("motion: set steps clear when the playhead moves back before them", async () => {
+  const { tl, el } = boundTimeline({
+    duration: 1000,
+    tracks: {
+      s: [
+        { at: 500, set: { backgroundPosition: "-64px 0px" } },
+      ],
+    },
+  });
+
+  tl.seek(700);
+  assertEqual(el.style.backgroundPosition, "-64px 0px");
+
+  tl.seek(100);
+  assertEqual(el.style.backgroundPosition, "", "styles from a not-yet-reached step must be cleared");
+});
+
+test("motion: play() after a finite-loop movie completes restores the loop budget", async () => {
+  let loops = 0;
+  const { tl } = boundTimeline({
+    duration: 40,
+    loop: 1,
+    tracks: { a: [{ at: 0, x: 0 }, { at: 40, x: 10 }] },
+    onLoop: () => {
+      loops += 1;
+    },
+  });
+
+  tl.play();
+  await wait(200); // first run: 2 passes (1 loop), completes
+  assert(!tl.isPlaying, "movie completed");
+  assertEqual(loops, 1);
+
+  tl.play(); // replay must loop again, like gotoAndPlay(0) does
+  await wait(200);
+  assertEqual(loops, 2, "replay via play() must restore loopsLeft");
+});
+
+test("motion: orient holds the guide's boundary tangent outside the span", async () => {
+  const { tl, el } = boundTimeline({
+    duration: 2000,
+    tracks: {
+      comet: [
+        { at: 0 },
+        { at: 1000, path: "M 0 0 L 0 100", orient: true }, // tangent 90deg
+      ],
+    },
+  });
+
+  tl.seek(1500); // past the guide span
+  assert(
+    el.style.transform.includes("rotate(90deg)"),
+    `orientation must hold the end tangent after the span, got: ${el.style.transform}`,
+  );
+
+  tl.seek(1000);
+  assert(el.style.transform.includes("rotate(90deg)"), "still oriented at the span end");
+});
+
 test("motion: late-bound elements sync to the playhead immediately", async () => {
   const tl = createTimeline({
     tracks: { box: [{ at: 0, opacity: 0 }, { at: 1000, opacity: 1 }] },

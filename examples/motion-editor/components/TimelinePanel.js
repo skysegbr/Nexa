@@ -4,11 +4,11 @@
 // with its container.
 
 import { h, useEffect, useRef, useState } from "/dist/nexa.js";
+import { snap } from "./editorUtils.js";
 
 export function TimelinePanel({
   tl,
   doc,
-  actors,
   selected,
   playheadRef,
   onSelect,
@@ -38,7 +38,7 @@ export function TimelinePanel({
   const msFromPointer = (event) => {
     const rect = rulerRef.current.getBoundingClientRect();
     const ratio = Math.min(1, Math.max(0, (event.clientX - rect.left) / rect.width));
-    return Math.round((ratio * doc.duration) / 25) * 25;
+    return snap(ratio * doc.duration);
   };
 
   const scrub = (event) => {
@@ -129,7 +129,7 @@ export function TimelinePanel({
       ),
     ),
 
-    actors.map((actor) =>
+    doc.actors.map((actor) =>
       h(
         "div",
         { key: actor.id, className: "me-row" },

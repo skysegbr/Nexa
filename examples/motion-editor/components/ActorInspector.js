@@ -6,7 +6,7 @@
 import { h } from "/dist/nexa.js";
 import { FILLS } from "../data.js";
 
-export function ActorInspector({ actor, onEdit, onDelete }) {
+export function ActorInspector({ actor, onEdit, onDelete, onArrange }) {
   const numberField = (name, value, min) =>
     h(
       "label",
@@ -17,8 +17,13 @@ export function ActorInspector({ actor, onEdit, onDelete }) {
         min,
         value,
         onChange: (e) => {
-          const next = Number(e.target.value);
-          if (Number.isFinite(next)) onEdit({ [name]: Math.round(next) });
+          const raw = Number(e.target.value);
+          if (!Number.isFinite(raw)) return;
+          // The HTML `min` attribute doesn't stop typed values — clamp here
+          // or a typed 0/negative collapses the actor into an invisible,
+          // unclickable box with coincident resize handles.
+          const next = min !== undefined ? Math.max(min, Math.round(raw)) : Math.round(raw);
+          onEdit({ [name]: next });
         },
       }),
     );
@@ -81,6 +86,21 @@ export function ActorInspector({ actor, onEdit, onDelete }) {
           value: actor.fill.startsWith("#") ? actor.fill : "#4f7cff",
           onInput: (e) => onEdit({ fill: e.target.value }),
         }),
+      ),
+    ),
+
+    // Flash's Arrange: paint order = layer order.
+    h(
+      "div",
+      { className: "me-field" },
+      h("span", null, "arrange"),
+      h(
+        "div",
+        { className: "me-arrange-row" },
+        h("button", { type: "button", className: "me-btn me-btn-small", title: "Send to back", onClick: () => onArrange(-Infinity) }, "⤓"),
+        h("button", { type: "button", className: "me-btn me-btn-small", title: "Send backward", onClick: () => onArrange(-1) }, "↓"),
+        h("button", { type: "button", className: "me-btn me-btn-small", title: "Bring forward", onClick: () => onArrange(1) }, "↑"),
+        h("button", { type: "button", className: "me-btn me-btn-small", title: "Bring to front", onClick: () => onArrange(Infinity) }, "⤒"),
       ),
     ),
 

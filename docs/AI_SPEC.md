@@ -50,6 +50,7 @@ Consequences you must respect when writing code, tooling, or reviews:
 /dist/nexa-bootstrap.css   ← optional Bootstrap 5 visual skin (opt-in, see §9)
 /dist/nexa-server.js       ← server-side rendering entry (renderToString)
 /dist/nexa-hmr.js          ← HMR client (dev only — injected by server.py)
+/dist/nexa-motion.js       ← Flash-style timeline animation (useTimeline, motion guides)
 /dist/nexa-canvas.js       ← SVG pipeline canvas (PipelineCanvasController)
 /dist/nexa-canvas.css      ← styles for nexa-canvas
 /dist/nexa-zoom.js         ← pan/zoom presentation canvas (ZoomStage)
@@ -1639,7 +1640,11 @@ function Intro() {
   keyframe makes the element follow that SVG path from the PREVIOUS keyframe
   to this one; the curve's start/end become x/y keyframes so surrounding
   tweens continue seamlessly. `orient: true` rotates along the tangent
-  (Flash's "orient to path").
+  (Flash's "orient to path") and HOLDS the boundary tangent outside the span
+  when the track keys no explicit `rotate`. Contract: inside the span the
+  curve owns x/y — if you also key x/y at the guide's own keyframe, make
+  them match the curve's endpoint or the element jumps at the boundary
+  (likewise, back-to-back guides should join end-to-start).
 - **Frame-by-frame**: `set: { styleProp: value }` applies styles DISCRETELY
   at the keyframe and holds them until the next `set` (no tween) — sprite
   sheets via `backgroundPosition` steps, visibility flips, class-free state.

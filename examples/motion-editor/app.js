@@ -58,18 +58,29 @@ function App() {
 
   const selectedActor = actorSel && editor.doc.actors.find((actor) => actor.id === actorSel);
 
-  // Controller lifecycle: rebuild on every document change, parked at the
-  // same playhead so scrub position survives edits and undo.
+  // Controller lifecycle: rebuild on every COMMITTED document change,
+  // parked at the same playhead so scrub position survives edits and undo.
+  // Drag drafts deliberately don't rebuild — recompiling every track (and
+  // re-measuring every guide path) per pointermove janks the exact
+  // interaction the editor is built around; the preview catches up on
+  // release, when the gesture commits.
   const [tl, setTl] = useState(() => buildController(INITIAL_DOC));
   const lastBuiltRef = useRef(INITIAL_DOC);
   useEffect(() => {
-    if (lastBuiltRef.current === editor.doc) return;
-    lastBuiltRef.current = editor.doc;
+    if (lastBuiltRef.current === editor.committedDoc) return;
+    lastBuiltRef.current = editor.committedDoc;
     tl.destroy();
-    const fresh = buildController(editor.doc);
+    const fresh = buildController(editor.committedDoc);
     fresh.seek(Math.min(playheadRef.current, fresh.duration));
     setTl(fresh);
   });
+
+  // The rebuild effect above only destroys on REPLACEMENT — this one owns
+  // the final controller when the editor unmounts (rAF ticker + guide
+  // paths in the shared hidden svg must not outlive the app).
+  const tlRef = useRef(tl);
+  tlRef.current = tl;
+  useEffect(() => () => tlRef.current.destroy(), []);
 
   // ── motion-guide drawing on the stage ──
 
@@ -96,8 +107,10 @@ function App() {
     onCopy: editor.copySelected,
     onPaste: editor.pasteAtPlayhead,
     onDelete: () => {
-      if (actorSel) {
-        editor.deleteActor(actorSel);
+      // Branch on the VALIDATED selection — actorSel can dangle after the
+      // actor was deleted elsewhere (row ✕, project load).
+      if (selectedActor) {
+        editor.deleteActor(selectedActor.id);
         setActorSel(null);
       } else {
         editor.deleteSelected();
@@ -122,7 +135,17 @@ function App() {
         h("button", { type: "button", className: "me-btn", disabled: !editor.canUndo, onClick: editor.undo }, "↩ undo"),
         h("button", { type: "button", className: "me-btn", disabled: !editor.canRedo, onClick: editor.redo }, "↪ redo"),
       ),
-      h(ProjectBar, { doc: editor.doc, onLoad: editor.load, onNew: () => editor.load(INITIAL_DOC) }),
+      h(ProjectBar, {
+        doc: editor.doc,
+        onLoad: (loaded) => {
+          editor.load(loaded);
+          setActorSel(null);
+        },
+        onNew: () => {
+          editor.load(INITIAL_DOC);
+          setActorSel(null);
+        },
+      }),
       h(
         "p",
         { className: "me-hint" },
@@ -159,7 +182,6 @@ function App() {
         h(TimelinePanel, {
           tl,
           doc: editor.doc,
-          actors: editor.doc.actors,
           selected: editor.selected,
           playheadRef,
           onSelect: selectKeyframe,
@@ -170,7 +192,10 @@ function App() {
           onDragPreview: editor.dragPreview,
           onDragCommit: editor.dragCommit,
           onAddKeyframe: editor.addKeyframe,
-          onDeleteActor: editor.deleteActor,
+          onDeleteActor: (id) => {
+            editor.deleteActor(id);
+            if (actorSel === id) setActorSel(null);
+          },
           onSetDuration: editor.setDuration,
         }),
       ),
@@ -181,6 +206,7 @@ function App() {
           ? h(ActorInspector, {
               actor: selectedActor,
               onEdit: (patch) => editor.updateActor(selectedActor.id, patch),
+              onArrange: (delta) => editor.moveActorLayer(selectedActor.id, delta),
               onDelete: () => {
                 editor.deleteActor(selectedActor.id);
                 setActorSel(null);

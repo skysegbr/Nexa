@@ -23,3 +23,7 @@
   color: #c7d2ff;
   font-size: 0.8rem;
 }
+
+.me-file-input {
+  display: none;
+}

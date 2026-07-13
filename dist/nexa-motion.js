@@ -202,6 +202,13 @@ function createGuidePath(d) {
   return { path, total: path.getTotalLength() };
 }
 
+// Tangent angle (deg) of the path at `length`, sampled over a ±1px window.
+function tangentAt(path, total, length) {
+  const ahead = path.getPointAtLength(Math.min(total, length + 1));
+  const behind = path.getPointAtLength(Math.max(0, length - 1));
+  return (Math.atan2(ahead.y - behind.y, ahead.x - behind.x) * 180) / Math.PI;
+}
+
 // ── Track compilation ────────────────────────────────────────────────────────
 
 const TWEEN_PROPS = ["x", "y", "rotate", "skewX", "skewY", "scale", "scaleX", "scaleY", "opacity"];
@@ -259,13 +266,18 @@ function compileTrack(keyframes) {
     if (keyframe.path) {
       const guide = createGuidePath(keyframe.path);
       if (guide) {
+        const orient = keyframe.orient === true;
         guides.push({
           fromAt: i > 0 ? sorted[i - 1].at : keyframe.at,
           toAt: keyframe.at,
           ease: keyframe.ease,
-          orient: keyframe.orient === true,
+          orient,
           path: guide.path,
           total: guide.total,
+          // Boundary tangents let orientation HOLD outside the span instead
+          // of snapping to 0deg the frame the guide ends.
+          startAngle: orient ? tangentAt(guide.path, guide.total, 0) : 0,
+          endAngle: orient ? tangentAt(guide.path, guide.total, guide.total) : 0,
         });
       }
     }
@@ -295,10 +307,21 @@ function compileTrack(keyframes) {
   // keyframe (a color-only or steps-only track still has a length).
   const lastAt = sorted.length ? sorted[sorted.length - 1].at : 0;
 
+  // Union of every property the steps touch: styleAt must emit a value for
+  // ALL of them on every frame (active step's value or "" to clear), or
+  // discrete styles would leak across backward seeks and loop wraps.
+  const stepKeys = new Set();
+  for (const step of steps) {
+    for (const key of Object.keys(step.styles)) {
+      stepKeys.add(key);
+    }
+  }
+
   return {
     perProp,
     perColor,
     steps,
+    stepKeys,
     guides,
     lastAt,
     hasTransform,
@@ -333,13 +356,19 @@ function styleAt(compiled, time, defaultEase) {
   const style = {};
 
   // 1. Frame-by-frame steps: the last `set` at or before the playhead holds.
-  let activeStep = null;
-  for (const step of compiled.steps) {
-    if (step.at > time) break;
-    activeStep = step;
-  }
-  if (activeStep) {
-    Object.assign(style, activeStep.styles);
+  //    Every step-managed property gets a value each frame — the active
+  //    step's, or "" (clearing the inline style) before the first step or
+  //    when the active step doesn't set it. Assigning only the active
+  //    step's keys would leak styles across backward seeks and loop wraps.
+  if (compiled.steps.length > 0) {
+    let activeStep = null;
+    for (const step of compiled.steps) {
+      if (step.at > time) break;
+      activeStep = step;
+    }
+    for (const key of compiled.stepKeys) {
+      style[key] = activeStep && key in activeStep.styles ? activeStep.styles[key] : "";
+    }
   }
 
   // 2. Color tweens.
@@ -359,11 +388,22 @@ function styleAt(compiled, time, defaultEase) {
     const length = ease(progress) * guide.total;
     guidePoint = guide.path.getPointAtLength(length);
     if (guide.orient) {
-      const ahead = guide.path.getPointAtLength(Math.min(guide.total, length + 1));
-      const behind = length + 1 > guide.total ? guide.path.getPointAtLength(Math.max(0, length - 1)) : guidePoint;
-      guideAngle = (Math.atan2(ahead.y - behind.y, ahead.x - behind.x) * 180) / Math.PI;
+      guideAngle = tangentAt(guide.path, guide.total, length);
     }
     break;
+  }
+
+  // Outside every span, orientation holds the nearest guide's boundary
+  // tangent (last passed guide's end, else next guide's start) — unless the
+  // track keys `rotate` explicitly, which then owns the value out there.
+  if (guideAngle === null && compiled.hasOrient && !compiled.perProp.has("rotate")) {
+    let hold = null;
+    for (const guide of compiled.guides) {
+      if (!guide.orient) continue;
+      if (time > guide.toAt) hold = guide.endAngle;
+      else if (hold === null && time < guide.fromAt) hold = guide.startAngle;
+    }
+    guideAngle = hold;
   }
 
   // 4. Transform + opacity, composed in canonical order (translate → rotate
@@ -440,13 +480,20 @@ export function createTimeline(spec = {}) {
 
   const labels = spec.labels || {};
   const resolveTime = (target) => {
-    if (typeof target === "number") return target;
+    // NaN would silently poison every clamp and the inferred duration —
+    // treat it as the unknown-label error it almost always is (a typo'd
+    // onFrame/goto key coerced through Number()).
+    if (typeof target === "number" && !Number.isNaN(target)) return target;
     if (target in labels) return labels[target];
-    throw new Error(`nexa-motion: unknown label "${target}".`);
+    throw new Error(`nexa-motion: unknown label or time "${target}".`);
   };
 
   const scripts = Object.entries(spec.onFrame || {})
-    .map(([key, fn]) => ({ at: resolveTime(key in labels ? key : Number(key)), fn }))
+    .map(([key, fn]) => {
+      const numeric = Number(key);
+      const at = key in labels ? labels[key] : Number.isNaN(numeric) ? resolveTime(key) : numeric;
+      return { at, fn };
+    })
     .sort((a, b) => a.at - b.at);
   for (const script of scripts) {
     lastKeyframeAt = Math.max(lastKeyframeAt, script.at);
@@ -456,6 +503,7 @@ export function createTimeline(spec = {}) {
   const defaultEase = spec.ease || "linear";
   const elements = new Map(); // trackName → Set<Element>
   const refCallbacks = new Map(); // trackName → stable callback ref
+  const warnedTracks = new Set(); // unknown track names already reported
 
   let time = 0;
   let playing = false;
@@ -471,8 +519,9 @@ export function createTimeline(spec = {}) {
     const bound = elements.get(name);
     if (!bound || bound.size === 0) return;
     const style = styleAt(compiled, time, defaultEase);
+    const keys = Object.keys(style);
     for (const element of bound) {
-      for (const key of Object.keys(style)) {
+      for (const key of keys) {
         element.style[key] = style[key];
       }
     }
@@ -488,14 +537,18 @@ export function createTimeline(spec = {}) {
   // Fire scripts the playhead crossed moving from `fromTime` to `toTime`
   // (exclusive start, inclusive end — a script fires once per pass).
   function fireCrossedScripts(fromTime, toTime) {
+    // `scripts` is sorted by `at`, so each direction can stop scanning the
+    // moment it passes the playhead.
     if (toTime > fromTime) {
       for (const script of scripts) {
-        if (script.at > fromTime && script.at <= toTime) script.fn();
+        if (script.at > toTime) break;
+        if (script.at > fromTime) script.fn();
       }
     } else if (toTime < fromTime) {
       for (let i = scripts.length - 1; i >= 0; i -= 1) {
         const script = scripts[i];
-        if (script.at < fromTime && script.at >= toTime) script.fn();
+        if (script.at < toTime) break;
+        if (script.at < fromTime) script.fn();
       }
     }
   }
@@ -595,9 +648,16 @@ export function createTimeline(spec = {}) {
     // The Flash quartet.
     play() {
       if (destroyed || playing) return;
-      // Replaying a finished movie starts over, like hitting play in Flash.
-      if (direction > 0 && time >= duration) time = 0;
-      if (direction < 0 && time <= 0) time = duration;
+      // Replaying a finished movie starts over, like hitting play in Flash —
+      // with its loop budget restored, same as gotoAndPlay does.
+      if (direction > 0 && time >= duration) {
+        time = 0;
+        loopsLeft = loopsTotal;
+      }
+      if (direction < 0 && time <= 0) {
+        time = duration;
+        loopsLeft = loopsTotal;
+      }
       playing = true;
       startTicker();
     },
@@ -619,10 +679,8 @@ export function createTimeline(spec = {}) {
       startTicker();
     },
     gotoAndStop(target) {
-      if (destroyed) return;
       controller.stop();
-      time = Math.max(0, Math.min(duration, resolveTime(target)));
-      applyAll();
+      controller.seek(target);
     },
     seek(target) {
       if (destroyed) return;
@@ -653,14 +711,20 @@ export function createTimeline(spec = {}) {
         if (node) {
           bound.add(node);
           node.style.willChange = "transform, opacity";
-          // Sync the newcomer to the playhead immediately so late-mounting
-          // elements never flash their unanimated state.
+          // Sync the newcomer to the playhead immediately (through the one
+          // canonical apply path) so late-mounting elements never flash
+          // their unanimated state.
           const compiled = tracks.get(name);
           if (compiled) {
-            const style = styleAt(compiled, time, defaultEase);
-            for (const key of Object.keys(style)) {
-              node.style[key] = style[key];
-            }
+            applyTrack(name, compiled);
+          } else if (!warnedTracks.has(name)) {
+            // The most common silent failure: binding a track the spec
+            // doesn't know. useTimeline captures its spec on FIRST render —
+            // tracks built from data that arrives later never compile.
+            warnedTracks.add(name);
+            console.warn(
+              `nexa-motion: track "${name}" is not in this timeline's spec — the element is bound but nothing will animate it.`,
+            );
           }
         } else {
           // Callback refs receive null without saying WHICH node unmounted,
@@ -713,12 +777,13 @@ export function useTimeline(spec) {
 
   if (!controllerRef.current) {
     controllerRef.current = createTimeline({ ...spec, autoplay: false });
-    controllerRef.current._autoplay = spec?.autoplay !== false;
   }
 
   useEffect(() => {
     const controller = controllerRef.current;
-    if (controller._autoplay) {
+    // The effect entry is created on the first render, so this closure holds
+    // the same spec the controller was built from.
+    if (spec?.autoplay !== false) {
       controller.play();
     }
     return () => controller.destroy();
