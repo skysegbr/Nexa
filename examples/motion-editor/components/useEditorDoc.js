@@ -145,6 +145,17 @@ export function useEditorDoc(initialDoc, playheadRef) {
 
   // ── actors: created with the stage tools, deleted from their row ──
 
+  const updateActor = (id, patch) => {
+    const current = effective.actors.find((actor) => actor.id === id);
+    if (!current || Object.keys(patch).every((key) => Object.is(current[key], patch[key]))) {
+      return;
+    }
+    setDoc({
+      ...effective,
+      actors: effective.actors.map((actor) => (actor.id === id ? { ...actor, ...patch } : actor)),
+    });
+  };
+
   const addActor = (actor) => {
     // Unique id/label per kind: rect-1, rect-2, ...
     let n = 1;
@@ -179,10 +190,14 @@ export function useEditorDoc(initialDoc, playheadRef) {
     setSelected([]);
   };
 
+  const clearSelection = () => setSelected([]);
+
   return {
     load,
     addActor,
     deleteActor,
+    updateActor,
+    clearSelection,
     doc: effective,
     selected: liveSelected,
     undo,

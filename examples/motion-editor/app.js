@@ -18,6 +18,7 @@ import { TimelinePanel } from "./components/TimelinePanel.js";
 import { Inspector } from "./components/Inspector.js";
 import { CodePane } from "./components/CodePane.js";
 import { smoothPath } from "./components/smoothPath.js";
+import { ActorInspector } from "./components/ActorInspector.js";
 import { ProjectBar } from "./components/ProjectBar.js";
 import { useEditorDoc } from "./components/useEditorDoc.js";
 import { useEditorShortcuts } from "./components/useEditorShortcuts.js";
@@ -36,11 +37,26 @@ function App() {
   const [drawing, setDrawing] = useState(null); // { track, index, points } | null
   const [tool, setTool] = useState("select");
   const [fill, setFill] = useState(FILLS[0]);
+  const [actorSel, setActorSel] = useState(null); // actor id | null
+
+  // Keyframe selection and actor selection are mutually exclusive — the
+  // sidebar shows one inspector at a time.
+  const selectActor = (id) => {
+    setActorSel(id);
+    if (id) editor.clearSelection();
+  };
+
+  const selectKeyframe = (entry, additive) => {
+    setActorSel(null);
+    editor.select(entry, additive);
+  };
 
   const createActor = (actor) => {
     editor.addActor(actor);
     setTool("select"); // back to selection after placing, like Flash
   };
+
+  const selectedActor = actorSel && editor.doc.actors.find((actor) => actor.id === actorSel);
 
   // Controller lifecycle: rebuild on every document change, parked at the
   // same playhead so scrub position survives edits and undo.
@@ -79,8 +95,18 @@ function App() {
     redo: editor.redo,
     onCopy: editor.copySelected,
     onPaste: editor.pasteAtPlayhead,
-    onDelete: editor.deleteSelected,
-    onEscape: () => setDrawing(null),
+    onDelete: () => {
+      if (actorSel) {
+        editor.deleteActor(actorSel);
+        setActorSel(null);
+      } else {
+        editor.deleteSelected();
+      }
+    },
+    onEscape: () => {
+      setDrawing(null);
+      setActorSel(null);
+    },
   });
 
   return h(
@@ -119,12 +145,15 @@ function App() {
             tl,
             doc: editor.doc,
             selected: editor.selected,
+            actorSel,
             drawing,
             tool,
             fill,
             onDrawPoint: addDrawingPoint,
             onEditGuide: (track, index, path) => editor.updateKeyframe(track, index, { path }),
             onCreateActor: createActor,
+            onSelectActor: selectActor,
+            onUpdateActor: editor.updateActor,
           }),
         ),
         h(TimelinePanel, {
@@ -133,8 +162,11 @@ function App() {
           actors: editor.doc.actors,
           selected: editor.selected,
           playheadRef,
-          onSelect: editor.select,
-          onDragStart: editor.dragStart,
+          onSelect: selectKeyframe,
+          onDragStart: (entry, additive) => {
+            setActorSel(null);
+            editor.dragStart(entry, additive);
+          },
           onDragPreview: editor.dragPreview,
           onDragCommit: editor.dragCommit,
           onAddKeyframe: editor.addKeyframe,
@@ -145,7 +177,16 @@ function App() {
       h(
         "aside",
         { className: "me-right" },
-        h(Inspector, {
+        selectedActor
+          ? h(ActorInspector, {
+              actor: selectedActor,
+              onEdit: (patch) => editor.updateActor(selectedActor.id, patch),
+              onDelete: () => {
+                editor.deleteActor(selectedActor.id);
+                setActorSel(null);
+              },
+            })
+          : h(Inspector, {
           doc: editor.doc,
           selected: editor.selected,
           drawing,

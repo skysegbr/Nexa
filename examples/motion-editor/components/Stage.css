@@ -69,6 +69,27 @@
   overflow: hidden;
 }
 
+.me-actor-selected {
+  outline: 1.5px dashed #35e0c2;
+  outline-offset: 2px;
+}
+
+/* corner resize handles for the selected actor */
+.me-handle {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  transform: translate(-50%, -50%);
+  border: 1.5px solid #35e0c2;
+  border-radius: 2px;
+  background: #0c1226;
+  touch-action: none;
+  z-index: 5;
+}
+
+.me-handle-nw, .me-handle-se { cursor: nwse-resize; }
+.me-handle-ne, .me-handle-sw { cursor: nesw-resize; }
+
 /* rubber-band preview while a shape tool drags */
 .me-create-preview {
   fill: rgba(79, 124, 255, 0.15);

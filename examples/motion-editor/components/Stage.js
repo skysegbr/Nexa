@@ -11,6 +11,10 @@
 import { h, useRef, useState } from "/dist/nexa.js";
 import { pathAnchors, smoothPath } from "./smoothPath.js";
 import { useStageCreate } from "./useStageCreate.js";
+import { useActorBox } from "./useActorBox.js";
+import { StageOverlay } from "./StageOverlay.js";
+
+const HANDLES = ["nw", "ne", "sw", "se"];
 
 const baseOf = (actor) => ({ x: actor.x + actor.w / 2, y: actor.y + actor.h / 2 });
 
@@ -32,9 +36,21 @@ function actorStyle(actor) {
   return style;
 }
 
-export function Stage({ tl, doc, selected, drawing, tool, fill, onDrawPoint, onEditGuide, onCreateActor }) {
+export function Stage({
+  tl,
+  doc,
+  selected,
+  actorSel,
+  drawing,
+  tool,
+  fill,
+  onDrawPoint,
+  onEditGuide,
+  onCreateActor,
+  onSelectActor,
+  onUpdateActor,
+}) {
   const stageRef = useRef(null);
-  const actorsById = Object.fromEntries(doc.actors.map((actor) => [actor.id, actor]));
 
   const stagePoint = (event) => {
     const rect = stageRef.current.getBoundingClientRect();
@@ -42,6 +58,30 @@ export function Stage({ tl, doc, selected, drawing, tool, fill, onDrawPoint, onE
   };
 
   const create = useStageCreate({ tool, fill, onCreate: onCreateActor, stagePoint });
+  const actorBox = useActorBox({ onCommit: (id, box) => onUpdateActor(id, box) });
+
+  // The live document view: the actor being moved/resized previews from the
+  // local drag box.
+  const liveActor = (actor) => {
+    const box = actorBox.boxOf(actor.id);
+    return box ? { ...actor, ...box } : actor;
+  };
+  const actorsById = Object.fromEntries(doc.actors.map((actor) => [actor.id, liveActor(actor)]));
+  const selectedActor = actorSel ? actorsById[actorSel] : null;
+
+  const actorPointerDown = (event, actor) => {
+    if (tool !== "select" || drawing) return;
+    onSelectActor(actor.id);
+    actorBox.start(event, actorsById[actor.id], "move", stagePoint);
+  };
+
+  const stagePointerDown = (event) => {
+    // Empty-stage click with the selection tool clears the actor selection.
+    if (tool === "select" && !drawing && event.target === stageRef.current) {
+      onSelectActor(null);
+    }
+    create.onPointerDown(event);
+  };
 
   const handleClick = (event) => {
     if (!drawing) return;
@@ -126,77 +166,58 @@ export function Stage({ tl, doc, selected, drawing, tool, fill, onDrawPoint, onE
       ariaLabel: "Preview stage",
       ref: stageRef,
       onClick: handleClick,
-      onPointerDown: create.onPointerDown,
-      onPointerMove: create.onPointerMove,
-      onPointerUp: create.onPointerUp,
+      onPointerDown: stagePointerDown,
+      onPointerMove: (event) => {
+        create.onPointerMove(event);
+        actorBox.move(event, stagePoint);
+      },
+      onPointerUp: () => {
+        create.onPointerUp();
+        actorBox.end();
+      },
     },
-    doc.actors.map((actor) =>
-      h(
+    doc.actors.map((actor) => {
+      const live = actorsById[actor.id];
+      return h(
         "div",
         {
           key: actor.id,
-          className: `me-actor me-kind-${actor.kind} me-actor-${actor.id}`,
-          style: actorStyle(actor),
+          className:
+            `me-actor me-kind-${actor.kind} me-actor-${actor.id}` +
+            (actorSel === actor.id ? " me-actor-selected" : ""),
+          style: actorStyle(live),
           ref: tl.track(actor.id),
+          onPointerDown: (e) => actorPointerDown(e, actor),
         },
         actor.kind === "text" ? actor.text : "",
-      ),
-    ),
-    h(
-      "svg",
-      { className: "me-guides", ariaHidden: "true" },
-      guides.map((guide, i) =>
-        h("path", {
-          key: `${guide.trackName}-${i}`,
-          className: "me-guide",
-          d: guide.d,
-          transform: `translate(${guide.base.x}, ${guide.base.y})`,
+      );
+    }),
+    // Resize handles for the selected actor (selection tool only).
+    selectedActor &&
+      tool === "select" &&
+      !drawing &&
+      HANDLES.map((corner) =>
+        h("div", {
+          key: corner,
+          className: `me-handle me-handle-${corner}`,
+          style: {
+            left: `${corner.includes("w") ? selectedActor.x : selectedActor.x + selectedActor.w}px`,
+            top: `${corner.includes("n") ? selectedActor.y : selectedActor.y + selectedActor.h}px`,
+          },
+          onPointerDown: (e) => actorBox.start(e, selectedActor, corner, stagePoint),
         }),
       ),
-      preview &&
-        h("polyline", {
-          className: "me-guide me-guide-preview",
-          points: preview.points,
-          transform: `translate(${preview.base.x}, ${preview.base.y})`,
-        }),
-      preview &&
-        drawing.points.map((point, i) =>
-          h("circle", {
-            key: i,
-            className: "me-guide-dot",
-            cx: point.x + preview.base.x,
-            cy: point.y + preview.base.y,
-            r: 3,
-          }),
-        ),
-      // Rubber-band preview while creating a shape.
-      create.draftBox &&
-        h(create.draftBox && tool === "ellipse" ? "ellipse" : "rect", {
-          className: "me-create-preview",
-          ...(tool === "ellipse"
-            ? {
-                cx: create.draftBox.x + create.draftBox.w / 2,
-                cy: create.draftBox.y + create.draftBox.h / 2,
-                rx: create.draftBox.w / 2,
-                ry: create.draftBox.h / 2,
-              }
-            : { x: create.draftBox.x, y: create.draftBox.y, width: create.draftBox.w, height: create.draftBox.h }),
-        }),
-      // Draggable anchor handles for the selected keyframe's guide.
-      editableAnchors &&
-        editableBase &&
-        editableAnchors.map((anchor, i) =>
-          h("circle", {
-            key: `a${i}`,
-            className: "me-anchor",
-            cx: anchor.x + editableBase.x,
-            cy: anchor.y + editableBase.y,
-            r: 6,
-            onPointerDown: (e) => startAnchorDrag(e, i),
-            onPointerMove: moveAnchorDrag,
-            onPointerUp: endAnchorDrag,
-          }),
-        ),
-    ),
+    h(StageOverlay, {
+      guides,
+      preview,
+      drawingPoints: drawing ? drawing.points : [],
+      draftBox: create.draftBox,
+      draftKind: tool,
+      anchors: editableAnchors,
+      anchorsBase: editableBase,
+      onAnchorDown: startAnchorDrag,
+      onAnchorMove: moveAnchorDrag,
+      onAnchorUp: endAnchorDrag,
+    }),
   );
 }
