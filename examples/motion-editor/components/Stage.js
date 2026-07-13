@@ -1,7 +1,9 @@
 // The preview stage: the demo actors bound to the CURRENT controller via
 // track() refs, plus an SVG overlay that shows the selected track's motion
-// guides (dashed, like Flash's guide layer) and captures clicks while a new
-// guide is being drawn.
+// guides (dashed, like Flash's guide layer), captures clicks while a new
+// guide is being drawn, and — when a single guide keyframe is selected —
+// exposes the curve's anchor points as draggable handles (edits commit one
+// history step on release).
 //
 // Guide coordinates live in the actor's translate space; the overlay
 // converts to stage space through the actor's static layout box
@@ -10,8 +12,9 @@
 // point.
 
 import { h, useEffect, useRef, useState } from "/dist/nexa.js";
+import { pathAnchors, smoothPath } from "./smoothPath.js";
 
-export function Stage({ tl, actors, doc, selected, drawing, onDrawPoint }) {
+export function Stage({ tl, actors, doc, selected, drawing, onDrawPoint, onEditGuide }) {
   const stageRef = useRef(null);
   const actorRefs = useRef(new Map());
   const [bases, setBases] = useState({});
@@ -52,6 +55,45 @@ export function Stage({ tl, actors, doc, selected, drawing, onDrawPoint }) {
     onDrawPoint({ x: Math.round(point.x - base.x), y: Math.round(point.y - base.y) });
   };
 
+  // ── anchor dragging for the selected keyframe's existing guide ──
+  // The drag mutates LOCAL state for live preview and commits a single
+  // updateKeyframe (one undo step) on release.
+
+  const [anchorDrag, setAnchorDrag] = useState(null); // { anchors, index } | null
+
+  const editable =
+    !drawing && selected.length === 1 && doc.tracks[selected[0].track]?.[selected[0].index]?.path
+      ? selected[0]
+      : null;
+  const editableKeyframe = editable && doc.tracks[editable.track][editable.index];
+  const editableAnchors = anchorDrag ? anchorDrag.anchors : editableKeyframe ? pathAnchors(editableKeyframe.path) : null;
+
+  const startAnchorDrag = (event, index) => {
+    event.stopPropagation();
+    setAnchorDrag({ anchors: pathAnchors(editableKeyframe.path), index });
+    try {
+      event.target.setPointerCapture(event.pointerId);
+    } catch {}
+  };
+
+  const moveAnchorDrag = (event) => {
+    if (!anchorDrag) return;
+    const base = bases[editable.track];
+    const point = stagePoint(event);
+    const anchors = anchorDrag.anchors.map((anchor, i) =>
+      i === anchorDrag.index
+        ? { x: Math.round(point.x - base.x), y: Math.round(point.y - base.y) }
+        : anchor,
+    );
+    setAnchorDrag({ ...anchorDrag, anchors });
+  };
+
+  const endAnchorDrag = () => {
+    if (!anchorDrag) return;
+    onEditGuide(editable.track, editable.index, smoothPath(anchorDrag.anchors));
+    setAnchorDrag(null);
+  };
+
   // Guides to display: every path keyframe of the selected tracks (or of the
   // track being drawn), positioned at the owning actor's base.
   const guideTracks = new Set(selected.map((entry) => entry.track));
@@ -63,10 +105,14 @@ export function Stage({ tl, actors, doc, selected, drawing, onDrawPoint }) {
     if (!base) continue;
     for (const keyframe of doc.tracks[trackName] || []) {
       if (keyframe.path) {
-        guides.push({ trackName, d: keyframe.path, base });
+        // The guide being anchor-dragged previews from the local anchors.
+        const d = anchorDrag && keyframe === editableKeyframe ? smoothPath(anchorDrag.anchors) : keyframe.path;
+        guides.push({ trackName, d, base });
       }
     }
   }
+
+  const editableBase = editable ? bases[editable.track] : null;
 
   const preview = drawing && drawing.points.length > 0 && bases[drawing.track]
     ? {
@@ -115,6 +161,21 @@ export function Stage({ tl, actors, doc, selected, drawing, onDrawPoint }) {
             cx: point.x + preview.base.x,
             cy: point.y + preview.base.y,
             r: 3,
+          }),
+        ),
+      // Draggable anchor handles for the selected keyframe's guide.
+      editableAnchors &&
+        editableBase &&
+        editableAnchors.map((anchor, i) =>
+          h("circle", {
+            key: `a${i}`,
+            className: "me-anchor",
+            cx: anchor.x + editableBase.x,
+            cy: anchor.y + editableBase.y,
+            r: 6,
+            onPointerDown: (e) => startAnchorDrag(e, i),
+            onPointerMove: moveAnchorDrag,
+            onPointerUp: endAnchorDrag,
           }),
         ),
     ),

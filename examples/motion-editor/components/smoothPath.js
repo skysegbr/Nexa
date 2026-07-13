@@ -1,6 +1,26 @@
 // Catmull-Rom → cubic bézier: turns clicked points into the smooth curve
 // Flash's motion guides were drawn as.
 
+// Recovers the on-curve anchor points from a path smoothPath() generated:
+// the M point plus every C endpoint (or the L endpoint for two-point
+// guides). This is what makes existing guides editable without storing any
+// editor metadata on the keyframe.
+export function pathAnchors(d) {
+  const numbers = (d.match(new RegExp("-?\\d+(?:\\.\\d+)?", "g")) || []).map(Number);
+  const pairs = [];
+  for (let i = 0; i + 1 < numbers.length; i += 2) {
+    pairs.push({ x: numbers[i], y: numbers[i + 1] });
+  }
+  if (pairs.length === 0) return [];
+  if (!d.includes("C")) return pairs; // "M x y L x y"
+
+  const anchors = [pairs[0]];
+  for (let i = 3; i < pairs.length; i += 3) {
+    anchors.push(pairs[i]); // each cubic segment's endpoint
+  }
+  return anchors;
+}
+
 export function smoothPath(points) {
   const r = (value) => Math.round(value * 10) / 10;
   if (points.length === 2) {

@@ -1,0 +1,25 @@
+.me-projects {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.me-project-name {
+  width: 130px;
+  padding: 0.38rem 0.55rem;
+  border: 1px solid #2a3560;
+  border-radius: 7px;
+  background: #0a0f22;
+  color: #e8ecff;
+  font-size: 0.8rem;
+}
+
+.me-project-list {
+  max-width: 150px;
+  padding: 0.38rem 0.45rem;
+  border: 1px solid #2a3560;
+  border-radius: 7px;
+  background: #0a0f22;
+  color: #c7d2ff;
+  font-size: 0.8rem;
+}

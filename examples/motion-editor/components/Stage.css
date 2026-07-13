@@ -40,6 +40,20 @@
   fill: #ffd166;
 }
 
+/* draggable anchor handles on the selected guide */
+.me-anchor {
+  fill: #0c1226;
+  stroke: #35e0c2;
+  stroke-width: 2;
+  pointer-events: all;
+  cursor: grab;
+  touch-action: none;
+}
+
+.me-anchor:hover {
+  fill: #35e0c2;
+}
+
 .me-actor {
   position: absolute;
   top: 60px;

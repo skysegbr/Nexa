@@ -17,6 +17,7 @@ import { TimelinePanel } from "./components/TimelinePanel.js";
 import { Inspector } from "./components/Inspector.js";
 import { CodePane } from "./components/CodePane.js";
 import { smoothPath } from "./components/smoothPath.js";
+import { ProjectBar } from "./components/ProjectBar.js";
 import { useEditorDoc } from "./components/useEditorDoc.js";
 import { useEditorShortcuts } from "./components/useEditorShortcuts.js";
 
@@ -87,6 +88,7 @@ function App() {
         h("button", { type: "button", className: "me-btn", disabled: !editor.canUndo, onClick: editor.undo }, "↩ undo"),
         h("button", { type: "button", className: "me-btn", disabled: !editor.canRedo, onClick: editor.redo }, "↪ redo"),
       ),
+      h(ProjectBar, { doc: editor.doc, onLoad: editor.load, onNew: () => editor.load(INITIAL_DOC) }),
       h(
         "p",
         { className: "me-hint" },
@@ -108,6 +110,7 @@ function App() {
           selected: editor.selected,
           drawing,
           onDrawPoint: addDrawingPoint,
+          onEditGuide: (track, index, path) => editor.updateKeyframe(track, index, { path }),
         }),
         h(TimelinePanel, {
           tl,

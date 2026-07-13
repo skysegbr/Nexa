@@ -143,7 +143,14 @@ export function useEditorDoc(initialDoc, playheadRef) {
     }
   };
 
+  // Loading a project (or resetting) is a normal history step — undoable.
+  const load = (nextDoc) => {
+    setDoc(nextDoc);
+    setSelected([]);
+  };
+
   return {
+    load,
     doc: effective,
     selected: liveSelected,
     undo,
