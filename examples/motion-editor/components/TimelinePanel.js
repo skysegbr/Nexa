@@ -230,6 +230,7 @@ export function TimelinePanel({
               actor,
               keyframes: doc.tracks[actor.id] || [],
               selected,
+              active: actorSel === actor.id,
               playheadPct: pct(playhead),
               pct,
               frameGrid,

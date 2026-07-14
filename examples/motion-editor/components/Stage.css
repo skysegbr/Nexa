@@ -104,6 +104,27 @@
   overflow: hidden;
 }
 
+/* selection chrome on the measured visual box */
+.me-selection-rect {
+  position: absolute;
+  border: 1px solid rgba(53, 224, 194, 0.65);
+  pointer-events: none;
+  z-index: 4;
+}
+
+.me-selection-tag {
+  position: absolute;
+  padding: 0.1rem 0.4rem;
+  border: 1px solid #35e0c2;
+  border-radius: 5px;
+  background: #0c1226;
+  color: #35e0c2;
+  font-size: 0.65rem;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 5;
+}
+
 /* corner resize handles for the selected actor */
 .me-handle {
   position: absolute;

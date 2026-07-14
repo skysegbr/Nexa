@@ -13,7 +13,9 @@ import { StageOverlay } from "./StageOverlay.js";
 import { OnionSkin } from "./OnionSkin.js";
 import { TransformOverlay } from "./TransformOverlay.js";
 import { guidesFor } from "./stageGuides.js";
-import { HANDLES, baseOf, stageActorStyle } from "./actorGeometry.js";
+import { SelectionBox } from "./SelectionBox.js";
+import { useMeasuredBox } from "./useMeasuredBox.js";
+import { baseOf, stageActorStyle } from "./actorGeometry.js";
 
 export function Stage({
   tl,
@@ -86,6 +88,9 @@ export function Stage({
   // track() binding so the controller stays warm; visibility:hidden also
   // makes them unclickable for free.
   const selectedFlags = actorSel ? layerFlags[actorSel] || {} : {};
+
+  // Selection chrome lives on the MEASURED visual box (see SelectionBox).
+  const selMeasured = useMeasuredBox(stageRef, tool === "select" && !drawing ? actorSel : null);
 
   const stagePointerDown = (event) => {
     // Empty-stage click with the selection tool clears the actor selection.
@@ -196,23 +201,15 @@ export function Stage({
         actor.kind === "text" ? actor.text : "",
       );
     }),
-    // Resize handles for the selected actor (selection tool only).
+    // Selection rect + name tag + resize handles on the visual box.
     selectedActor &&
-      tool === "select" &&
-      !drawing &&
-      !selectedFlags.locked &&
-      !selectedFlags.hidden &&
-      HANDLES.map((corner) =>
-        h("div", {
-          key: corner,
-          className: `me-handle me-handle-${corner}`,
-          style: {
-            left: `${corner.includes("w") ? selectedActor.x : selectedActor.x + selectedActor.w}px`,
-            top: `${corner.includes("n") ? selectedActor.y : selectedActor.y + selectedActor.h}px`,
-          },
-          onPointerDown: (e) => actorBox.start(e, selectedActor, corner, stagePoint),
-        }),
-      ),
+      selMeasured &&
+      h(SelectionBox, {
+        box: selMeasured,
+        label: selectedActor.label,
+        showHandles: !selectedFlags.locked && !selectedFlags.hidden,
+        onHandleDown: (e, corner) => actorBox.start(e, selectedActor, corner, stagePoint),
+      }),
     tool === "transform" &&
       selectedActor &&
       !drawing &&

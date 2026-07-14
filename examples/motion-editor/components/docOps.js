@@ -105,11 +105,6 @@ export function setLabelDoc(doc, name, ms) {
   return { ...doc, labels };
 }
 
-export function setLoopDoc(doc, loop) {
-  if (Boolean(doc.loop) === loop) return null;
-  return { ...doc, loop: loop || undefined };
-}
-
 // Clipboard payload for the selected keyframes: copies stripped of their
 // ids (paste mints fresh ones), plus the earliest `at` so a paste keeps
 // the group's internal spacing relative to the playhead.

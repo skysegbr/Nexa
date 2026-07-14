@@ -54,6 +54,31 @@ export function parseTimelineCode(source) {
   return spec;
 }
 
+// A single track's keyframe array — the actor-level "behavior" editor
+// commits through this (select the object, edit its code, Flash-style).
+export function parseTrackCode(source) {
+  const open = source.indexOf("[");
+  const close = source.lastIndexOf("]");
+  if (open === -1 || close <= open) {
+    throw new Error("expected a [ … ] keyframe array");
+  }
+  let keyframes;
+  try {
+    keyframes = new Function(`"use strict"; return (${source.slice(open, close + 1)});`)();
+  } catch (error) {
+    throw new Error(`not valid JavaScript: ${error.message}`);
+  }
+  if (!Array.isArray(keyframes)) {
+    throw new Error("the track must be an array of keyframes");
+  }
+  for (const keyframe of keyframes) {
+    if (!keyframe || typeof keyframe !== "object" || !Number.isFinite(keyframe.at) || keyframe.at < 0) {
+      throw new Error("every keyframe needs a numeric `at` ≥ 0");
+    }
+  }
+  return keyframes;
+}
+
 // Actors survive the round-trip (the code carries no geometry); tracks,
 // duration, labels and loop come from the spec. A track name the document
 // doesn't know yet gets a starter actor so it lands on stage editable.

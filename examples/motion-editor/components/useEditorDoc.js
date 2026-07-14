@@ -17,7 +17,6 @@ import {
   pasteClipboardDoc,
   moveKeyframesDoc,
   setLabelDoc,
-  setLoopDoc,
 } from "./docOps.js";
 
 export function useEditorDoc(initialDoc, playheadRef) {
@@ -42,10 +41,9 @@ export function useEditorDoc(initialDoc, playheadRef) {
   // ── document edits (all history-committing paths go through setDoc) ──
 
   const updateKeyframe = (trackName, id, patch) => {
-    // A no-op patch must not touch history: a blur can re-fire change with
-    // the value already committed, and pushing a duplicate entry makes the
-    // next undo appear to do nothing. Missing entries (imported documents
-    // can be sparse) are also no-ops.
+    // No-op patches must not touch history (a blur re-fires change with
+    // the value already committed → duplicate entry → "undo does nothing");
+    // missing entries (sparse imported docs) are no-ops too.
     const index = indexOfKeyframe(trackName, id);
     const current = index !== -1 && effective.tracks[trackName][index];
     if (!current || Object.keys(patch).every((key) => Object.is(current[key], patch[key]))) {
@@ -97,13 +95,16 @@ export function useEditorDoc(initialDoc, playheadRef) {
     }
   };
 
-  // Timeline labels ({ name: ms }) and looping are document properties —
-  // they ship with the export. `ms: undefined` removes a label.
+  // Labels ship with the export; `ms: undefined` removes one.
   const setLabel = (name, ms) => setDoc(setLabelDoc(effective, name, ms));
 
-  const setLoop = (loop) => {
-    const next = setLoopDoc(effective, loop);
-    if (next) setDoc(next);
+  // Replace an entire track — the actor-level code editor commits here.
+  const setTrack = (trackName, keyframes) => {
+    setDoc({
+      ...effective,
+      tracks: { ...effective.tracks, [trackName]: keyframes.map((kf) => ({ ...kf, _id: freshKeyframeId() })) },
+    });
+    setSelected([]);
   };
 
   // ── copy/paste: keyframes travel to the playhead, keeping their spacing ──
@@ -130,8 +131,8 @@ export function useEditorDoc(initialDoc, playheadRef) {
     });
   };
 
+  // Dragging an unselected diamond selects it first (Flash behavior).
   const dragStart = (entry, additive) => {
-    // Dragging an unselected diamond selects it first (Flash behavior).
     const isSelected = liveSelected.some((e) => e.id === entry.id);
     const nextSelection = isSelected && !additive ? liveSelected : additive
       ? [...liveSelected.filter((e) => e.id !== entry.id), entry]
@@ -177,8 +178,7 @@ export function useEditorDoc(initialDoc, playheadRef) {
     setSelected([{ track: next.id, id: next.doc.tracks[next.id][0]._id }]);
   };
 
-  // ONE history step; returns the new id (null for stale ids) so the
-  // caller can move the actor selection onto the copy.
+  // ONE history step; returns the new id (null for stale ids).
   const duplicateActor = (id) => {
     const next = duplicateActorDoc(effective, id);
     if (!next) return null;
@@ -239,7 +239,7 @@ export function useEditorDoc(initialDoc, playheadRef) {
     deleteSelected,
     setDocProp,
     setLabel,
-    setLoop,
+    setTrack,
     copySelected,
     pasteAtPlayhead,
     select,

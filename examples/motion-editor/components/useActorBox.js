@@ -23,6 +23,9 @@ export function useActorBox({ onCommit }) {
     const point = stagePoint(event);
     const dx = Math.round(point.x - drag.startPoint.x);
     const dy = Math.round(point.y - drag.startPoint.y);
+    // A click is not a gesture: nothing moves until the pointer commits
+    // past a small threshold — selecting an actor must never auto-key.
+    if (!drag.armed && Math.hypot(dx, dy) < 4) return;
     const { x, y, w, h } = drag.startBox;
     let box;
 
@@ -41,7 +44,7 @@ export function useActorBox({ onCommit }) {
       };
     }
 
-    setDrag({ ...drag, box });
+    setDrag({ ...drag, armed: true, box });
   };
 
   const end = () => {

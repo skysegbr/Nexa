@@ -128,6 +128,63 @@
   stroke-width: 2;
 }
 
+/* ── the actor's behavior: keyframe list + track code editor ── */
+
+.me-track-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.me-kf-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.3rem 0.45rem;
+  border: 1px solid #1d2440;
+  border-radius: 7px;
+  background: #0a0f22;
+  color: #c7d2ff;
+  font-size: 0.72rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.me-kf-row:hover,
+.me-kf-row:focus-visible {
+  border-color: #4f7cff;
+  background: #121a36;
+}
+
+.me-kf-frame {
+  flex-shrink: 0;
+  min-width: 34px;
+  color: #35e0c2;
+  font-variant-numeric: tabular-nums;
+}
+
+.me-kf-summary {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #8fa1e8;
+}
+
+.me-track-code {
+  min-height: 130px;
+  padding: 0.5rem;
+  border: 1px solid #35e0c2;
+  border-radius: 8px;
+  background: #070a18;
+  color: #b7e6d9;
+  font-family: ui-monospace, "Cascadia Mono", monospace;
+  font-size: 0.72rem;
+  line-height: 1.5;
+  white-space: pre;
+  resize: vertical;
+}
+
 /* duplicate + delete, side by side under the actor inspector */
 .me-actor-actions {
   display: flex;

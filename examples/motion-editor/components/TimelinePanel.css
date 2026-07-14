@@ -220,6 +220,12 @@
   outline: 1px solid rgba(53, 224, 194, 0.45);
 }
 
+/* the selected actor's lane lights up too — object ↔ timeline, one thing */
+.me-lane-active {
+  border-color: rgba(53, 224, 194, 0.55);
+  background-color: rgba(53, 224, 194, 0.05);
+}
+
 .me-row-name {
   flex: 1;
   min-width: 0;

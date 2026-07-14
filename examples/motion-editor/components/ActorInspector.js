@@ -6,6 +6,7 @@
 
 import { h } from "/dist/nexa.js";
 import { FILLS } from "../data.js";
+import { TrackEditor } from "./TrackEditor.js";
 
 // #rgb / #rrggbb / #rrggbbaa / rgb() / rgba() → [r, g, b, a]; null for
 // anything else (gradients keep the mixer's alpha slider hidden).
@@ -30,7 +31,18 @@ function parseFill(fill) {
   return null;
 }
 
-export function ActorInspector({ actor, onEdit, onDelete, onArrange, onDuplicate, onSaveSymbol }) {
+export function ActorInspector({
+  actor,
+  keyframes,
+  fps,
+  onEdit,
+  onDelete,
+  onArrange,
+  onDuplicate,
+  onSaveSymbol,
+  onJumpKeyframe,
+  onApplyTrack,
+}) {
   const numberField = (name, value, min) =>
     h(
       "label",
@@ -162,6 +174,8 @@ export function ActorInspector({ actor, onEdit, onDelete, onArrange, onDuplicate
         h("button", { type: "button", className: "me-btn me-btn-small", title: "Bring to front", onClick: () => onArrange(Infinity) }, "⤒"),
       ),
     ),
+
+    h(TrackEditor, { keyframes, fps, onJump: onJumpKeyframe, onApplyTrack }),
 
     h(
       "div",

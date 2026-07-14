@@ -79,6 +79,12 @@ function App() {
 
   const library = libraryFor(editor, selectedActor, createActor);
 
+  const loadProject = (project) => {
+    editor.load(project);
+    setActorSel(null);
+    setLayerFlags({});
+  };
+
   const tl = useStageController(INITIAL_DOC, editor.committedDoc, playheadRef);
 
   // ── motion-guide drawing on the stage ──
@@ -127,16 +133,8 @@ function App() {
     h(EditorHeader, {
       editor,
       drawing,
-      onLoad: (loaded) => {
-        editor.load(loaded);
-        setActorSel(null);
-        setLayerFlags({});
-      },
-      onNew: () => {
-        editor.load(INITIAL_DOC);
-        setActorSel(null);
-        setLayerFlags({});
-      },
+      onLoad: (loaded) => loadProject(loaded),
+      onNew: () => loadProject(INITIAL_DOC),
     }),
     h(
       "main",
@@ -194,7 +192,7 @@ function App() {
           onRenameActor: (id, label) => editor.updateActor(id, { label }),
           onAddLabel: (name) => editor.setLabel(name, Math.round(playheadRef.current)),
           onRemoveLabel: (name) => editor.setLabel(name, undefined),
-          onToggleLoop: () => editor.setLoop(!editor.doc.loop),
+          onToggleLoop: () => editor.setDocProp("loop", editor.doc.loop ? undefined : true),
           onion,
           onOnionToggle: () => setOnion((current) => ({ ...current, on: !current.on })),
           onOnionCount: (count) =>
@@ -207,11 +205,22 @@ function App() {
         selectedActor
           ? h(ActorInspector, {
               actor: selectedActor,
+              keyframes: editor.doc.tracks[selectedActor.id] || [],
+              fps: editor.doc.fps,
               onEdit: (patch) => editor.updateActor(selectedActor.id, patch),
               onArrange: (delta) => editor.moveActorLayer(selectedActor.id, delta),
               onDuplicate: duplicateSelectedActor,
               onSaveSymbol: library.save,
               onDelete: () => deleteActor(selectedActor.id),
+              // Object → its animation: parks the playhead on the keyframe
+              // and selects it, flipping to the keyframe editor.
+              onJumpKeyframe: (kf) => {
+                tl.stop();
+                tl.seek(kf.at);
+                playheadRef.current = kf.at;
+                selectKeyframe({ track: selectedActor.id, id: kf._id }, false);
+              },
+              onApplyTrack: (kfs) => editor.setTrack(selectedActor.id, kfs),
             })
           : h(Inspector, {
           doc: editor.doc,

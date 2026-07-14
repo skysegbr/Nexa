@@ -9,8 +9,9 @@
 // the handles follow the actor wherever the tween has translated it —
 // unlike the base-box resize handles of the selection tool.
 
-import { h, useEffect, useRef, useState } from "/dist/nexa.js";
+import { h, useRef } from "/dist/nexa.js";
 import { capturePointer, tweenRotation, tweenScale } from "./editorUtils.js";
+import { useMeasuredBox } from "./useMeasuredBox.js";
 
 // new RegExp(string): the repo's lightweight validator trips on literals.
 const TRANSLATE_PART_RE = new RegExp("translate3d\\([^)]*\\)");
@@ -18,40 +19,11 @@ const TRANSLATE_PART_RE = new RegExp("translate3d\\([^)]*\\)");
 const CORNERS = ["nw", "ne", "sw", "se"];
 
 export function TransformOverlay({ stageRef, actorId, onCommit }) {
-  const [box, setBox] = useState(null); // visual box in stage coords
+  const box = useMeasuredBox(stageRef, actorId);
   const gestureRef = useRef(null);
 
   const elementOf = () =>
     stageRef.current && stageRef.current.querySelector(`.me-actor-${CSS.escape(actorId)}`);
-
-  // Follow the element: scrubbing, playback and committed edits all move
-  // it, so the box is re-measured on a light interval (and the setState
-  // no-ops while nothing changed).
-  useEffect(() => {
-    const measure = () => {
-      const element = elementOf();
-      const stage = stageRef.current;
-      if (!element || !stage) {
-        setBox((previous) => (previous === null ? previous : null));
-        return;
-      }
-      const er = element.getBoundingClientRect();
-      const sr = stage.getBoundingClientRect();
-      const next = { x: er.left - sr.left, y: er.top - sr.top, w: er.width, h: er.height };
-      setBox((previous) =>
-        previous &&
-        Math.abs(previous.x - next.x) < 0.5 &&
-        Math.abs(previous.y - next.y) < 0.5 &&
-        Math.abs(previous.w - next.w) < 0.5 &&
-        Math.abs(previous.h - next.h) < 0.5
-          ? previous
-          : next,
-      );
-    };
-    measure();
-    const id = setInterval(measure, 120);
-    return () => clearInterval(id);
-  }, [actorId]);
 
   const startGesture = (event, type) => {
     event.stopPropagation();
