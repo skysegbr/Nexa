@@ -1,0 +1,80 @@
+/* Tutorial player — video-friendly 1280x720 layout. Own prefix: tut-
+   The demo pane is WIDER than the other tutorials: the Motion Editor is a
+   full IDE and must stay above its own 900px responsive breakpoint. */
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  width: 1280px;
+  height: 720px;
+  overflow: hidden;
+  font-family: -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  background: #0b1220;
+  color: #e2e8f0;
+}
+
+.tut-root { display: flex; flex-direction: column; width: 1280px; height: 720px; }
+
+.tut-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 28px; background: #0f172a; border-bottom: 1px solid #1e293b;
+}
+.tut-brand { font-size: 20px; font-weight: 700; letter-spacing: 0.5px; }
+.tut-brand em { color: #22d3ee; font-style: normal; }
+.tut-stepno { font-size: 14px; color: #94a3b8; }
+
+.tut-main { flex: 1; display: flex; min-height: 0; }
+
+/* code pane (narrow — the editor needs the room) */
+.tut-code {
+  width: 24%; padding: 18px 20px; background: #0f172a;
+  border-right: 1px solid #1e293b; display: flex; flex-direction: column;
+}
+.tut-code h2 { margin: 0 0 12px; font-size: 19px; color: #f8fafc; }
+.tut-code pre {
+  flex: 1; margin: 0; padding: 14px; border-radius: 10px;
+  background: #020617; border: 1px solid #1e293b; overflow: hidden;
+  font-family: "SF Mono", Consolas, "Liberation Mono", monospace;
+  font-size: 13px; line-height: 1.55; white-space: pre-wrap;
+}
+.tut-kw  { color: #c084fc; }
+.tut-str { color: #86efac; }
+.tut-fn  { color: #7dd3fc; }
+.tut-cm  { color: #64748b; font-style: italic; }
+
+/* demo pane */
+.tut-demo { flex: 1; display: flex; flex-direction: column; padding: 10px 12px; gap: 10px; }
+
+/* caption bar */
+.tut-caption {
+  padding: 14px 30px; background: #111c33; border-top: 2px solid #22d3ee;
+  font-size: 18px; line-height: 1.45; min-height: 72px; color: #f1f5f9;
+}
+
+/* overlay cards (title / recap) */
+.tut-overlay {
+  position: fixed; inset: 0; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 18px;
+  background: radial-gradient(ellipse at 30% 20%, #16324f 0%, #0b1220 65%);
+  z-index: 10; text-align: center;
+}
+.tut-overlay h1 { margin: 0; font-size: 50px; color: #f8fafc; }
+.tut-overlay h1 em { color: #22d3ee; font-style: normal; }
+.tut-overlay p { margin: 0; font-size: 22px; color: #94a3b8; }
+.tut-overlay ul {
+  text-align: left; font-size: 22px; line-height: 1.9; color: #e2e8f0;
+  margin: 0; padding: 0; list-style: none;
+}
+.tut-overlay ul li::before { content: "✓  "; color: #4ade80; font-weight: 700; }
+
+/* The editor, live — rendered 25% larger and scaled down, so the full
+   IDE (stage + timeline + sidebar) fits the demo pane's height. */
+.tut-frame-wrap {
+  flex: 1; overflow: hidden; border-radius: 12px; background: #05060f;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+}
+.tut-frame {
+  width: 125%; height: 125%; border: 0;
+  transform: scale(0.8); transform-origin: top left;
+}
