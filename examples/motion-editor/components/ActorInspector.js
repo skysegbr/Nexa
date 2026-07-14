@@ -44,6 +44,7 @@ export function ActorInspector({
   onArrange,
   onDuplicate,
   onSaveSymbol,
+  onEditSymbol,
   onMoveToLayer,
   onJumpKeyframe,
   onApplyTrack,
@@ -211,11 +212,10 @@ export function ActorInspector({
         {
           type: "button",
           className: "me-btn",
-          disabled: Boolean(symbolName),
-          title: symbolName ? `Linked to “${symbolName}”` : "Convert this actor to a linked library symbol",
-          onClick: onSaveSymbol,
+          title: symbolName ? `Edit “${symbolName}” in place` : "Convert this actor to a linked library symbol",
+          onClick: symbolName ? onEditSymbol : onSaveSymbol,
         },
-        symbolName ? "◆ linked symbol" : "☆ convert to symbol",
+        symbolName ? "◆ edit symbol" : "☆ convert to symbol",
       ),
       h(
         "button",

@@ -4,6 +4,7 @@
 // nexa-motion runtime.
 
 import { applyScene, syncActiveScene } from "./sceneOps.js";
+import { movieClipTimelineFromArtwork, syncEditingSymbol } from "./symbolTimelineOps.js";
 
 const CONTENT_FIELDS = ["kind", "fill", "text", "stroke", "strokeWidth", "path", "vectorW", "vectorH"];
 
@@ -50,6 +51,7 @@ export function convertActorToSymbolDoc(doc, actorId) {
     w: actor.w,
     h: actor.h,
   };
+  symbol.timeline = movieClipTimelineFromArtwork(symbol);
   return {
     ...doc,
     library: [...library, symbol],
@@ -95,15 +97,24 @@ export function removeSymbolDoc(doc, symbolId) {
   if (!doc.scenes) {
     return { ...doc, actors: doc.actors.map(detach), library: doc.library.filter((item) => item.id !== symbolId) };
   }
-  const synced = syncActiveScene(doc);
+  const contextual = doc.editingSymbolId ? syncEditingSymbol(doc) : doc;
+  const synced = syncActiveScene(contextual);
   const scenes = synced.scenes.map((scene) => ({ ...scene, actors: scene.actors.map(detach) }));
-  const next = { ...synced, scenes, library: doc.library.filter((item) => item.id !== symbolId) };
+  const library = synced.library
+    .filter((item) => item.id !== symbolId)
+    .map((item) => ({ ...item, timeline: { ...item.timeline, actors: item.timeline.actors.map(detach) } }));
+  const next = { ...synced, scenes, library };
+  if (next.editingSymbolId) return { ...next, actors: next.actors.map(detach) };
   return applyScene(next, scenes.find((scene) => scene.id === next.activeSceneId));
 }
 
 export function symbolUsage(doc) {
   const counts = {};
-  const actors = doc.scenes ? syncActiveScene(doc).scenes.flatMap((scene) => scene.actors) : doc.actors;
+  const contextual = doc.editingSymbolId ? syncEditingSymbol(doc) : doc;
+  const synced = doc.scenes ? syncActiveScene(contextual) : contextual;
+  const actors = doc.scenes
+    ? [...synced.scenes.flatMap((scene) => scene.actors), ...synced.library.flatMap((item) => item.timeline?.actors || [])]
+    : doc.actors;
   for (const actor of actors) {
     if (actor.symbolId) counts[actor.symbolId] = (counts[actor.symbolId] || 0) + 1;
   }

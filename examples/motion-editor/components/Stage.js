@@ -75,6 +75,7 @@ export function Stage({
   const resolvedActors = orderedActors(doc).map((actor) => resolveActor(doc, actor));
   const actorsById = Object.fromEntries(resolvedActors.map((actor) => [actor.id, liveActor(actor)]));
   const selectedActor = actorSel ? actorsById[actorSel] : null;
+  const editingSymbol = doc.editingSymbolId && doc.library.find((symbol) => symbol.id === doc.editingSymbolId);
 
   const actorPointerDown = (event, actor) => {
     if (drawing) return;
@@ -191,6 +192,14 @@ export function Stage({
       },
     },
     onion.on && h(OnionSkin, { doc: committedDoc, playheadRef, count: onion.count, layerFlags }),
+    editingSymbol && h(
+      "div",
+      {
+        className: "me-symbol-boundary",
+        style: { width: `${editingSymbol.w}px`, height: `${editingSymbol.h}px` },
+      },
+      h("span", null, `0,0 · ${editingSymbol.w}×${editingSymbol.h}`),
+    ),
     h(StageActors, {
       doc,
       actorsById,

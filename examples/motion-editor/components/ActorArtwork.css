@@ -10,3 +10,21 @@
   overflow: visible;
   pointer-events: none;
 }
+
+.me-movieclip-art {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.me-movieclip-world {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-origin: 0 0;
+}
+
+.me-movieclip-child {
+  position: absolute;
+}

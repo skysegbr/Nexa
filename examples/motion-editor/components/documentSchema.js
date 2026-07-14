@@ -3,8 +3,9 @@
 
 import { normalizeLayers } from "./layerOps.js";
 import { applyScene, syncActiveScene } from "./sceneOps.js";
+import { normalizeMovieClipTimeline, syncEditingSymbol } from "./symbolTimelineOps.js";
 
-export const MOTION_DOCUMENT_VERSION = 6;
+export const MOTION_DOCUMENT_VERSION = 7;
 
 const isRecord = (value) => Boolean(value) && typeof value === "object" && !Array.isArray(value);
 
@@ -23,6 +24,7 @@ function normalizeLibrary(items) {
       kind: item.kind || "rect",
       w: Number.isFinite(item.w) ? Math.max(1, item.w) : 48,
       h: Number.isFinite(item.h) ? Math.max(1, item.h) : 48,
+      timeline: normalizeMovieClipTimeline(item.timeline, item),
     };
   });
 }
@@ -76,6 +78,8 @@ export function normalizeMotionDocument(input, fallback = {}) {
     stageColor: typeof source.stageColor === "string" ? source.stageColor : base.stageColor || "#ffffff",
     library: normalizeLibrary(source.library ?? base.library),
     scenes,
+    editingSymbolId: undefined,
+    symbolEditStack: undefined,
   };
   return applyScene(shared, active);
 }
@@ -88,9 +92,17 @@ function serializeTracks(tracks) {
 }
 
 export function serializeMotionDocument(doc) {
-  const synced = syncActiveScene(doc);
+  const contextual = doc.editingSymbolId ? syncEditingSymbol(doc) : doc;
+  const synced = syncActiveScene(contextual);
+  const library = synced.library.map((symbol) => ({
+    ...symbol,
+    timeline: { ...symbol.timeline, tracks: serializeTracks(symbol.timeline.tracks) },
+  }));
   return {
     ...synced,
+    editingSymbolId: undefined,
+    symbolEditStack: undefined,
+    library,
     schemaVersion: MOTION_DOCUMENT_VERSION,
     tracks: serializeTracks(synced.tracks),
     scenes: synced.scenes.map((scene) => ({ ...scene, tracks: serializeTracks(scene.tracks) })),

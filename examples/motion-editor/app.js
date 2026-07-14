@@ -1,8 +1,5 @@
-// Example: motion-editor — a visual timeline editor for nexa-motion, in the
-// spirit of the Flash IDE: stage preview on top, timeline panel with
-// draggable keyframes below, an inspector for the selection, undo/redo,
-// multi-selection, copy/paste, motion-guide drawing directly on the stage,
-// and live code export.
+// Visual Flash-style timeline editor for nexa-motion: stage, timeline,
+// draggable keyframes, stage drawing, inspectors and live code export.
 //
 // The document lives in useEditorDoc (useHistory + selection + all
 // mutations). Every document change rebuilds the createTimeline()
@@ -28,8 +25,9 @@ import { applySpecToDoc } from "./components/codeParse.js";
 import { useDrawingTools } from "./components/useDrawingTools.js";
 import { useLayers } from "./components/useLayers.js";
 import { layerTimelineBindings } from "./components/layerTimelineBindings.js";
-import { SceneBar } from "./components/SceneBar.js";
+import { EditorContextBar } from "./components/EditorContextBar.js";
 import { sceneBarBindings } from "./components/sceneBarBindings.js";
+import { symbolContextBindings } from "./components/symbolContextBindings.js";
 function App() {
   const playheadRef = useRef(0);
   const editor = useEditorDoc(INITIAL_DOC, playheadRef);
@@ -79,6 +77,7 @@ function App() {
   const selectedActor = library.selected;
   const layerTimeline = layerTimelineBindings({ editor, layers, setActorSelection: setActorSel });
   const sceneBar = sceneBarBindings({ editor, layers, setActorSelection: setActorSel, playheadRef });
+  const symbolContext = symbolContextBindings({ editor, layers, setActorSelection: setActorSel, playheadRef });
   const loadProject = (project) => {
     editor.load(project);
     setActorSel(null);
@@ -143,7 +142,7 @@ function App() {
       h(
         "div",
         { className: "me-left" },
-        h(SceneBar, { doc: editor.doc, ...sceneBar }),
+        h(EditorContextBar, { doc: editor.doc, sceneProps: sceneBar, onExitSymbol: symbolContext.exit }),
         h(
           "div",
           { className: "me-stage-row" },
@@ -211,6 +210,7 @@ function App() {
               onArrange: (delta) => editor.arrangeActor(selectedActor.id, delta),
               onDuplicate: duplicateSelectedActor,
               onSaveSymbol: library.save,
+              onEditSymbol: () => symbolContext.enter(selectedActor.symbolId),
               onDelete: () => deleteActor(selectedActor.id),
               // Object → its animation: parks the playhead on the keyframe
               // and selects it, flipping to the keyframe editor.
@@ -234,7 +234,7 @@ function App() {
           onFinishDrawing: finishDrawing,
           onCancelDrawing: () => setDrawing(null),
         }),
-        h(Library, { items: library.items, usage: library.usage, onPlace: library.place, onRemove: library.remove }),
+        h(Library, { items: library.items, usage: library.usage, blockedSymbolIds: [...(editor.doc.symbolEditStack || []), editor.doc.editingSymbolId].filter(Boolean), onPlace: library.place, onEdit: symbolContext.enter, onRemove: library.remove }),
         h(CodePane, {
           doc: editor.doc,
           onApply: (spec) => {

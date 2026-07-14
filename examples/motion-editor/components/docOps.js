@@ -27,6 +27,10 @@ export function withKeyframeIds(doc) {
     ...doc,
     tracks: identify(doc.tracks),
     scenes: doc.scenes?.map((scene) => ({ ...scene, tracks: identify(scene.tracks) })),
+    library: doc.library?.map((symbol) => ({
+      ...symbol,
+      timeline: symbol.timeline ? { ...symbol.timeline, tracks: identify(symbol.timeline.tracks) } : symbol.timeline,
+    })),
   };
 }
 

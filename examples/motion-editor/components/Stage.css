@@ -16,10 +16,33 @@
   cursor: crosshair;
 }
 
+.me-symbol-boundary {
+  position: absolute;
+  left: 0;
+  top: 0;
+  border: 1px dashed rgba(192, 132, 252, 0.8);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.me-symbol-boundary span {
+  position: absolute;
+  left: 3px;
+  bottom: -18px;
+  color: #c084fc;
+  font-size: 0.62rem;
+  white-space: nowrap;
+}
+
 .me-stage-art,
 .me-stage-layer {
   position: absolute;
   inset: 0;
+  pointer-events: none;
+}
+
+.me-stage-layer .me-actor {
+  pointer-events: auto;
 }
 
 .me-mask-defs {

@@ -2,7 +2,7 @@
 // DOM nodes; mask actors become animated SVG clipPath geometry.
 
 import { h } from "/dist/nexa.js";
-import { ActorArtwork } from "./ActorArtwork.js";
+import { ActorContent } from "./MovieClipArtwork.js";
 import { stageActorStyle } from "./actorGeometry.js";
 import { resolvedLayerFlags } from "./layerOps.js";
 import { isPaintLayer, maskForLayer } from "./layerTypes.js";
@@ -75,7 +75,7 @@ function MaskDefinitions({ doc, masks, actorsById, tl }) {
   );
 }
 
-function PaintedActor({ actor, layer, layerIndex, flags, tl, actorSel, onActorPointerDown }) {
+function PaintedActor({ doc, actor, layer, layerIndex, flags, tl, actorSel, onActorPointerDown }) {
   const guide = layer.type === "guide";
   const paintFlags = guide ? { ...flags, outline: true } : flags;
   return h(
@@ -90,8 +90,10 @@ function PaintedActor({ actor, layer, layerIndex, flags, tl, actorSel, onActorPo
       ref: tl.track(actor.id),
       onPointerDown: (event) => onActorPointerDown(event, actor),
     },
-    h(ActorArtwork, {
+    h(ActorContent, {
+      doc,
       actor,
+      parentTl: tl,
       outlineColor: paintFlags.outline ? OUTLINE_COLORS[layerIndex % OUTLINE_COLORS.length] : null,
     }),
   );
@@ -138,6 +140,7 @@ export function StageActors({ doc, actorsById, activeLayerId, actorSel, layerFla
         },
         layer.actorIds.map((actorId) => actorsById[actorId] && h(PaintedActor, {
           key: actorId,
+          doc,
           actor: actorsById[actorId],
           layer,
           layerIndex,

@@ -32,6 +32,7 @@ import { generateCode } from "../examples/motion-editor/components/CodePane.js";
 import { applySpecToDoc } from "../examples/motion-editor/components/codeParse.js";
 import { addMaskLayerDoc } from "../examples/motion-editor/components/layerSpecialOps.js";
 import { maskForLayer } from "../examples/motion-editor/components/layerTypes.js";
+import { enterSymbolDoc, exitSymbolDoc } from "../examples/motion-editor/components/symbolTimelineOps.js";
 import {
   addSceneDoc,
   deleteSceneDoc,
@@ -52,6 +53,7 @@ test("motion editor: legacy documents normalize to the current schema", async ()
   assertEqual(doc.schemaVersion, MOTION_DOCUMENT_VERSION);
   assertEqual(doc.fps, 24);
   assertEqual(doc.library[0].id, "symbol-1");
+  assertEqual(doc.library[0].timeline.actors.length, 1);
   assertEqual(doc.layers[0].actorIds[0], "box");
   assertEqual(doc.scenes.length, 1);
   assertEqual(doc.activeSceneId, doc.scenes[0].id);
@@ -266,7 +268,46 @@ test("motion editor: converting an actor creates a linked symbol", async () => {
   const actor = converted.actors[0];
   assert(actor.symbolId, "actor should reference the new symbol");
   assertEqual(converted.library.length, 2);
+  assertEqual(converted.library[1].timeline.actors[0].kind, "rect");
   assertEqual(resolveActor(converted, actor).fill, "#f00");
+});
+
+test("motion editor: symbol editing isolates and commits a MovieClip timeline", async () => {
+  let doc = convertActorToSymbolDoc(normalizeMotionDocument(legacyDoc()), "box");
+  const symbolId = doc.actors[0].symbolId;
+  doc = enterSymbolDoc(doc, symbolId);
+  assertEqual(doc.editingSymbolId, symbolId);
+  assertEqual(doc.actors[0].id, "artwork-1");
+  doc = { ...doc, actors: doc.actors.map((actor) => ({ ...actor, fill: "#00f" })) };
+  doc = exitSymbolDoc(doc);
+  assertEqual(doc.editingSymbolId, undefined);
+  assertEqual(doc.actors[0].symbolId, symbolId);
+  assertEqual(doc.library.find((symbol) => symbol.id === symbolId).timeline.actors[0].fill, "#00f");
+});
+
+test("motion editor: nested MovieClip editing uses a cycle-safe context stack", async () => {
+  let doc = convertActorToSymbolDoc(normalizeMotionDocument(legacyDoc()), "box");
+  const outerId = doc.actors[0].symbolId;
+  doc = enterSymbolDoc(doc, outerId);
+  doc = convertActorToSymbolDoc(doc, "artwork-1");
+  const innerId = doc.actors[0].symbolId;
+  doc = enterSymbolDoc(doc, innerId);
+  assertEqual(doc.symbolEditStack.join(","), outerId);
+  assertEqual(enterSymbolDoc(doc, outerId), null);
+  doc = exitSymbolDoc(doc);
+  assertEqual(doc.editingSymbolId, outerId);
+  doc = exitSymbolDoc(doc);
+  assertEqual(doc.editingSymbolId, undefined);
+});
+
+test("motion editor: saving inside a symbol persists it without replacing the scene", async () => {
+  let doc = convertActorToSymbolDoc(normalizeMotionDocument(legacyDoc()), "box");
+  const symbolId = doc.actors[0].symbolId;
+  doc = enterSymbolDoc(doc, symbolId);
+  doc = { ...doc, actors: doc.actors.map((actor) => ({ ...actor, fill: "#35e0c2" })) };
+  const loaded = normalizeMotionDocument(serializeMotionDocument(doc));
+  assertEqual(loaded.actors[0].symbolId, symbolId);
+  assertEqual(loaded.library.find((symbol) => symbol.id === symbolId).timeline.actors[0].fill, "#35e0c2");
 });
 
 test("motion editor: editing linked artwork updates every instance", async () => {

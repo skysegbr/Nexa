@@ -18,6 +18,7 @@ export function sceneSnapshot(doc, identity = {}) {
 }
 
 export function syncActiveScene(doc) {
+  if (doc.editingSymbolId) return doc;
   if (!Array.isArray(doc.scenes) || !doc.scenes.length) return doc;
   return {
     ...doc,
@@ -35,6 +36,7 @@ export function applyScene(doc, scene) {
 }
 
 export function selectSceneDoc(doc, id) {
+  if (doc.editingSymbolId) return null;
   if (id === doc.activeSceneId) return null;
   const synced = syncActiveScene(doc);
   const scene = synced.scenes.find((entry) => entry.id === id);
@@ -42,6 +44,7 @@ export function selectSceneDoc(doc, id) {
 }
 
 export function addSceneDoc(doc, name) {
+  if (doc.editingSymbolId) return null;
   const synced = syncActiveScene(doc);
   const id = nextSceneId(synced.scenes);
   const scene = {
@@ -74,6 +77,7 @@ function cloneScene(scene, id, name) {
 }
 
 export function duplicateSceneDoc(doc) {
+  if (doc.editingSymbolId) return null;
   const synced = syncActiveScene(doc);
   const source = synced.scenes.find((scene) => scene.id === synced.activeSceneId);
   if (!source) return null;
@@ -103,6 +107,7 @@ export function moveSceneDoc(doc, id, delta) {
 }
 
 export function deleteSceneDoc(doc, id) {
+  if (doc.editingSymbolId) return null;
   if (doc.scenes.length <= 1) return null;
   const synced = syncActiveScene(doc);
   const index = synced.scenes.findIndex((scene) => scene.id === id);

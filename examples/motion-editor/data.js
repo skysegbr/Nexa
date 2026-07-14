@@ -4,7 +4,7 @@
 // tools, deleted from their track row, saved with the project.
 
 export const INITIAL_DOC = {
-  schemaVersion: 6,
+  schemaVersion: 7,
   duration: 3000,
   fps: 24,
   stageColor: "#0d1226",

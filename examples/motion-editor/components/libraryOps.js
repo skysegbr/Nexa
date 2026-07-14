@@ -22,6 +22,8 @@ export function libraryFor(editor, selectedActor, createActor) {
   };
 
   const place = (item) => {
+    const contextIds = [...(editor.doc.symbolEditStack || []), editor.doc.editingSymbolId].filter(Boolean);
+    if (contextIds.includes(item.id)) return;
     const offset = (editor.doc.actors.length % 6) * 24;
     createActor({
       kind: item.kind,

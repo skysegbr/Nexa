@@ -43,6 +43,11 @@
   color: #35e0c2;
 }
 
+.me-library-name:disabled {
+  color: #4c587f;
+  cursor: not-allowed;
+}
+
 .me-library-kind {
   flex-shrink: 0;
   font-size: 0.68rem;

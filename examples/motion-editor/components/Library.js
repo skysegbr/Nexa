@@ -15,7 +15,7 @@ function swatchStyle(item) {
   };
 }
 
-export function Library({ items, usage, onPlace, onRemove }) {
+export function Library({ items, usage, blockedSymbolIds = [], onPlace, onEdit, onRemove }) {
   return h(
     "section",
     { className: "me-library", ariaLabel: "Library" },
@@ -36,7 +36,8 @@ export function Library({ items, usage, onPlace, onRemove }) {
           {
             type: "button",
             className: "me-library-name",
-            title: `Place an instance of “${item.name}” on the stage`,
+            disabled: blockedSymbolIds.includes(item.id),
+            title: blockedSymbolIds.includes(item.id) ? "A MovieClip cannot contain itself or an ancestor" : `Place an instance of “${item.name}” on the stage`,
             onClick: () => onPlace(item),
           },
           item.name,
@@ -44,9 +45,15 @@ export function Library({ items, usage, onPlace, onRemove }) {
         h("span", { className: "me-library-kind", title: "Linked instances on stage" }, `${item.kind} · ${usage[item.id] || 0}×`),
         h(
           "button",
+          { type: "button", className: "me-btn me-btn-add", disabled: blockedSymbolIds.includes(item.id), title: `Edit “${item.name}”`, onClick: () => onEdit(item.id) },
+          "✎",
+        ),
+        h(
+          "button",
           {
             type: "button",
             className: "me-btn me-btn-add me-btn-remove",
+            disabled: blockedSymbolIds.includes(item.id),
             title: `Remove “${item.name}” (instances become independent artwork)`,
             onClick: () => onRemove(item.id),
           },

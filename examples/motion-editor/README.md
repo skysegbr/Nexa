@@ -46,10 +46,11 @@ The scene strip above the stage switches, renames, reorders, creates, duplicates
 - **Motion guides**: select a keyframe → *draw guide on stage* → click points → finish. Drag the anchors to reshape; *orient* rotates along the path.
 - **Mask and guide layers**: draw any supported artwork on a `◩ Mask` row to clip its nested layers; mask geometry follows its real animation track. `⌖ Guide` artwork remains visible as an outline while authoring but its tracks are omitted from exported `useTimeline()` code.
 - **Library**: with an actor selected, *☆ convert to symbol* creates a real linked symbol. Every placed instance shares its artwork, so editing the fill/text through one instance updates all of them; removing a symbol safely detaches its instances as independent artwork.
+- **MovieClip editing**: choose *◆ edit symbol* in the Actor inspector or ✎ in the Library to enter the symbol's own stage and timeline. The breadcrumb shows `Scene › Symbol › Nested symbol`; *← back* commits the current MovieClip context. Instances play internal timelines slaved to the parent playhead, with cycle-safe nesting.
 - **Projects** save/load in localStorage from the header; *stage* picks the stage color. The Export pane always holds the current `useTimeline()` code — copy and paste it into any Nexa app.
 
 Project files carry a versioned editor schema. Legacy JSON is normalized on import, and session-only keyframe IDs are never written to saved/downloaded files.
 
 ## Road to the Flash authoring model
 
-The runtime stays browser-native and small; Flash-like authoring belongs here in the editor. Schema v6 now has independent multi-actor layers, nested folders, animated masks, editor-only guides and multi-scene movies. The next structural milestones are a symbol-editing stage for nested MovieClips and explicit frame/keyframe/blank-keyframe operations. That order avoids baking editor-only complexity into `nexa-motion.js`.
+The runtime stays browser-native and small; Flash-like authoring belongs here in the editor. Schema v7 now has independent multi-actor layers, nested folders, animated masks, editor-only guides, multi-scene movies and nested MovieClip editing. The next structural milestone is explicit frame/keyframe/blank-keyframe operations. That separation avoids baking authoring complexity into `nexa-motion.js`.

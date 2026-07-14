@@ -46,3 +46,13 @@
   padding: 0.22rem 0.5rem;
   font-size: 0.7rem;
 }
+
+.me-symbol-context {
+  border-color: rgba(192, 132, 252, 0.55);
+}
+
+.me-symbol-crumb {
+  flex: 1;
+  color: #c084fc;
+  font-size: 0.78rem;
+}
