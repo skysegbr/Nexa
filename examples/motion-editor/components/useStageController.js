@@ -9,7 +9,13 @@ import { useEffect, useRef, useState } from "/dist/nexa.js";
 import { createTimeline } from "/dist/nexa-motion.js";
 
 function buildController(doc) {
-  return createTimeline({ duration: doc.duration, tracks: doc.tracks, autoplay: false });
+  return createTimeline({
+    duration: doc.duration,
+    tracks: doc.tracks,
+    labels: doc.labels,
+    loop: doc.loop,
+    autoplay: false,
+  });
 }
 
 export function useStageController(initialDoc, committedDoc, playheadRef) {

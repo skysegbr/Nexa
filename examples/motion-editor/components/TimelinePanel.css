@@ -64,6 +64,35 @@
   color: #e8ecff;
 }
 
+/* speed / zoom selects */
+.me-speed {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.75rem;
+  color: #7f8fd9;
+}
+
+.me-speed select {
+  padding: 0.25rem 0.3rem;
+  border: 1px solid #2a3560;
+  border-radius: 6px;
+  background: #0a0f22;
+  color: #e8ecff;
+  font-size: 0.75rem;
+}
+
+/* inline label-name input in the transport */
+.me-label-input {
+  width: 110px;
+  padding: 0.3rem 0.45rem;
+  border: 1px solid #ffd166;
+  border-radius: 6px;
+  background: #0a0f22;
+  color: #e8ecff;
+  font-size: 0.78rem;
+}
+
 /* ── ruler ── */
 
 .me-ruler {
@@ -97,13 +126,57 @@
   z-index: 2;
 }
 
+/* named label markers on the ruler (gotoAndPlay targets) */
+.me-label-marker {
+  position: absolute;
+  bottom: 1px;
+  transform: translateX(-2px);
+  font-size: 0.6rem;
+  color: #ffd166;
+  white-space: nowrap;
+  user-select: none;
+  z-index: 3;
+}
+
 /* ── track rows (the label column is the layers panel) ── */
 
-.me-row {
+/* fixed layers column on the left, one shared scroll strip on the right */
+.me-tracks {
   display: grid;
   grid-template-columns: 248px minmax(0, 1fr);
   gap: 0.5rem;
-  align-items: center;
+  align-items: start;
+}
+
+.me-track-labels {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+/* keeps the layer cells aligned with their lanes across the ruler row */
+.me-labels-spacer {
+  height: 26px;
+  flex-shrink: 0;
+}
+
+.me-track-labels .me-row-label {
+  height: 30px;
+}
+
+.me-track-scroll {
+  overflow-x: auto;
+  min-width: 0;
+  /* room for the half of a diamond that hangs past 0%/100% */
+  padding: 0 8px;
+}
+
+/* the zoomed strip: ruler + lanes scale together */
+.me-track-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  min-width: 100%;
 }
 
 .me-row-label {

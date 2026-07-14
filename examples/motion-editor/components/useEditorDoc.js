@@ -1,33 +1,50 @@
-// The editor's document state: duration + keyframe tracks in useHistory
-// (the core's undo/redo hook), the current selection, and every mutation —
-// keyframe edits, add/delete, copy/paste at the playhead, and draft-based
-// dragging (a gesture edits a transient draft and commits ONE history step
-// on release, not one per pixel).
+// The editor's document state: useHistory (undo/redo) + selection + every
+// mutation; drags edit a transient draft and commit ONE history step on
+// release. Selection entries are { track, id } — the keyframe's `_id` —
+// so undo/redo reordering arrays never re-aims them at another diamond.
 
 import { useHistory, useRef, useState } from "/dist/nexa.js";
-import { snap, selKey } from "./editorUtils.js";
-import { addActorDoc, duplicateActorDoc, moveActorLayerDoc, deleteActorDoc, writeKeyframeAtDoc } from "./docOps.js";
+import { snap } from "./editorUtils.js";
+import {
+  addActorDoc,
+  duplicateActorDoc,
+  moveActorLayerDoc,
+  deleteActorDoc,
+  writeKeyframeAtDoc,
+  withKeyframeIds,
+  freshKeyframeId,
+  clipboardFrom,
+  pasteClipboardDoc,
+  moveKeyframesDoc,
+  setLabelDoc,
+  setLoopDoc,
+} from "./docOps.js";
 
 export function useEditorDoc(initialDoc, playheadRef) {
-  const { state: doc, set: setDoc, undo, redo, canUndo, canRedo } = useHistory(initialDoc, { limit: 100 });
+  const [initial] = useState(() => withKeyframeIds(initialDoc));
+  const { state: doc, set: setDoc, undo, redo, canUndo, canRedo } = useHistory(initial, { limit: 100 });
   const [draft, setDraft] = useState(null); // in-flight drag document
-  const [selected, setSelected] = useState([]); // [{ track, index }]
-  const dragOriginRef = useRef(null); // [{ track, index, at }] while dragging
+  const [selected, setSelected] = useState([]); // [{ track, id }]
+  const dragOriginRef = useRef(null); // [{ track, id, at }] while dragging
   const clipboardRef = useRef(null);
 
   const effective = draft ?? doc;
 
+  const indexOfKeyframe = (trackName, id) =>
+    (effective.tracks[trackName] || []).findIndex((keyframe) => keyframe._id === id);
+
   // Selection entries can dangle after undo/delete — drop them.
-  const liveSelected = selected.filter((entry) => effective.tracks[entry.track]?.[entry.index]);
+  const liveSelected = selected.filter((entry) => indexOfKeyframe(entry.track, entry.id) !== -1);
 
   // ── document edits (all history-committing paths go through setDoc) ──
 
-  const updateKeyframe = (trackName, index, patch) => {
+  const updateKeyframe = (trackName, id, patch) => {
     // A no-op patch must not touch history: a blur can re-fire change with
     // the value already committed, and pushing a duplicate entry makes the
     // next undo appear to do nothing. Missing entries (imported documents
     // can be sparse) are also no-ops.
-    const current = effective.tracks[trackName]?.[index];
+    const index = indexOfKeyframe(trackName, id);
+    const current = index !== -1 && effective.tracks[trackName][index];
     if (!current || Object.keys(patch).every((key) => Object.is(current[key], patch[key]))) {
       return;
     }
@@ -44,11 +61,11 @@ export function useEditorDoc(initialDoc, playheadRef) {
   };
 
   const addKeyframe = (trackName) => {
-    const at = snap(playheadRef.current);
+    const keyframe = { at: snap(playheadRef.current), _id: freshKeyframeId() };
     // Imported documents may list an actor without a tracks entry.
-    const nextTrack = [...(effective.tracks[trackName] || []), { at }];
+    const nextTrack = [...(effective.tracks[trackName] || []), keyframe];
     setDoc({ ...effective, tracks: { ...effective.tracks, [trackName]: nextTrack } });
-    setSelected([{ track: trackName, index: nextTrack.length - 1 }]);
+    setSelected([{ track: trackName, id: keyframe._id }]);
   };
 
   // Flash's auto-key: dragging an actor on the stage records its position
@@ -60,10 +77,10 @@ export function useEditorDoc(initialDoc, playheadRef) {
 
   const deleteSelected = () => {
     if (liveSelected.length === 0) return;
-    const doomed = new Set(liveSelected.map(selKey));
+    const doomed = new Set(liveSelected.map((entry) => entry.id));
     const tracks = {};
     for (const [name, keyframes] of Object.entries(effective.tracks)) {
-      tracks[name] = keyframes.filter((_, i) => !doomed.has(selKey({ track: name, index: i })));
+      tracks[name] = keyframes.filter((keyframe) => !doomed.has(keyframe._id));
     }
     setDoc({ ...effective, tracks });
     setSelected([]);
@@ -75,31 +92,27 @@ export function useEditorDoc(initialDoc, playheadRef) {
     }
   };
 
+  // Timeline labels ({ name: ms }) and looping are document properties —
+  // they ship with the export. `ms: undefined` removes a label.
+  const setLabel = (name, ms) => setDoc(setLabelDoc(effective, name, ms));
+
+  const setLoop = (loop) => {
+    const next = setLoopDoc(effective, loop);
+    if (next) setDoc(next);
+  };
+
   // ── copy/paste: keyframes travel to the playhead, keeping their spacing ──
 
   const copySelected = () => {
     if (liveSelected.length === 0) return;
-    const entries = liveSelected.map(({ track, index }) => ({
-      track,
-      keyframe: { ...effective.tracks[track][index] },
-    }));
-    const baseAt = Math.min(...entries.map((entry) => entry.keyframe.at));
-    clipboardRef.current = { entries, baseAt };
+    clipboardRef.current = clipboardFrom(effective, liveSelected);
   };
 
   const pasteAtPlayhead = () => {
-    const clipboard = clipboardRef.current;
-    if (!clipboard) return;
-    const offset = snap(playheadRef.current) - clipboard.baseAt;
-    const tracks = { ...effective.tracks };
-    const pasted = [];
-    for (const { track, keyframe } of clipboard.entries) {
-      const at = snap(Math.max(0, Math.min(effective.duration, keyframe.at + offset)));
-      tracks[track] = [...tracks[track], { ...keyframe, at }];
-      pasted.push({ track, index: tracks[track].length - 1 });
-    }
-    setDoc({ ...effective, tracks });
-    setSelected(pasted);
+    if (!clipboardRef.current) return;
+    const next = pasteClipboardDoc(effective, clipboardRef.current, snap(playheadRef.current));
+    setDoc(next.doc);
+    setSelected(next.pasted);
   };
 
   // ── selection & keyframe dragging (draft-based) ──
@@ -107,41 +120,29 @@ export function useEditorDoc(initialDoc, playheadRef) {
   const select = (entry, additive) => {
     setSelected((current) => {
       if (!additive) return [{ ...entry }];
-      const key = selKey(entry);
-      const without = current.filter((e) => selKey(e) !== key);
+      const without = current.filter((e) => e.id !== entry.id);
       return without.length === current.length ? [...current, { ...entry }] : without;
     });
   };
 
   const dragStart = (entry, additive) => {
     // Dragging an unselected diamond selects it first (Flash behavior).
-    const key = selKey(entry);
-    const isSelected = liveSelected.some((e) => selKey(e) === key);
+    const isSelected = liveSelected.some((e) => e.id === entry.id);
     const nextSelection = isSelected && !additive ? liveSelected : additive
-      ? [...liveSelected.filter((e) => selKey(e) !== key), entry]
+      ? [...liveSelected.filter((e) => e.id !== entry.id), entry]
       : [entry];
     setSelected(nextSelection);
 
-    // Plain objects — no string round-trip, so track names from imported
-    // JSON can contain any character without corrupting the drag.
     dragOriginRef.current = nextSelection.map((sel) => ({
       track: sel.track,
-      index: sel.index,
-      at: effective.tracks[sel.track][sel.index].at,
+      id: sel.id,
+      at: effective.tracks[sel.track][indexOfKeyframe(sel.track, sel.id)].at,
     }));
   };
 
   const dragPreview = (deltaMs) => {
-    const origins = dragOriginRef.current;
-    if (!origins) return;
-    const tracks = { ...effective.tracks };
-    for (const { track: trackName, index, at } of origins) {
-      const nextAt = snap(Math.max(0, Math.min(effective.duration, at + deltaMs)));
-      tracks[trackName] = tracks[trackName].map((keyframe, i) =>
-        i === index ? { ...keyframe, at: nextAt } : keyframe,
-      );
-    }
-    setDraft({ ...doc, tracks });
+    if (!dragOriginRef.current) return;
+    setDraft(moveKeyframesDoc(doc, dragOriginRef.current, deltaMs, snap));
   };
 
   const dragCommit = () => {
@@ -168,7 +169,7 @@ export function useEditorDoc(initialDoc, playheadRef) {
   const addActor = (actor) => {
     const next = addActorDoc(effective, actor);
     setDoc(next.doc);
-    setSelected([{ track: next.id, index: 0 }]);
+    setSelected([{ track: next.id, id: next.doc.tracks[next.id][0]._id }]);
   };
 
   // ONE history step; returns the new id (null for stale ids) so the
@@ -196,7 +197,8 @@ export function useEditorDoc(initialDoc, playheadRef) {
   // Loading a project (or resetting) is a normal history step — undoable.
   // Projects saved before actors became part of the document inherit the
   // starter cast, and every actor is guaranteed a tracks entry so sparse
-  // imported documents can't crash keyframe mutations.
+  // imported documents can't crash keyframe mutations. Keyframe ids are
+  // regenerated: saved files carry ids from an older session.
   const load = (nextDoc) => {
     const actors = nextDoc.actors ?? initialDoc.actors;
     const tracks = { ...nextDoc.tracks };
@@ -205,7 +207,7 @@ export function useEditorDoc(initialDoc, playheadRef) {
         tracks[actor.id] = [];
       }
     }
-    setDoc({ ...nextDoc, actors, tracks });
+    setDoc(withKeyframeIds({ ...nextDoc, actors, tracks }));
     setSelected([]);
   };
 
@@ -233,6 +235,8 @@ export function useEditorDoc(initialDoc, playheadRef) {
     keyAtPlayhead,
     deleteSelected,
     setDuration,
+    setLabel,
+    setLoop,
     copySelected,
     pasteAtPlayhead,
     select,

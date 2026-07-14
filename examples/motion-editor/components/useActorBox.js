@@ -4,6 +4,7 @@
 // ("nw", "ne", "sw", "se").
 
 import { useState } from "/dist/nexa.js";
+import { capturePointer } from "./editorUtils.js";
 
 const MIN_SIZE = 12;
 
@@ -14,9 +15,7 @@ export function useActorBox({ onCommit }) {
     event.stopPropagation();
     const startBox = { x: actor.x, y: actor.y, w: actor.w, h: actor.h };
     setDrag({ id: actor.id, mode, startPoint: stagePoint(event), startBox, box: startBox });
-    try {
-      event.target.setPointerCapture(event.pointerId);
-    } catch {}
+    capturePointer(event);
   };
 
   const move = (event, stagePoint) => {

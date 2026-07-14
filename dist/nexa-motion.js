@@ -179,8 +179,11 @@ function rgbaString([r, g, b, a]) {
 // ── Motion guides (SVG paths) ────────────────────────────────────────────────
 //
 // getTotalLength/getPointAtLength need a path inside a live document on some
-// engines, so every guide shares one hidden <svg> appended lazily to <body>.
-// Timelines remove their own guide paths on destroy().
+// engines, so guides are measured through one hidden <svg> appended lazily
+// to <body>. Each guide is PRE-SAMPLED into a polyline once at compile time:
+// the per-frame hot path then lerps between samples instead of calling
+// getPointAtLength (geometry-engine work on every frame), and the temporary
+// <path> element leaves the document immediately.
 
 let guideSvg = null;
 
@@ -202,10 +205,44 @@ function createGuidePath(d) {
   return { path, total: path.getTotalLength() };
 }
 
-// Tangent angle (deg) of the path at `length`, sampled over a ±1px window.
-function tangentAt(path, total, length) {
-  const ahead = path.getPointAtLength(Math.min(total, length + 1));
-  const behind = path.getPointAtLength(Math.max(0, length - 1));
+// Coordinates are rounded to 1/1000 px: getPointAtLength's float noise
+// would otherwise leak into transforms that are exact by construction
+// (straight guides, endpoints).
+const round3 = (value) => Math.round(value * 1000) / 1000;
+
+// One sample every ~4px of arc length, clamped to [16, 256] samples.
+function sampleGuidePath(d) {
+  const guide = createGuidePath(d);
+  if (!guide) return null;
+  const { path, total } = guide;
+  const count = Math.max(16, Math.min(256, Math.ceil(total / 4) || 16));
+  const points = new Array(count + 1);
+  for (let i = 0; i <= count; i += 1) {
+    const point = path.getPointAtLength((i / count) * total);
+    points[i] = { x: round3(point.x), y: round3(point.y) };
+  }
+  path.remove();
+  return points;
+}
+
+// Position along the sampled polyline at eased progress `t` (clamped —
+// overshooting easings pile up at the guide's ends, like Flash).
+function pointOnSamples(points, t) {
+  const scaled = Math.max(0, Math.min(1, t)) * (points.length - 1);
+  const index = Math.floor(scaled);
+  if (index >= points.length - 1) return points[points.length - 1];
+  const frac = scaled - index;
+  const a = points[index];
+  const b = points[index + 1];
+  return { x: round3(a.x + (b.x - a.x) * frac), y: round3(a.y + (b.y - a.y) * frac) };
+}
+
+// Tangent angle (deg) at eased progress `t`, from the neighbouring samples.
+function tangentOnSamples(points, t) {
+  const scaled = Math.max(0, Math.min(1, t)) * (points.length - 1);
+  const index = Math.max(0, Math.min(points.length - 1, Math.round(scaled)));
+  const behind = points[Math.max(0, index - 1)];
+  const ahead = points[Math.min(points.length - 1, index + 1)];
   return (Math.atan2(ahead.y - behind.y, ahead.x - behind.x) * 180) / Math.PI;
 }
 
@@ -264,20 +301,19 @@ function compileTrack(keyframes) {
     }
 
     if (keyframe.path) {
-      const guide = createGuidePath(keyframe.path);
-      if (guide) {
+      const points = sampleGuidePath(keyframe.path);
+      if (points) {
         const orient = keyframe.orient === true;
         guides.push({
           fromAt: i > 0 ? sorted[i - 1].at : keyframe.at,
           toAt: keyframe.at,
           ease: keyframe.ease,
           orient,
-          path: guide.path,
-          total: guide.total,
+          points,
           // Boundary tangents let orientation HOLD outside the span instead
           // of snapping to 0deg the frame the guide ends.
-          startAngle: orient ? tangentAt(guide.path, guide.total, 0) : 0,
-          endAngle: orient ? tangentAt(guide.path, guide.total, guide.total) : 0,
+          startAngle: orient ? tangentOnSamples(points, 0) : 0,
+          endAngle: orient ? tangentOnSamples(points, 1) : 0,
         });
       }
     }
@@ -286,8 +322,8 @@ function compileTrack(keyframes) {
   // A guide's endpoints become x/y keyframes, so tweens before and after the
   // curve continue exactly from where it starts/ends.
   for (const guide of guides) {
-    const start = guide.path.getPointAtLength(0);
-    const end = guide.path.getPointAtLength(guide.total);
+    const start = guide.points[0];
+    const end = guide.points[guide.points.length - 1];
     let xPoints = perProp.get("x");
     let yPoints = perProp.get("y");
     if (!xPoints) perProp.set("x", (xPoints = []));
@@ -385,10 +421,10 @@ function styleAt(compiled, time, defaultEase) {
     const span = guide.toAt - guide.fromAt;
     const progress = span === 0 ? 1 : (time - guide.fromAt) / span;
     const ease = easings[guide.ease] || easings[defaultEase] || easings.linear;
-    const length = ease(progress) * guide.total;
-    guidePoint = guide.path.getPointAtLength(length);
+    const eased = ease(progress);
+    guidePoint = pointOnSamples(guide.points, eased);
     if (guide.orient) {
-      guideAngle = tangentAt(guide.path, guide.total, length);
+      guideAngle = tangentOnSamples(guide.points, eased);
     }
     break;
   }
@@ -747,12 +783,8 @@ export function createTimeline(spec = {}) {
       playing = false;
       stopTicker();
       elements.clear();
-      // Motion-guide paths live in the shared hidden <svg> — remove ours.
-      for (const compiled of tracks.values()) {
-        for (const guide of compiled.guides) {
-          guide.path.remove();
-        }
-      }
+      // Guides are pre-sampled at compile time — their temporary <path>
+      // elements already left the hidden <svg>; nothing to clean up here.
     },
   };
 

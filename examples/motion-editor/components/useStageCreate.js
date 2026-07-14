@@ -4,6 +4,7 @@
 // the overlay and the actor is committed on release.
 
 import { useState } from "/dist/nexa.js";
+import { capturePointer } from "./editorUtils.js";
 
 function normalizeBox(x1, y1, x2, y2) {
   return {
@@ -28,9 +29,7 @@ export function useStageCreate({ tool, fill, onCreate, stagePoint }) {
     }
     const point = stagePoint(event);
     setCreateDraft({ x0: point.x, y0: point.y, x1: point.x, y1: point.y });
-    try {
-      event.target.setPointerCapture(event.pointerId);
-    } catch {}
+    capturePointer(event);
     return true;
   };
 

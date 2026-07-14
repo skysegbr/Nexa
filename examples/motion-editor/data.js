@@ -33,6 +33,7 @@ export const INITIAL_DOC = {
 // Stage tools, Flash-style (adapted from the drawEasyNexa toolbox).
 export const TOOLS = [
   { id: "select", label: "Select", icon: "➤" },
+  { id: "transform", label: "Free Transform (rotate/scale)", icon: "⤾" },
   { id: "rect", label: "Rectangle", icon: "▭" },
   { id: "ellipse", label: "Ellipse", icon: "◯" },
   { id: "text", label: "Text", icon: "T" },

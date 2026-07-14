@@ -22,6 +22,7 @@ import { EditorHeader } from "./components/EditorHeader.js";
 import { useEditorDoc } from "./components/useEditorDoc.js";
 import { useEditorShortcuts } from "./components/useEditorShortcuts.js";
 import { useStageController } from "./components/useStageController.js";
+import { applySpecToDoc } from "./components/codeParse.js";
 
 function App() {
   const playheadRef = useRef(0);
@@ -90,7 +91,7 @@ function App() {
 
   const finishDrawing = () => {
     if (drawing && drawing.points.length >= 2) {
-      editor.updateKeyframe(drawing.track, drawing.index, { path: smoothPath(drawing.points) });
+      editor.updateKeyframe(drawing.track, drawing.id, { path: smoothPath(drawing.points) });
     }
     setDrawing(null);
   };
@@ -156,7 +157,7 @@ function App() {
             onion,
             playheadRef,
             onDrawPoint: addDrawingPoint,
-            onEditGuide: (track, index, path) => editor.updateKeyframe(track, index, { path }),
+            onEditGuide: (track, id, path) => editor.updateKeyframe(track, id, { path }),
             onCreateActor: createActor,
             onSelectActor: selectActor,
             onUpdateActor: editor.updateActor,
@@ -185,6 +186,9 @@ function App() {
           onMoveLayer: editor.moveActorLayer,
           onSelectActor: selectActor,
           onRenameActor: (id, label) => editor.updateActor(id, { label }),
+          onAddLabel: (name) => editor.setLabel(name, Math.round(playheadRef.current)),
+          onRemoveLabel: (name) => editor.setLabel(name, undefined),
+          onToggleLoop: () => editor.setLoop(!editor.doc.loop),
           onion,
           onOnionToggle: () => setOnion((current) => ({ ...current, on: !current.on })),
           onOnionCount: (count) =>
@@ -208,13 +212,19 @@ function App() {
           drawing,
           onEdit: (patch) =>
             editor.selected.length === 1 &&
-            editor.updateKeyframe(editor.selected[0].track, editor.selected[0].index, patch),
+            editor.updateKeyframe(editor.selected[0].track, editor.selected[0].id, patch),
           onDelete: editor.deleteSelected,
           onStartDrawing: startDrawing,
           onFinishDrawing: finishDrawing,
           onCancelDrawing: () => setDrawing(null),
         }),
-        h(CodePane, { doc: editor.doc }),
+        h(CodePane, {
+          doc: editor.doc,
+          onApply: (spec) => {
+            editor.load(applySpecToDoc(editor.doc, spec));
+            setActorSel(null);
+          },
+        }),
       ),
     ),
   );

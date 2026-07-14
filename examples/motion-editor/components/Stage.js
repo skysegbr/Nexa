@@ -1,20 +1,17 @@
-// The preview stage: the document's actors bound to the CURRENT controller
-// via track() refs, an SVG overlay for motion guides (dashed, like Flash's
-// guide layer) with draggable anchor handles, guide drawing by clicking,
-// and actor CREATION with the shape tools (rubber-band drag / text click).
-//
-// Guide coordinates live in the actor's translate space; the overlay
-// converts to stage space through the actor's document box (x/y/w/h),
-// running the curve through the actor's CENTER — the closest thing to
-// Flash's registration point.
+// The preview stage: actors bound to the CURRENT controller via track()
+// refs, the motion-guide SVG overlay (drawing + draggable anchors), actor
+// creation with the shape tools, and the Free Transform overlay. Guide
+// coordinates live in the actor's translate space anchored on its center
+// (see actorGeometry.baseOf).
 
 import { h, useRef, useState } from "/dist/nexa.js";
-import { tweenTranslation } from "./editorUtils.js";
+import { tweenTranslation, capturePointer } from "./editorUtils.js";
 import { pathAnchors, smoothPath } from "./smoothPath.js";
 import { useStageCreate } from "./useStageCreate.js";
 import { useActorBox } from "./useActorBox.js";
 import { StageOverlay } from "./StageOverlay.js";
 import { OnionSkin } from "./OnionSkin.js";
+import { TransformOverlay } from "./TransformOverlay.js";
 import { HANDLES, baseOf, actorStyle } from "./actorGeometry.js";
 
 export function Stage({
@@ -71,7 +68,13 @@ export function Stage({
   const selectedActor = actorSel ? actorsById[actorSel] : null;
 
   const actorPointerDown = (event, actor) => {
-    if (tool !== "select" || drawing) return;
+    if (drawing) return;
+    if (tool === "transform") {
+      // Free Transform: clicking selects; the gestures live on the overlay.
+      onSelectActor(actor.id);
+      return;
+    }
+    if (tool !== "select") return;
     onSelectActor(actor.id);
     tweenRef.current = tweenTranslation(event.currentTarget);
     actorBox.start(event, actorsById[actor.id], "move", stagePoint);
@@ -107,20 +110,18 @@ export function Stage({
 
   const [anchorDrag, setAnchorDrag] = useState(null); // { anchors, index } | null
 
-  const editable =
-    !drawing && !create.active && selected.length === 1 && doc.tracks[selected[0].track]?.[selected[0].index]?.path
-      ? selected[0]
-      : null;
-  const editableKeyframe = editable && doc.tracks[editable.track][editable.index];
+  const selectedKeyframe =
+    selected.length === 1 &&
+    doc.tracks[selected[0].track]?.find((keyframe) => keyframe._id === selected[0].id);
+  const editable = !drawing && !create.active && selectedKeyframe?.path ? selected[0] : null;
+  const editableKeyframe = editable ? selectedKeyframe : null;
   const editableAnchors = anchorDrag ? anchorDrag.anchors : editableKeyframe ? pathAnchors(editableKeyframe.path) : null;
   const editableBase = editable && actorsById[editable.track] ? baseOf(actorsById[editable.track]) : null;
 
   const startAnchorDrag = (event, index) => {
     event.stopPropagation();
     setAnchorDrag({ anchors: pathAnchors(editableKeyframe.path), index });
-    try {
-      event.target.setPointerCapture(event.pointerId);
-    } catch {}
+    capturePointer(event);
   };
 
   const moveAnchorDrag = (event) => {
@@ -136,7 +137,7 @@ export function Stage({
 
   const endAnchorDrag = () => {
     if (!anchorDrag) return;
-    onEditGuide(editable.track, editable.index, smoothPath(anchorDrag.anchors));
+    onEditGuide(editable.track, editable.id, smoothPath(anchorDrag.anchors));
     setAnchorDrag(null);
   };
 
@@ -222,6 +223,16 @@ export function Stage({
           onPointerDown: (e) => actorBox.start(e, selectedActor, corner, stagePoint),
         }),
       ),
+    tool === "transform" &&
+      selectedActor &&
+      !drawing &&
+      !selectedFlags.locked &&
+      !selectedFlags.hidden &&
+      h(TransformOverlay, {
+        stageRef,
+        actorId: actorSel,
+        onCommit: (patch) => onKeyPosition(actorSel, patch),
+      }),
     h(StageOverlay, {
       guides,
       preview,

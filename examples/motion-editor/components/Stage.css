@@ -120,6 +120,55 @@
 .me-handle-nw, .me-handle-se { cursor: nwse-resize; }
 .me-handle-ne, .me-handle-sw { cursor: nesw-resize; }
 
+/* ── Free Transform overlay (rotate/scale auto-key) ── */
+
+.me-transform-outline {
+  position: absolute;
+  border: 1.5px solid #c084fc;
+  pointer-events: none;
+}
+
+.me-rotate-stick {
+  position: absolute;
+  width: 1.5px;
+  height: 22px;
+  transform: translateX(-50%);
+  background: #c084fc;
+  pointer-events: none;
+}
+
+.me-rotate-handle {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  transform: translate(-50%, -50%);
+  border: 1.5px solid #c084fc;
+  border-radius: 50%;
+  background: #0c1226;
+  cursor: grab;
+  touch-action: none;
+  z-index: 6;
+}
+
+.me-rotate-handle:active {
+  cursor: grabbing;
+}
+
+.me-thandle {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  transform: translate(-50%, -50%) rotate(45deg);
+  border: 1.5px solid #c084fc;
+  border-radius: 2px;
+  background: #0c1226;
+  cursor: nwse-resize;
+  touch-action: none;
+  z-index: 6;
+}
+
+.me-thandle-ne, .me-thandle-sw { cursor: nesw-resize; }
+
 /* rubber-band preview while a shape tool drags */
 .me-create-preview {
   fill: rgba(79, 124, 255, 0.15);

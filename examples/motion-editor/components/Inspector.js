@@ -64,8 +64,8 @@ export function Inspector({ doc, selected, drawing, onEdit, onDelete, onStartDra
     );
   }
 
-  const { track, index } = selected[0];
-  const keyframe = doc.tracks[track][index];
+  const { track, id } = selected[0];
+  const keyframe = doc.tracks[track].find((entry) => entry._id === id);
 
   const numberField = (name, value, onValue, { step = 1, min } = {}) =>
     h(

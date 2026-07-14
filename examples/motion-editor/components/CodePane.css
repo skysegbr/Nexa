@@ -20,6 +20,11 @@
   margin: 0;
 }
 
+.me-code-actions {
+  display: inline-flex;
+  gap: 0.35rem;
+}
+
 .me-code-body {
   flex: 1;
   min-height: 0;
@@ -32,4 +37,19 @@
   color: #b7e6d9;
   font-size: 0.72rem;
   line-height: 1.5;
+}
+
+/* two-way editing */
+.me-code-edit {
+  min-height: 180px;
+  resize: vertical;
+  border-color: #35e0c2;
+  font-family: ui-monospace, "Cascadia Mono", monospace;
+  white-space: pre;
+}
+
+.me-code-error {
+  margin: 0.4rem 0 0;
+  color: #ff8fa3;
+  font-size: 0.72rem;
 }
