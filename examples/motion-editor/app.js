@@ -28,6 +28,8 @@ import { applySpecToDoc } from "./components/codeParse.js";
 import { useDrawingTools } from "./components/useDrawingTools.js";
 import { useLayers } from "./components/useLayers.js";
 import { layerTimelineBindings } from "./components/layerTimelineBindings.js";
+import { SceneBar } from "./components/SceneBar.js";
+import { sceneBarBindings } from "./components/sceneBarBindings.js";
 function App() {
   const playheadRef = useRef(0);
   const editor = useEditorDoc(INITIAL_DOC, playheadRef);
@@ -76,6 +78,7 @@ function App() {
   const library = libraryFor(editor, selectedActorSource, createActor);
   const selectedActor = library.selected;
   const layerTimeline = layerTimelineBindings({ editor, layers, setActorSelection: setActorSel });
+  const sceneBar = sceneBarBindings({ editor, layers, setActorSelection: setActorSel, playheadRef });
   const loadProject = (project) => {
     editor.load(project);
     setActorSel(null);
@@ -140,6 +143,7 @@ function App() {
       h(
         "div",
         { className: "me-left" },
+        h(SceneBar, { doc: editor.doc, ...sceneBar }),
         h(
           "div",
           { className: "me-stage-row" },

@@ -16,6 +16,7 @@ import {
   setLabelDoc,
 } from "./docOps.js";
 import { createActorActions } from "./editorActorActions.js";
+import { createSceneActions } from "./sceneEditorActions.js";
 import { layerActorIds } from "./layerOps.js";
 
 export function useEditorDoc(initialDoc, playheadRef) {
@@ -187,6 +188,7 @@ export function useEditorDoc(initialDoc, playheadRef) {
   };
 
   const actorActions = createActorActions({ effective, setDoc, setSelected });
+  const sceneActions = createSceneActions({ effective, setDoc, setSelected });
 
   // Loading a project is a normal (undoable) history step. Old saves
   // inherit the starter cast, every actor gets a tracks entry, and
@@ -201,6 +203,7 @@ export function useEditorDoc(initialDoc, playheadRef) {
   return {
     load,
     ...actorActions,
+    ...sceneActions,
     clearSelection,
     doc: effective,
     // The committed document (no in-flight drag draft): rebuild triggers key

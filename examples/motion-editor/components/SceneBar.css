@@ -1,0 +1,48 @@
+.me-scenes {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 32px;
+  padding: 0.35rem 0.5rem;
+  border: 1px solid #1d2440;
+  border-radius: 8px;
+  background: #0c1226;
+}
+
+.me-scenes-label {
+  color: #ffd166;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.me-scene-select,
+.me-scene-name {
+  height: 25px;
+  border: 1px solid #2a3560;
+  border-radius: 5px;
+  background: #0a0f22;
+  color: #dce3ff;
+  font-size: 0.72rem;
+}
+
+.me-scene-select {
+  max-width: 170px;
+}
+
+.me-scene-name {
+  width: 145px;
+  padding: 0 0.4rem;
+}
+
+.me-scene-count {
+  color: #7081c1;
+  font-size: 0.68rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.me-scene-btn {
+  padding: 0.22rem 0.5rem;
+  font-size: 0.7rem;
+}

@@ -16,11 +16,18 @@ export const freshKeyframeId = () => `k${nextKeyframeId++}`;
 // Regenerates every id (used on init and project load: saved files carry
 // ids from an older session and could collide with this one's counter).
 export function withKeyframeIds(doc) {
-  const tracks = {};
-  for (const [name, keyframes] of Object.entries(doc.tracks)) {
-    tracks[name] = keyframes.map((keyframe) => ({ ...keyframe, _id: freshKeyframeId() }));
-  }
-  return { ...doc, tracks };
+  const identify = (source) => {
+    const tracks = {};
+    for (const [name, keyframes] of Object.entries(source)) {
+      tracks[name] = keyframes.map((keyframe) => ({ ...keyframe, _id: freshKeyframeId() }));
+    }
+    return tracks;
+  };
+  return {
+    ...doc,
+    tracks: identify(doc.tracks),
+    scenes: doc.scenes?.map((scene) => ({ ...scene, tracks: identify(scene.tracks) })),
+  };
 }
 
 // Unique id per kind: rect-1, rect-2, ... (also reused by duplication).

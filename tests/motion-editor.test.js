@@ -12,6 +12,7 @@ import {
   editActorOrSymbolDoc,
   removeSymbolDoc,
   resolveActor,
+  symbolUsage,
 } from "../examples/motion-editor/components/symbolOps.js";
 import { vectorActorFromPoints } from "../examples/motion-editor/components/vectorGeometry.js";
 import {
@@ -31,6 +32,13 @@ import { generateCode } from "../examples/motion-editor/components/CodePane.js";
 import { applySpecToDoc } from "../examples/motion-editor/components/codeParse.js";
 import { addMaskLayerDoc } from "../examples/motion-editor/components/layerSpecialOps.js";
 import { maskForLayer } from "../examples/motion-editor/components/layerTypes.js";
+import {
+  addSceneDoc,
+  deleteSceneDoc,
+  duplicateSceneDoc,
+  moveSceneDoc,
+  selectSceneDoc,
+} from "../examples/motion-editor/components/sceneOps.js";
 
 const legacyDoc = () => ({
   duration: 1000,
@@ -45,6 +53,8 @@ test("motion editor: legacy documents normalize to the current schema", async ()
   assertEqual(doc.fps, 24);
   assertEqual(doc.library[0].id, "symbol-1");
   assertEqual(doc.layers[0].actorIds[0], "box");
+  assertEqual(doc.scenes.length, 1);
+  assertEqual(doc.activeSceneId, doc.scenes[0].id);
 });
 
 test("motion editor: layers normalize membership without duplicating actors", async () => {
@@ -214,7 +224,41 @@ test("motion editor: deleting a layer removes its member tracks atomically", asy
 test("motion editor: serialization removes session keyframe ids", async () => {
   const saved = serializeMotionDocument(normalizeMotionDocument(legacyDoc()));
   assertEqual(saved.tracks.box[0]._id, undefined);
+  assertEqual(saved.scenes[0].tracks.box[0]._id, undefined);
   assertEqual(saved.tracks.box[0].x, 0);
+});
+
+test("motion editor: switching scenes preserves each scene snapshot", async () => {
+  let doc = normalizeMotionDocument(legacyDoc());
+  const firstId = doc.activeSceneId;
+  doc = { ...doc, actors: doc.actors.map((actor) => ({ ...actor, label: "Edited in scene 1" })) };
+  const added = addSceneDoc(doc);
+  assertEqual(added.doc.actors.length, 0);
+  assertEqual(added.doc.scenes.length, 2);
+  const restored = selectSceneDoc(added.doc, firstId);
+  assertEqual(restored.actors[0].label, "Edited in scene 1");
+  assertEqual(restored.activeSceneId, firstId);
+});
+
+test("motion editor: duplicating a scene creates an independent editable copy", async () => {
+  const doc = normalizeMotionDocument(legacyDoc());
+  const originalId = doc.activeSceneId;
+  const duplicated = duplicateSceneDoc(doc);
+  const editedCopy = { ...duplicated.doc, actors: duplicated.doc.actors.map((actor) => ({ ...actor, label: "Copy only" })) };
+  const original = selectSceneDoc(editedCopy, originalId);
+  assertEqual(original.actors[0].label, "Box");
+  assertEqual(duplicated.doc.scenes[1].name, "Scene 1 copy");
+});
+
+test("motion editor: scenes reorder and active deletion chooses a neighbor", async () => {
+  let doc = addSceneDoc(normalizeMotionDocument(legacyDoc()), "Second").doc;
+  const secondId = doc.activeSceneId;
+  doc = moveSceneDoc(doc, secondId, -1);
+  assertEqual(doc.scenes[0].id, secondId);
+  doc = deleteSceneDoc(doc, secondId);
+  assertEqual(doc.scenes.length, 1);
+  assertEqual(doc.activeSceneId, doc.scenes[0].id);
+  assertEqual(deleteSceneDoc(doc, doc.activeSceneId), null);
 });
 
 test("motion editor: converting an actor creates a linked symbol", async () => {
@@ -241,6 +285,15 @@ test("motion editor: removing a symbol safely detaches its instances", async () 
   assertEqual(doc.actors[0].symbolId, undefined);
   assertEqual(doc.actors[0].fill, "#f00");
   assertEqual(doc.library.some((item) => item.id === symbolId), false);
+});
+
+test("motion editor: shared library usage spans every scene", async () => {
+  let doc = convertActorToSymbolDoc(normalizeMotionDocument(legacyDoc()), "box");
+  const symbolId = doc.actors[0].symbolId;
+  doc = duplicateSceneDoc(doc).doc;
+  assertEqual(symbolUsage(doc)[symbolId], 2);
+  doc = removeSymbolDoc(doc, symbolId);
+  assertEqual(doc.scenes.some((scene) => scene.actors.some((actor) => actor.symbolId === symbolId)), false);
 });
 
 test("motion editor: line tool creates portable local vector geometry", async () => {

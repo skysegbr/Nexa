@@ -33,6 +33,10 @@ Frames at the document's fps (default 24, editable in the transport — the read
 - **Layers column**: `+ layer` creates an empty layer · `+ folder` creates a Flash-style folder · `+ mask` places an animated mask above the selected row and nests that row beneath it · `+ guide` creates editor-only reference artwork · ▾/▸ expands or collapses a folder/mask · →/← moves a row into/out of the container · 👁 hide · 🔒 lock · colored square = outline mode · double-click renames · ↑↓ changes sibling paint order (top paints in front) · `+` keys every actor in a layer or container · ✕ removes the row and its subtree. Container visibility, locking and outline mode propagate to descendants.
 - **Transport**: play/stop/rewind · ◉ onion skin (ghosts per frame; drag the ❲ ❳ brackets on the ruler to widen) · ∞ loop (exported) · spd (preview only) · zoom · 🏷 label at the playhead (exported for `gotoAndPlay`; double-click a marker removes it).
 
+## Scenes
+
+The scene strip above the stage switches, renames, reorders, creates, duplicates and deletes scenes. Each scene owns its duration, actors, layers, tracks and labels; FPS, stage color and the linked-symbol Library are shared across the movie. Switching scenes parks the playhead at frame 1 and clears object/keyframe selection. The Export panel follows the active scene.
+
 ## Keyboard
 
 `Ctrl+Z / Ctrl+Shift+Z / Ctrl+Y` undo/redo · `Ctrl+C / Ctrl+V` copy/paste keyframes to the playhead · `Ctrl+D` duplicate actor · `Del` delete selection · `Esc` cancel guide drawing · `V/Q/N/Y/R/O/T` select Transform/Line/Pencil/Rectangle/Oval/Text tools.
@@ -48,4 +52,4 @@ Project files carry a versioned editor schema. Legacy JSON is normalized on impo
 
 ## Road to the Flash authoring model
 
-The runtime stays browser-native and small; Flash-like authoring belongs here in the editor. Schema v5 now has independent multi-actor layers, nested folders, animated masks and editor-only guide layers. The next structural milestones are scene navigation, a symbol-editing stage for nested MovieClips, and explicit frame/keyframe/blank-keyframe operations. That order avoids baking editor-only complexity into `nexa-motion.js`.
+The runtime stays browser-native and small; Flash-like authoring belongs here in the editor. Schema v6 now has independent multi-actor layers, nested folders, animated masks, editor-only guides and multi-scene movies. The next structural milestones are a symbol-editing stage for nested MovieClips and explicit frame/keyframe/blank-keyframe operations. That order avoids baking editor-only complexity into `nexa-motion.js`.

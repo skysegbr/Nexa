@@ -3,6 +3,8 @@
 // Keeping this in the editor avoids adding authoring concepts to the small
 // nexa-motion runtime.
 
+import { applyScene, syncActiveScene } from "./sceneOps.js";
+
 const CONTENT_FIELDS = ["kind", "fill", "text", "stroke", "strokeWidth", "path", "vectorW", "vectorH"];
 
 const contentOf = (actor) =>
@@ -84,18 +86,25 @@ export function editActorOrSymbolDoc(doc, actorId, patch) {
 
 export function removeSymbolDoc(doc, symbolId) {
   if (!(doc.library || []).some((item) => item.id === symbolId)) return doc;
-  const actors = doc.actors.map((actor) => {
+  const detach = (actor) => {
     if (actor.symbolId !== symbolId) return actor;
     const resolved = resolveActor(doc, actor);
     const { symbolId: _removed, ...plainActor } = actor;
     return { ...plainActor, ...contentOf(resolved) };
-  });
-  return { ...doc, actors, library: doc.library.filter((item) => item.id !== symbolId) };
+  };
+  if (!doc.scenes) {
+    return { ...doc, actors: doc.actors.map(detach), library: doc.library.filter((item) => item.id !== symbolId) };
+  }
+  const synced = syncActiveScene(doc);
+  const scenes = synced.scenes.map((scene) => ({ ...scene, actors: scene.actors.map(detach) }));
+  const next = { ...synced, scenes, library: doc.library.filter((item) => item.id !== symbolId) };
+  return applyScene(next, scenes.find((scene) => scene.id === next.activeSceneId));
 }
 
 export function symbolUsage(doc) {
   const counts = {};
-  for (const actor of doc.actors) {
+  const actors = doc.scenes ? syncActiveScene(doc).scenes.flatMap((scene) => scene.actors) : doc.actors;
+  for (const actor of actors) {
     if (actor.symbolId) counts[actor.symbolId] = (counts[actor.symbolId] || 0) + 1;
   }
   return counts;

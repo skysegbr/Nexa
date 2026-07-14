@@ -7,6 +7,7 @@
 @import url("./components/ProjectBar.css");
 @import url("./components/Toolbox.css");
 @import url("./components/Library.css");
+@import url("./components/SceneBar.css");
 
 * {
   box-sizing: border-box;
