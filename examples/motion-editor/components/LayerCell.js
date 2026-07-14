@@ -1,9 +1,11 @@
 // One row of the layers panel (the timeline's label column): Flash's eye
-// (hide) and padlock (lock), click to select the actor, double-click to
-// rename inline, arrows to move the layer, and the keyframe/delete actions.
-// Rows top→bottom paint back→front on the stage.
+// (hide), padlock (lock) and outline square (show the layer as colored
+// outlines), click to select the actor, double-click to rename inline,
+// arrows to move the layer, and the keyframe/delete actions. Rows
+// top→bottom paint back→front on the stage.
 
 import { h, useState } from "/dist/nexa.js";
+import { OUTLINE_COLORS } from "../data.js";
 
 export function LayerCell({
   actor,
@@ -13,6 +15,7 @@ export function LayerCell({
   active,
   onToggleHidden,
   onToggleLocked,
+  onToggleOutline,
   onMoveLayer,
   onSelectActor,
   onRenameActor,
@@ -53,6 +56,14 @@ export function LayerCell({
       },
       flags.locked ? "🔒" : "🔓",
     ),
+    h("button", {
+      type: "button",
+      className: `me-layer-square${flags.outline ? " me-layer-square-on" : ""}`,
+      title: flags.outline ? "Show layer filled" : "Show layer as outlines",
+      ariaPressed: flags.outline ? "true" : "false",
+      style: { borderColor: OUTLINE_COLORS[layerIndex % OUTLINE_COLORS.length] },
+      onClick: () => onToggleOutline(actor.id),
+    }),
     renaming !== null
       ? h("input", {
           className: "me-rename",

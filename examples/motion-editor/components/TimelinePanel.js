@@ -1,13 +1,14 @@
-// The timeline panel: the transport bar, a scrubbable ruler with the
-// playhead and named label markers, and one lane per track where keyframes
-// are draggable diamonds. The label column doubles as Flash's layers panel
-// (see LayerCell). Ruler + lanes live inside one horizontally scrollable
-// strip whose inner width is the zoom factor — positions stay percentages
-// of the document duration, so everything scales together.
+// The timeline panel, Flash 8 layout: transport bar, a frame-numbered
+// ruler with the playhead, named label markers and draggable onion-skin
+// brackets, and one frame-gridded lane per track (see TrackLane). The
+// label column doubles as Flash's layers panel (see LayerCell). Ruler +
+// lanes live inside one horizontally scrollable strip whose inner width
+// is the zoom factor.
 
 import { h, useEffect, useRef, useState } from "/dist/nexa.js";
-import { snap, capturePointer } from "./editorUtils.js";
+import { snapToFrame, frameOf, capturePointer, DEFAULT_FPS } from "./editorUtils.js";
 import { LayerCell } from "./LayerCell.js";
+import { TrackLane } from "./TrackLane.js";
 import { TransportBar } from "./TransportBar.js";
 
 export function TimelinePanel({
@@ -24,8 +25,10 @@ export function TimelinePanel({
   onAddKeyframe,
   onDeleteActor,
   onSetDuration,
+  onSetFps,
   onToggleHidden,
   onToggleLocked,
+  onToggleOutline,
   onMoveLayer,
   onSelectActor,
   onRenameActor,
@@ -41,7 +44,11 @@ export function TimelinePanel({
   const [zoom, setZoom] = useState(1);
   const [speed, setSpeed] = useState(1);
   const rulerRef = useRef(null);
-  const dragRef = useRef(null);
+  const onionDragRef = useRef(null);
+
+  const fps = doc.fps || DEFAULT_FPS;
+  const frameMs = 1000 / fps;
+  const totalFrames = Math.max(1, Math.round(doc.duration / frameMs));
 
   // UI clock: follow the real playhead while the movie runs (or after any
   // programmatic jump). State lives here, so only the panel re-renders.
@@ -62,7 +69,7 @@ export function TimelinePanel({
   const msFromPointer = (event) => {
     const rect = rulerRef.current.getBoundingClientRect();
     const ratio = Math.min(1, Math.max(0, (event.clientX - rect.left) / rect.width));
-    return snap(ratio * doc.duration);
+    return snapToFrame(ratio * doc.duration, fps);
   };
 
   const scrub = (event) => {
@@ -73,30 +80,55 @@ export function TimelinePanel({
     setPlayhead(at);
   };
 
-  // Diamond dragging via pointer capture. The panel only reports the time
-  // DELTA of the gesture — app.js applies it to the whole selection as a
-  // draft document and commits one undo step on release.
-  const startDrag = (event, trackName, keyframeId) => {
+  // Flash's onion markers: the brackets around the playhead drag to widen
+  // or narrow the ghosted range (in frames).
+  const onionMarkerDown = (event) => {
     event.stopPropagation();
-    onDragStart({ track: trackName, id: keyframeId }, event.shiftKey);
-    dragRef.current = { startMs: msFromPointer(event), moved: false };
+    onionDragRef.current = true;
     capturePointer(event);
   };
 
-  const moveDrag = (event) => {
-    if (!dragRef.current) return;
-    const delta = msFromPointer(event) - dragRef.current.startMs;
-    if (delta !== 0) dragRef.current.moved = true;
-    if (dragRef.current.moved) onDragPreview(delta);
+  const onionMarkerMove = (event) => {
+    if (!onionDragRef.current) return;
+    const frames = Math.abs(msFromPointer(event) - playhead) / frameMs;
+    onOnionCount(Math.max(1, Math.min(12, Math.round(frames))));
   };
 
-  const endDrag = () => {
-    if (!dragRef.current) return;
-    dragRef.current = null;
-    onDragCommit();
+  const onionMarkerUp = () => {
+    onionDragRef.current = null;
   };
 
   const pct = (at) => `${(at / doc.duration) * 100}%`;
+
+  // Flash numbers the ruler at 1, 5, 10, 15…
+  const frameMarks = [];
+  for (let f = 1; f <= totalFrames; f += f === 1 ? 4 : 5) {
+    frameMarks.push(f);
+  }
+
+  // Frame-cell grid for the lanes: a line per frame, stronger every 5th.
+  const frameGrid = {
+    backgroundImage:
+      "linear-gradient(90deg, rgba(79, 124, 255, 0.22) 1px, transparent 1px)," +
+      " linear-gradient(90deg, rgba(79, 124, 255, 0.09) 1px, transparent 1px)",
+    backgroundSize: `${500 / totalFrames}% 100%, ${100 / totalFrames}% 100%`,
+  };
+
+  const onionMarker = (side) => {
+    const at = side === "left" ? playhead - onion.count * frameMs : playhead + onion.count * frameMs;
+    return h(
+      "div",
+      {
+        className: `me-onion-marker me-onion-marker-${side}`,
+        title: "Onion range — drag to widen/narrow (frames)",
+        style: { left: pct(Math.max(0, Math.min(doc.duration, at))) },
+        onPointerDown: onionMarkerDown,
+        onPointerMove: onionMarkerMove,
+        onPointerUp: onionMarkerUp,
+      },
+      side === "left" ? "❲" : "❳",
+    );
+  };
 
   return h(
     "section",
@@ -106,8 +138,11 @@ export function TimelinePanel({
       tl,
       playing,
       playhead,
+      frame: frameOf(playhead, fps),
+      fps,
       duration: doc.duration,
       onSetDuration,
+      onSetFps,
       onRewind: () => {
         tl.gotoAndStop(0);
         playheadRef.current = 0;
@@ -143,6 +178,7 @@ export function TimelinePanel({
             active: actorSel === actor.id,
             onToggleHidden,
             onToggleLocked,
+            onToggleOutline,
             onMoveLayer,
             onSelectActor,
             onRenameActor,
@@ -160,15 +196,17 @@ export function TimelinePanel({
           { className: "me-track-inner", style: { width: `${zoom * 100}%` } },
           h(
             "div",
-            { className: "me-ruler", ref: rulerRef, onPointerDown: scrub },
+            { className: "me-ruler", ref: rulerRef, onPointerDown: scrub, style: frameGrid },
             h("div", { className: "me-playhead", style: { left: pct(playhead) } }),
-            [0, 0.25, 0.5, 0.75, 1].map((stop) =>
+            frameMarks.map((f) =>
               h(
                 "span",
-                { key: stop, className: "me-tick", style: { left: `${stop * 100}%` } },
-                `${((doc.duration * stop) / 1000).toFixed(1)}s`,
+                { key: f, className: "me-tick", style: { left: pct((f - 1) * frameMs) } },
+                String(f),
               ),
             ),
+            onion.on && onionMarker("left"),
+            onion.on && onionMarker("right"),
             Object.entries(doc.labels || {}).map(([name, ms]) =>
               h(
                 "span",
@@ -187,26 +225,19 @@ export function TimelinePanel({
             ),
           ),
           doc.actors.map((actor) =>
-            h(
-              "div",
-              { key: actor.id, className: "me-row-lane" },
-              h("div", { className: "me-playhead me-playhead-lane", style: { left: pct(playhead) } }),
-              (doc.tracks[actor.id] || []).map((keyframe) =>
-                h("button", {
-                  key: keyframe._id,
-                  type: "button",
-                  className:
-                    "me-key" +
-                    (selected.some((entry) => entry.id === keyframe._id) ? " me-key-selected" : "") +
-                    (keyframe.path ? " me-key-guide" : ""),
-                  style: { left: pct(keyframe.at) },
-                  title: `${actor.label} @ ${keyframe.at}ms${keyframe.path ? " (motion guide)" : ""}`,
-                  onPointerDown: (e) => startDrag(e, actor.id, keyframe._id),
-                  onPointerMove: moveDrag,
-                  onPointerUp: endDrag,
-                }),
-              ),
-            ),
+            h(TrackLane, {
+              key: actor.id,
+              actor,
+              keyframes: doc.tracks[actor.id] || [],
+              selected,
+              playheadPct: pct(playhead),
+              pct,
+              frameGrid,
+              msFromPointer,
+              onDragStart,
+              onDragPreview,
+              onDragCommit,
+            }),
           ),
         ),
       ),

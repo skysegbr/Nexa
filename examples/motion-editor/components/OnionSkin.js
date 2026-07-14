@@ -11,8 +11,7 @@
 
 import { h, useEffect, useRef, useState } from "/dist/nexa.js";
 import { createTimeline } from "/dist/nexa-motion.js";
-
-const STEP_MS = 100; // one ghost every 100ms — the closest thing to a "frame"
+import { DEFAULT_FPS } from "./editorUtils.js";
 
 function buildGhosts(doc, count) {
   const ghosts = [];
@@ -69,13 +68,14 @@ export function OnionSkin({ doc, playheadRef, count, layerFlags }) {
     [],
   );
 
-  // Follow the playhead on the same 50ms clock the timeline panel uses.
-  // seek() clamps to [0, duration] itself, so edge offsets pile up at the
-  // document's ends, like Flash's onion markers against the movie's edge.
+  // Follow the playhead on the same 50ms clock the timeline panel uses —
+  // one ghost per FRAME of the document's fps, like Flash. seek() clamps
+  // to [0, duration] itself, so edge offsets pile up at the movie's ends.
   useEffect(() => {
+    const stepMs = 1000 / (doc.fps || DEFAULT_FPS);
     const follow = () => {
       for (const { offset, ctrl } of ghosts) {
-        ctrl.seek(playheadRef.current + offset * STEP_MS);
+        ctrl.seek(playheadRef.current + offset * stepMs);
       }
     };
     follow();

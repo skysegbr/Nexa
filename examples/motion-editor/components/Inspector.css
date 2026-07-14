@@ -88,6 +88,24 @@
   background: #0a0f22;
 }
 
+/* the color mixer: free CSS value + alpha slider */
+.me-mixer {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+.me-mixer-value {
+  flex: 1;
+  min-width: 0;
+}
+
+.me-mixer-alpha {
+  width: 70px;
+  flex-shrink: 0;
+}
+
 /* easing curve preview (drawn from the runtime's real easing function) */
 .me-ease-curve {
   width: 100%;

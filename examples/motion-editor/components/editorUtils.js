@@ -1,8 +1,17 @@
 // Small pure helpers shared across the editor.
 
-// The editor's snap grid — shared by the timeline ruler and every document
-// mutation, so they can never disagree about where keyframes may land.
-export const snap = (ms) => Math.round(ms / 25) * 25;
+// The editor thinks in FRAMES, like Flash: keyframes land on the frame
+// grid of the document's fps. Internally everything stays milliseconds
+// (the runtime is ms-based) — snapping rounds to the nearest frame and
+// then to a whole ms, so exports show integers and the frame number
+// round-trips stably.
+export const DEFAULT_FPS = 24;
+
+export const snapToFrame = (ms, fps = DEFAULT_FPS) =>
+  Math.round((Math.round((ms * fps) / 1000) * 1000) / fps);
+
+// 1-based frame number for display, Flash-style (frame 1 sits at t=0).
+export const frameOf = (ms, fps = DEFAULT_FPS) => Math.round((ms * fps) / 1000) + 1;
 
 // Pointer capture that tolerates event sources without it (synthetic
 // events, older browsers) — the drag still works while the pointer stays

@@ -18,6 +18,8 @@ import { Inspector } from "./components/Inspector.js";
 import { CodePane } from "./components/CodePane.js";
 import { smoothPath } from "./components/smoothPath.js";
 import { ActorInspector } from "./components/ActorInspector.js";
+import { Library } from "./components/Library.js";
+import { libraryFor } from "./components/libraryOps.js";
 import { EditorHeader } from "./components/EditorHeader.js";
 import { useEditorDoc } from "./components/useEditorDoc.js";
 import { useEditorShortcuts } from "./components/useEditorShortcuts.js";
@@ -74,6 +76,8 @@ function App() {
   };
 
   const selectedActor = actorSel && editor.doc.actors.find((actor) => actor.id === actorSel);
+
+  const library = libraryFor(editor, selectedActor, createActor);
 
   const tl = useStageController(INITIAL_DOC, editor.committedDoc, playheadRef);
 
@@ -180,9 +184,11 @@ function App() {
           onDragCommit: editor.dragCommit,
           onAddKeyframe: editor.addKeyframe,
           onDeleteActor: deleteActor,
-          onSetDuration: editor.setDuration,
+          onSetDuration: (ms) => Number.isFinite(ms) && ms >= 100 && editor.setDocProp("duration", ms),
+          onSetFps: (fps) => Number.isFinite(fps) && fps >= 1 && fps <= 120 && editor.setDocProp("fps", Math.round(fps)),
           onToggleHidden: (id) => toggleLayerFlag(id, "hidden"),
           onToggleLocked: (id) => toggleLayerFlag(id, "locked"),
+          onToggleOutline: (id) => toggleLayerFlag(id, "outline"),
           onMoveLayer: editor.moveActorLayer,
           onSelectActor: selectActor,
           onRenameActor: (id, label) => editor.updateActor(id, { label }),
@@ -192,7 +198,7 @@ function App() {
           onion,
           onOnionToggle: () => setOnion((current) => ({ ...current, on: !current.on })),
           onOnionCount: (count) =>
-            Number.isFinite(count) && setOnion((current) => ({ ...current, count: Math.max(1, Math.min(6, Math.round(count))) })),
+            Number.isFinite(count) && setOnion((current) => ({ ...current, count: Math.max(1, Math.min(12, Math.round(count))) })),
         }),
       ),
       h(
@@ -204,6 +210,7 @@ function App() {
               onEdit: (patch) => editor.updateActor(selectedActor.id, patch),
               onArrange: (delta) => editor.moveActorLayer(selectedActor.id, delta),
               onDuplicate: duplicateSelectedActor,
+              onSaveSymbol: library.save,
               onDelete: () => deleteActor(selectedActor.id),
             })
           : h(Inspector, {
@@ -218,6 +225,7 @@ function App() {
           onFinishDrawing: finishDrawing,
           onCancelDrawing: () => setDrawing(null),
         }),
+        h(Library, { items: library.items, onPlace: library.place, onRemove: library.remove }),
         h(CodePane, {
           doc: editor.doc,
           onApply: (spec) => {

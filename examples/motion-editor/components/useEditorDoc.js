@@ -4,7 +4,7 @@
 // so undo/redo reordering arrays never re-aims them at another diamond.
 
 import { useHistory, useRef, useState } from "/dist/nexa.js";
-import { snap } from "./editorUtils.js";
+import { snapToFrame } from "./editorUtils.js";
 import {
   addActorDoc,
   duplicateActorDoc,
@@ -29,6 +29,9 @@ export function useEditorDoc(initialDoc, playheadRef) {
   const clipboardRef = useRef(null);
 
   const effective = draft ?? doc;
+
+  // Everything the editor touches snaps to the document's frame grid.
+  const snap = (ms) => snapToFrame(ms, effective.fps);
 
   const indexOfKeyframe = (trackName, id) =>
     (effective.tracks[trackName] || []).findIndex((keyframe) => keyframe._id === id);
@@ -86,9 +89,11 @@ export function useEditorDoc(initialDoc, playheadRef) {
     setSelected([]);
   };
 
-  const setDuration = (duration) => {
-    if (Number.isFinite(duration) && duration >= 100 && duration !== effective.duration) {
-      setDoc({ ...effective, duration });
+  // Scalar document properties (duration, fps, stageColor, library, …):
+  // one guarded mutation instead of a setter per field.
+  const setDocProp = (key, value) => {
+    if (!Object.is(effective[key], value)) {
+      setDoc({ ...effective, [key]: value });
     }
   };
 
@@ -194,11 +199,9 @@ export function useEditorDoc(initialDoc, playheadRef) {
     setSelected((current) => current.filter((entry) => entry.track !== id));
   };
 
-  // Loading a project (or resetting) is a normal history step — undoable.
-  // Projects saved before actors became part of the document inherit the
-  // starter cast, and every actor is guaranteed a tracks entry so sparse
-  // imported documents can't crash keyframe mutations. Keyframe ids are
-  // regenerated: saved files carry ids from an older session.
+  // Loading a project is a normal (undoable) history step. Old saves
+  // inherit the starter cast, every actor gets a tracks entry, and
+  // keyframe ids are regenerated (saved ids come from an older session).
   const load = (nextDoc) => {
     const actors = nextDoc.actors ?? initialDoc.actors;
     const tracks = { ...nextDoc.tracks };
@@ -234,7 +237,7 @@ export function useEditorDoc(initialDoc, playheadRef) {
     addKeyframe,
     keyAtPlayhead,
     deleteSelected,
-    setDuration,
+    setDocProp,
     setLabel,
     setLoop,
     copySelected,

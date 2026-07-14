@@ -28,13 +28,16 @@ function nextIdFor(doc, kind) {
 }
 
 export function addActorDoc(doc, actor) {
+  const { labelBase, ...props } = actor;
   const { id, n } = nextIdFor(doc, actor.kind);
-  const label = `${actor.kind[0].toUpperCase()}${actor.kind.slice(1)} ${n}`;
+  // Library instances label after their symbol ("estrela 2"), shapes
+  // after their kind ("Rect 2").
+  const label = `${labelBase || `${actor.kind[0].toUpperCase()}${actor.kind.slice(1)}`} ${n}`;
   return {
     id,
     doc: {
       ...doc,
-      actors: [...doc.actors, { ...actor, id, label }],
+      actors: [...doc.actors, { ...props, id, label }],
       // A starter keyframe at 0 so the new row has a diamond to work from.
       tracks: { ...doc.tracks, [id]: [{ at: 0, x: 0, y: 0, opacity: 1, _id: freshKeyframeId() }] },
     },

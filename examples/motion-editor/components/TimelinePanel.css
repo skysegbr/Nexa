@@ -22,22 +22,32 @@
   color: #35e0c2;
 }
 
-.me-duration {
+.me-duration,
+.me-fps {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  margin-left: auto;
   font-size: 0.75rem;
   color: #7f8fd9;
 }
 
-.me-duration input {
+/* fps + duration dock to the right together */
+.me-fps {
+  margin-left: auto;
+}
+
+.me-duration input,
+.me-fps input {
   width: 80px;
   padding: 0.25rem 0.4rem;
   border: 1px solid #2a3560;
   border-radius: 6px;
   background: #0a0f22;
   color: #e8ecff;
+}
+
+.me-fps input {
+  width: 56px;
 }
 
 /* onion skin controls */
@@ -124,6 +134,22 @@
   box-shadow: 0 0 8px rgba(53, 224, 194, 0.8);
   pointer-events: none;
   z-index: 2;
+}
+
+/* onion-skin range brackets on the ruler, draggable like Flash's */
+.me-onion-marker {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  transform: translateX(-50%);
+  color: #35e0c2;
+  font-size: 0.8rem;
+  cursor: ew-resize;
+  user-select: none;
+  touch-action: none;
+  z-index: 4;
 }
 
 /* named label markers on the ruler (gotoAndPlay targets) */
@@ -224,6 +250,23 @@
   filter: grayscale(1);
 }
 
+/* outline-mode square, colored per layer like Flash's */
+.me-layer-square {
+  width: 11px;
+  height: 11px;
+  flex-shrink: 0;
+  padding: 0;
+  border: 2px solid;
+  border-radius: 2px;
+  background: none;
+  cursor: pointer;
+}
+
+.me-layer-square-on {
+  background: currentColor;
+  opacity: 0.9;
+}
+
 /* inline rename (double-click the name) */
 .me-rename {
   flex: 1;
@@ -252,14 +295,45 @@
   line-height: 1.4;
 }
 
+/* The frame-cell grid itself comes inline (it depends on the document's
+   fps and duration) — see TimelinePanel's frameGrid. */
 .me-row-lane {
   position: relative;
   height: 30px;
   border-radius: 6px;
   border: 1px solid #1d2440;
-  background:
-    repeating-linear-gradient(90deg, transparent 0 24.75%, rgba(79, 124, 255, 0.12) 24.75% 25%);
   background-color: #0a0f22;
+}
+
+/* ── tween spans between keyframes, with Flash's arrow ── */
+
+.me-span {
+  position: absolute;
+  top: 6px;
+  bottom: 6px;
+  background: rgba(79, 124, 255, 0.16);
+  border-bottom: 1.5px solid rgba(157, 180, 255, 0.55);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.me-span::after {
+  content: "";
+  position: absolute;
+  right: 8px;
+  bottom: -4.5px;
+  border: 4px solid transparent;
+  border-left: 6px solid rgba(157, 180, 255, 0.75);
+}
+
+/* span ending on a motion-guide keyframe gets the guide-layer accent */
+.me-span-guide {
+  background: rgba(255, 209, 102, 0.12);
+  border-bottom-color: rgba(255, 209, 102, 0.6);
+}
+
+.me-span-guide::after {
+  border-left-color: rgba(255, 209, 102, 0.8);
 }
 
 .me-playhead-lane {
@@ -267,17 +341,17 @@
   box-shadow: none;
 }
 
-/* keyframe diamonds */
+/* keyframe dots, Flash 8 style */
 
 .me-key {
   position: absolute;
   top: 50%;
-  width: 13px;
-  height: 13px;
+  width: 11px;
+  height: 11px;
   padding: 0;
   border: 1px solid #9db4ff;
-  border-radius: 2px;
-  transform: translate(-50%, -50%) rotate(45deg);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
   background: #4f7cff;
   cursor: grab;
   touch-action: none;

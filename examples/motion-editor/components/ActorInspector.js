@@ -1,12 +1,36 @@
-// Inspector panel for the selected ACTOR (selection tool): box, fill,
-// label, text content for text actors, and deletion. Number edits commit
-// through updateActor's no-op guard, so blur re-fires never pollute the
-// history.
+// Inspector panel for the selected ACTOR (selection tool): box, fill
+// (swatches + a small color mixer with free CSS input and alpha), label,
+// text content for text actors, arrange, library save, duplication and
+// deletion. Number edits commit through updateActor's no-op guard, so
+// blur re-fires never pollute the history.
 
 import { h } from "/dist/nexa.js";
 import { FILLS } from "../data.js";
 
-export function ActorInspector({ actor, onEdit, onDelete, onArrange, onDuplicate }) {
+// #rgb / #rrggbb / #rrggbbaa / rgb() / rgba() → [r, g, b, a]; null for
+// anything else (gradients keep the mixer's alpha slider hidden).
+// new RegExp(string): the repo's lightweight validator trips on literals.
+const RGBA_RE = new RegExp("^rgba?\\(([^)]+)\\)$");
+
+function parseFill(fill) {
+  const text = String(fill).trim();
+  if (text.startsWith("#")) {
+    const hex = text.slice(1);
+    const n = (s) => parseInt(s, 16);
+    if (hex.length === 3) return [n(hex[0] + hex[0]), n(hex[1] + hex[1]), n(hex[2] + hex[2]), 1];
+    if (hex.length === 6 || hex.length === 8) {
+      return [n(hex.slice(0, 2)), n(hex.slice(2, 4)), n(hex.slice(4, 6)), hex.length === 8 ? n(hex.slice(6, 8)) / 255 : 1];
+    }
+  }
+  const match = RGBA_RE.exec(text);
+  if (match) {
+    const parts = match[1].split(",").map((part) => parseFloat(part));
+    return [parts[0], parts[1], parts[2], parts.length > 3 ? parts[3] : 1];
+  }
+  return null;
+}
+
+export function ActorInspector({ actor, onEdit, onDelete, onArrange, onDuplicate, onSaveSymbol }) {
   const numberField = (name, value, min) =>
     h(
       "label",
@@ -83,11 +107,46 @@ export function ActorInspector({ actor, onEdit, onDelete, onArrange, onDuplicate
           type: "color",
           className: "me-fill-custom",
           ariaLabel: "Custom fill",
-          value: actor.fill.startsWith("#") ? actor.fill : "#4f7cff",
+          value: actor.fill.startsWith("#") ? actor.fill.slice(0, 7) : "#4f7cff",
           onInput: (e) => onEdit({ fill: e.target.value }),
         }),
       ),
     ),
+
+    // The color mixer: free CSS value (hex/rgba/gradient) + alpha slider
+    // for the simple colors.
+    (() => {
+      const rgba = parseFill(actor.fill);
+      const alpha = rgba ? Math.round(rgba[3] * 100) : 100;
+      return h(
+        "div",
+        { className: "me-field" },
+        h("span", null, "mix"),
+        h(
+          "div",
+          { className: "me-mixer" },
+          h("input", {
+            type: "text",
+            className: "me-mixer-value",
+            ariaLabel: "Fill (any CSS color)",
+            value: actor.fill,
+            onChange: (e) => e.target.value.trim() && onEdit({ fill: e.target.value.trim() }),
+          }),
+          rgba &&
+            h("input", {
+              type: "range",
+              className: "me-mixer-alpha",
+              min: 0,
+              max: 100,
+              value: alpha,
+              ariaLabel: "Fill alpha",
+              title: `alpha ${alpha}%`,
+              onInput: (e) =>
+                onEdit({ fill: `rgba(${rgba[0]}, ${rgba[1]}, ${rgba[2]}, ${Number(e.target.value) / 100})` }),
+            }),
+        ),
+      );
+    })(),
 
     // Flash's Arrange: paint order = layer order.
     h(
@@ -111,6 +170,11 @@ export function ActorInspector({ actor, onEdit, onDelete, onArrange, onDuplicate
         "button",
         { type: "button", className: "me-btn", title: "Duplicate actor + keyframes (Ctrl+D)", onClick: onDuplicate },
         "⧉ duplicate",
+      ),
+      h(
+        "button",
+        { type: "button", className: "me-btn", title: "Save this actor's shape as a reusable library symbol", onClick: onSaveSymbol },
+        "☆ to library",
       ),
       h(
         "button",

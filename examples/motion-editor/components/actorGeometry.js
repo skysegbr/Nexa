@@ -1,6 +1,25 @@
 // Shared geometry/paint helpers for stage actors.
 
+import { OUTLINE_COLORS } from "../data.js";
+
 export const HANDLES = ["nw", "ne", "sw", "se"];
+
+// actorStyle + the layer chrome: hidden layers keep their track() binding
+// (visibility, not unmount), outline layers paint as Flash's colored
+// outlines.
+export function stageActorStyle(live, flags, layerIndex) {
+  const style = actorStyle(live);
+  if (flags.hidden) style.visibility = "hidden";
+  if (flags.outline) {
+    const color = OUTLINE_COLORS[layerIndex % OUTLINE_COLORS.length];
+    if (live.kind === "text") style.color = color;
+    else {
+      style.background = "none";
+      style.border = `1.5px solid ${color}`;
+    }
+  }
+  return style;
+}
 
 // Guide coordinates live in the actor's translate space anchored on its
 // CENTER — the closest thing to Flash's registration point.

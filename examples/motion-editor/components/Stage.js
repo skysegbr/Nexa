@@ -12,7 +12,8 @@ import { useActorBox } from "./useActorBox.js";
 import { StageOverlay } from "./StageOverlay.js";
 import { OnionSkin } from "./OnionSkin.js";
 import { TransformOverlay } from "./TransformOverlay.js";
-import { HANDLES, baseOf, actorStyle } from "./actorGeometry.js";
+import { guidesFor } from "./stageGuides.js";
+import { HANDLES, baseOf, stageActorStyle } from "./actorGeometry.js";
 
 export function Stage({
   tl,
@@ -141,24 +142,7 @@ export function Stage({
     setAnchorDrag(null);
   };
 
-  // Guides to display: every path keyframe of the selected tracks (or of the
-  // track being drawn), positioned at the owning actor's base.
-  const guideTracks = new Set(selected.map((entry) => entry.track));
-  if (drawing) guideTracks.add(drawing.track);
-
-  const guides = [];
-  for (const trackName of guideTracks) {
-    const actor = actorsById[trackName];
-    if (!actor) continue;
-    const base = baseOf(actor);
-    for (const keyframe of doc.tracks[trackName] || []) {
-      if (keyframe.path) {
-        // The guide being anchor-dragged previews from the local anchors.
-        const d = anchorDrag && keyframe === editableKeyframe ? smoothPath(anchorDrag.anchors) : keyframe.path;
-        guides.push({ trackName, d, base });
-      }
-    }
-  }
+  const guides = guidesFor({ doc, selected, drawing, actorsById, anchorDrag, editableKeyframe });
 
   const drawingActor = drawing && actorsById[drawing.track];
   const preview = drawing && drawing.points.length > 0 && drawingActor
@@ -173,6 +157,15 @@ export function Stage({
     {
       className: `me-stage${drawing || create.active ? " me-stage-drawing" : ""}`,
       ariaLabel: "Preview stage",
+      // The document's stage color replaces the CSS backdrop (the grid
+      // lines stay, as translucent overlays).
+      style: {
+        backgroundColor: doc.stageColor || "#0d1226",
+        backgroundImage:
+          "linear-gradient(rgba(79, 124, 255, 0.08) 1px, transparent 1px)," +
+          " linear-gradient(90deg, rgba(79, 124, 255, 0.08) 1px, transparent 1px)",
+        backgroundSize: "32px 32px, 32px 32px",
+      },
       ref: stageRef,
       onClick: handleClick,
       onPointerDown: stagePointerDown,
@@ -186,11 +179,8 @@ export function Stage({
       },
     },
     onion.on && h(OnionSkin, { doc: committedDoc, playheadRef, count: onion.count, layerFlags }),
-    doc.actors.map((actor) => {
-      const live = actorsById[actor.id];
+    doc.actors.map((actor, layerIndex) => {
       const flags = layerFlags[actor.id] || {};
-      const style = actorStyle(live);
-      if (flags.hidden) style.visibility = "hidden";
       return h(
         "div",
         {
@@ -199,7 +189,7 @@ export function Stage({
             `me-actor me-kind-${actor.kind} me-actor-${actor.id}` +
             (actorSel === actor.id ? " me-actor-selected" : "") +
             (flags.locked ? " me-actor-locked" : ""),
-          style,
+          style: stageActorStyle(actorsById[actor.id], flags, layerIndex),
           ref: tl.track(actor.id),
           onPointerDown: (e) => actorPointerDown(e, actor),
         },

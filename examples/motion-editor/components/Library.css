@@ -1,0 +1,50 @@
+.me-library {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.9rem;
+  border: 1px solid #1d2440;
+  border-radius: 12px;
+  background: #0c1226;
+}
+
+.me-library-item {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.me-library-swatch {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  border: 1px solid #2a3560;
+  font-size: 0.7rem;
+  line-height: 18px;
+  text-align: center;
+}
+
+.me-library-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 0.2rem 0.3rem;
+  border: none;
+  background: none;
+  color: #c7d2ff;
+  font-size: 0.8rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.me-library-name:hover {
+  color: #35e0c2;
+}
+
+.me-library-kind {
+  flex-shrink: 0;
+  font-size: 0.68rem;
+  color: #5a6aa8;
+}

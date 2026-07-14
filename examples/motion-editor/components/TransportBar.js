@@ -11,8 +11,11 @@ export function TransportBar({
   tl,
   playing,
   playhead,
+  frame,
+  fps,
   duration,
   onSetDuration,
+  onSetFps,
   onRewind,
   onion,
   onOnionToggle,
@@ -39,7 +42,8 @@ export function TransportBar({
     h("button", { type: "button", className: "me-btn", onClick: () => tl.play() }, playing ? "▶ …" : "▶ play"),
     h("button", { type: "button", className: "me-btn", onClick: () => tl.stop() }, "■ stop"),
     h("button", { type: "button", className: "me-btn", onClick: onRewind }, "⏮ start"),
-    h("span", { className: "me-clock" }, `${(playhead / 1000).toFixed(2)}s`),
+    // Flash's readout: current frame · frame rate · elapsed time.
+    h("span", { className: "me-clock" }, `f${frame} · ${fps} fps · ${(playhead / 1000).toFixed(2)}s`),
 
     h(
       "button",
@@ -55,12 +59,12 @@ export function TransportBar({
     onion.on &&
       h(
         "label",
-        { className: "me-onion-range", title: "Ghost frames each side of the playhead (100ms apart)" },
+        { className: "me-onion-range", title: "Ghost FRAMES each side of the playhead" },
         "±",
         h("input", {
           type: "number",
           min: 1,
-          max: 6,
+          max: 12,
           value: onion.count,
           onChange: (e) => onOnionCount(Number(e.target.value)),
         }),
@@ -123,6 +127,19 @@ export function TransportBar({
           },
           onBlur: commitLabel,
         }),
+
+    h(
+      "label",
+      { className: "me-fps", title: "Frame rate — the editor's frame grid" },
+      "fps ",
+      h("input", {
+        type: "number",
+        min: 1,
+        max: 120,
+        value: fps,
+        onChange: (e) => onSetFps(Number(e.target.value)),
+      }),
+    ),
 
     h(
       "label",

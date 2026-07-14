@@ -4,6 +4,7 @@
 @import url("./components/CodePane.css");
 @import url("./components/ProjectBar.css");
 @import url("./components/Toolbox.css");
+@import url("./components/Library.css");
 
 * {
   box-sizing: border-box;
@@ -58,6 +59,24 @@ body {
 .me-history {
   display: inline-flex;
   gap: 0.4rem;
+}
+
+/* stage color picker in the header */
+.me-stagecolor {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+  color: #7f8fd9;
+}
+
+.me-stagecolor input {
+  width: 26px;
+  height: 24px;
+  padding: 0;
+  border: 1px solid #2a3560;
+  border-radius: 6px;
+  background: #0a0f22;
 }
 
 .me-btn:disabled {

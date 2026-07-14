@@ -17,6 +17,16 @@ export function EditorHeader({ editor, drawing, onLoad, onNew }) {
     ),
     h(ProjectBar, { doc: editor.doc, onLoad, onNew }),
     h(
+      "label",
+      { className: "me-stagecolor", title: "Stage color (saved with the project)" },
+      "stage",
+      h("input", {
+        type: "color",
+        value: editor.doc.stageColor || "#0d1226",
+        onInput: (e) => editor.setDocProp("stageColor", e.target.value),
+      }),
+    ),
+    h(
       "p",
       { className: "me-hint" },
       drawing
