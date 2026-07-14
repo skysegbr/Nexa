@@ -40,7 +40,7 @@ export function addActorDoc(doc, actor, targetLayerId) {
     actors: [...doc.actors, { ...props, id, label }],
     tracks: { ...doc.tracks, [id]: [{ at: 0, x: 0, y: 0, opacity: 1, _id: freshKeyframeId() }] },
   };
-  const hasTarget = (doc.layers || []).some((layer) => layer.id === targetLayerId);
+  const hasTarget = (doc.layers || []).some((layer) => layer.id === targetLayerId && layer.type === "normal");
   const created = hasTarget ? null : addLayerDoc(nextDoc, label);
   const withLayer = created ? created.doc : nextDoc;
   const layerId = hasTarget ? targetLayerId : created.id;

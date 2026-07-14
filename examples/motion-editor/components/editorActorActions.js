@@ -8,7 +8,15 @@ import {
   duplicateActorDoc,
   moveActorLayerDoc,
 } from "./docOps.js";
-import { addLayerDoc, deleteLayerDoc, moveActorToLayerDoc, moveLayerDoc } from "./layerOps.js";
+import {
+  addLayerDoc,
+  deleteLayerDoc,
+  indentLayerDoc,
+  layerActorIds,
+  moveActorToLayerDoc,
+  moveLayerDoc,
+  outdentLayerDoc,
+} from "./layerOps.js";
 
 export function createActorActions({ effective, setDoc, setSelected }) {
   const updateActor = (id, patch) => {
@@ -47,8 +55,8 @@ export function createActorActions({ effective, setDoc, setSelected }) {
     setSelected((current) => current.filter((entry) => entry.track !== id));
   };
 
-  const addLayer = (name) => {
-    const next = addLayerDoc(effective, name);
+  const addLayer = (name, type, parentId) => {
+    const next = addLayerDoc(effective, name, type, parentId);
     setDoc(next.doc);
     return next.id;
   };
@@ -67,13 +75,23 @@ export function createActorActions({ effective, setDoc, setSelected }) {
     if (next) setDoc(next);
   };
 
+  const indentLayer = (id) => {
+    const next = indentLayerDoc(effective, id);
+    if (next) setDoc(next);
+  };
+
+  const outdentLayer = (id) => {
+    const next = outdentLayerDoc(effective, id);
+    if (next) setDoc(next);
+  };
+
   const moveActorToLayer = (actorId, layerId) => {
     const next = moveActorToLayerDoc(effective, actorId, layerId);
     if (next) setDoc(next);
   };
 
   const deleteLayer = (id) => {
-    const doomed = new Set(effective.layers.find((layer) => layer.id === id)?.actorIds || []);
+    const doomed = new Set(layerActorIds(effective, id));
     const next = deleteLayerDoc(effective, id);
     if (!next) return;
     setDoc(next);
@@ -89,6 +107,8 @@ export function createActorActions({ effective, setDoc, setSelected }) {
     addLayer,
     updateLayer,
     moveLayer,
+    indentLayer,
+    outdentLayer,
     moveActorToLayer,
     deleteLayer,
   };

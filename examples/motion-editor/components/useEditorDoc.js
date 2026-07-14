@@ -16,6 +16,7 @@ import {
   setLabelDoc,
 } from "./docOps.js";
 import { createActorActions } from "./editorActorActions.js";
+import { layerActorIds } from "./layerOps.js";
 
 export function useEditorDoc(initialDoc, playheadRef) {
   const [initial] = useState(() => withKeyframeIds(normalizeMotionDocument(initialDoc, initialDoc)));
@@ -71,12 +72,13 @@ export function useEditorDoc(initialDoc, playheadRef) {
   // member actor, while preserving the runtime's independent tracks.
   const addLayerKeyframe = (layerId) => {
     const layer = effective.layers.find((entry) => entry.id === layerId);
-    if (!layer || layer.actorIds.length === 0) return;
+    const actorIds = layer && layerActorIds(effective, layerId);
+    if (!actorIds?.length) return;
     const at = snap(playheadRef.current);
     const tracks = { ...effective.tracks };
     const nextSelection = [];
     let changed = false;
-    for (const track of layer.actorIds) {
+    for (const track of actorIds) {
       const existing = (tracks[track] || []).find((keyframe) => keyframe.at === at);
       const keyframe = existing || { at, _id: freshKeyframeId() };
       if (!existing) {

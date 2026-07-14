@@ -14,7 +14,18 @@ import {
   resolveActor,
 } from "../examples/motion-editor/components/symbolOps.js";
 import { vectorActorFromPoints } from "../examples/motion-editor/components/vectorGeometry.js";
-import { addLayerDoc, deleteLayerDoc, moveActorToLayerDoc, normalizeLayers, orderedActors } from "../examples/motion-editor/components/layerOps.js";
+import {
+  addLayerDoc,
+  deleteLayerDoc,
+  indentLayerDoc,
+  moveActorToLayerDoc,
+  moveLayerDoc,
+  normalizeLayers,
+  orderedActors,
+  outdentLayerDoc,
+  resolvedLayerFlags,
+  visibleLayers,
+} from "../examples/motion-editor/components/layerOps.js";
 import { addActorDoc } from "../examples/motion-editor/components/docOps.js";
 
 const legacyDoc = () => ({
@@ -78,6 +89,65 @@ test("motion editor: new layers are inserted at the top of the Flash stack", asy
   const next = addLayerDoc(doc);
   assertEqual(next.doc.layers[0].id, next.id);
   assertEqual(next.doc.layers[1].actorIds[0], "box");
+});
+
+test("motion editor: folder hierarchy normalizes to preorder without owning actors", async () => {
+  const actors = [{ id: "a" }, { id: "b" }];
+  const layers = normalizeLayers([
+    { id: "child", name: "Child", parentId: "group", actorIds: ["a"] },
+    { id: "group", name: "Group", type: "folder", actorIds: ["b"] },
+    { id: "back", name: "Back", actorIds: ["b"] },
+  ], actors);
+  assertEqual(layers.map((layer) => layer.id).join(","), "group,child,back");
+  assertEqual(layers[0].actorIds.length, 0, "folders must never own runtime actors");
+  assertEqual(layers[1].parentId, "group");
+});
+
+test("motion editor: layers indent into and out of folders", async () => {
+  let doc = normalizeMotionDocument(legacyDoc());
+  doc = addLayerDoc(doc, "Assets", "folder").doc;
+  doc = indentLayerDoc(doc, doc.layers[1].id);
+  assertEqual(doc.layers[1].parentId, doc.layers[0].id);
+  assertEqual(visibleLayers(doc.layers, { [doc.layers[0].id]: { collapsed: true } }).length, 1);
+  assertEqual(resolvedLayerFlags(doc, { [doc.layers[0].id]: { locked: true } }, doc.layers[1].id).locked, true);
+  doc = outdentLayerDoc(doc, doc.layers[1].id);
+  assertEqual(doc.layers[1].parentId, undefined);
+});
+
+test("motion editor: actors cannot be placed directly in an authoring folder", async () => {
+  let doc = normalizeMotionDocument(legacyDoc());
+  const folder = addLayerDoc(doc, "Assets", "folder");
+  doc = folder.doc;
+  const next = addActorDoc(doc, { kind: "ellipse", x: 0, y: 0, w: 20, h: 20, fill: "#fff" }, folder.id);
+  assertEqual(next.doc.layers.find((layer) => layer.id === folder.id).actorIds.length, 0);
+  assertEqual(next.doc.layers.find((layer) => layer.actorIds.includes(next.id)).type, "normal");
+});
+
+test("motion editor: moving a folder carries its complete subtree", async () => {
+  const doc = normalizeMotionDocument({
+    ...legacyDoc(),
+    layers: [
+      { id: "group", name: "Group", type: "folder", actorIds: [] },
+      { id: "child", name: "Child", parentId: "group", actorIds: ["box"] },
+      { id: "other", name: "Other", actorIds: [] },
+    ],
+  });
+  const moved = moveLayerDoc(doc, "group", 1);
+  assertEqual(moved.layers.map((layer) => layer.id).join(","), "other,group,child");
+});
+
+test("motion editor: deleting a folder removes descendant actors atomically", async () => {
+  const doc = normalizeMotionDocument({
+    ...legacyDoc(),
+    layers: [
+      { id: "group", name: "Group", type: "folder", actorIds: [] },
+      { id: "child", name: "Child", parentId: "group", actorIds: ["box"] },
+    ],
+  });
+  const next = deleteLayerDoc(doc, "group");
+  assertEqual(next.actors.length, 0);
+  assertEqual(next.tracks.box, undefined);
+  assertEqual(next.layers.some((layer) => layer.type === "normal"), true);
 });
 
 test("motion editor: deleting a layer removes its member tracks atomically", async () => {

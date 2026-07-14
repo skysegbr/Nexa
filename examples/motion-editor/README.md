@@ -30,7 +30,7 @@ An actor selection and a keyframe selection are mutually exclusive — the inspe
 
 Frames at the document's fps (default 24, editable in the transport — the readout shows `f41 · 24 fps · 1.7s`). Dots are keyframes; shaded spans with arrows are tweens (gold when the span ends on a motion guide). Everything snaps to the frame grid.
 
-- **Layers column**: `+ layer` creates an empty layer at the top · 👁 hide · 🔒 lock · colored square = outline mode · double-click renames · ↑↓ changes paint order (top paints in front, like Flash) · `+` keys every actor in that layer at the playhead · ✕ removes the layer and its actors. A layer may contain several independently animated actors.
+- **Layers column**: `+ layer` creates an empty layer · `+ folder` creates a Flash-style layer folder · ▾/▸ expands or collapses it · →/← moves a row into/out of the folder · 👁 hide · 🔒 lock · colored square = outline mode · double-click renames · ↑↓ changes sibling paint order (top paints in front) · `+` keys every actor in a layer or folder · ✕ removes the row and, for folders, its complete subtree. Folder visibility, locking and outline mode propagate to descendants. A normal layer may contain several independently animated actors.
 - **Transport**: play/stop/rewind · ◉ onion skin (ghosts per frame; drag the ❲ ❳ brackets on the ruler to widen) · ∞ loop (exported) · spd (preview only) · zoom · 🏷 label at the playhead (exported for `gotoAndPlay`; double-click a marker removes it).
 
 ## Keyboard
@@ -47,4 +47,4 @@ Project files carry a versioned editor schema. Legacy JSON is normalized on impo
 
 ## Road to the Flash authoring model
 
-The runtime stays browser-native and small; Flash-like authoring belongs here in the editor. Independent multi-actor layers are now part of schema v3. The next structural milestones are layer folders/masks/guides, scene navigation, a symbol-editing stage for nested MovieClips, and explicit frame/keyframe/blank-keyframe operations. That order avoids baking editor-only complexity into `nexa-motion.js`.
+The runtime stays browser-native and small; Flash-like authoring belongs here in the editor. Schema v4 now has independent multi-actor layers and nested layer folders. The next structural milestones are masks/guides, scene navigation, a symbol-editing stage for nested MovieClips, and explicit frame/keyframe/blank-keyframe operations. That order avoids baking editor-only complexity into `nexa-motion.js`.

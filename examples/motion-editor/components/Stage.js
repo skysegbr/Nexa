@@ -19,7 +19,7 @@ import { baseOf, stageActorStyle } from "./actorGeometry.js";
 import { resolveActor } from "./symbolOps.js";
 import { ActorArtwork } from "./ActorArtwork.js";
 import { OUTLINE_COLORS } from "../data.js";
-import { layerForActor, orderedActors } from "./layerOps.js";
+import { layerForActor, orderedActors, resolvedLayerFlags } from "./layerOps.js";
 export function Stage({
   tl,
   doc,
@@ -50,7 +50,7 @@ export function Stage({
     return { x: event.clientX - rect.left, y: event.clientY - rect.top };
   };
 
-  const activeFlags = layerFlags[activeLayerId] || {};
+  const activeFlags = activeLayerId ? resolvedLayerFlags(doc, layerFlags, activeLayerId) : {};
   const create = useStageCreate({ tool, fill, stroke, strokeWidth, disabled: activeFlags.locked || activeFlags.hidden, onCreate: onCreateActor, stagePoint });
 
   // Flash's auto-key: a MOVE gesture records the drop as a position
@@ -95,7 +95,7 @@ export function Stage({
   // track() binding so the controller stays warm; visibility:hidden also
   // makes them unclickable for free.
   const selectedLayer = actorSel ? layerForActor(doc, actorSel) : null;
-  const selectedFlags = selectedLayer ? layerFlags[selectedLayer.id] || {} : {};
+  const selectedFlags = selectedLayer ? resolvedLayerFlags(doc, layerFlags, selectedLayer.id) : {};
 
   // Selection chrome lives on the MEASURED visual box (see SelectionBox).
   const selMeasured = useMeasuredBox(stageRef, tool === "select" && !drawing ? actorSel : null);
@@ -195,7 +195,7 @@ export function Stage({
     resolvedActors.map((actor) => {
       const layer = layerForActor(doc, actor.id);
       const layerIndex = Math.max(0, doc.layers.findIndex((entry) => entry.id === layer?.id));
-      const flags = layer ? layerFlags[layer.id] || {} : {};
+      const flags = layer ? resolvedLayerFlags(doc, layerFlags, layer.id) : {};
       return h(
         "div",
         {

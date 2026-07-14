@@ -2,7 +2,7 @@
 // (hide), padlock (lock) and outline square (show the layer as colored
 // outlines), click to select the layer, double-click to rename inline,
 // arrows to move the layer, and the keyframe/delete actions. Rows
-// top→bottom paint back→front on the stage.
+// top→bottom paint front→back on the stage.
 
 import { h, useState } from "/dist/nexa.js";
 import { OUTLINE_COLORS } from "../data.js";
@@ -11,12 +11,18 @@ export function LayerCell({
   layer,
   layerIndex,
   layerCount,
+  depth,
+  actorCount,
+  canIndent,
   flags,
   active,
   onToggleHidden,
   onToggleLocked,
   onToggleOutline,
+  onToggleCollapsed,
   onMoveLayer,
+  onIndentLayer,
+  onOutdentLayer,
   onSelectLayer,
   onRenameLayer,
   onAddKeyframe,
@@ -33,7 +39,10 @@ export function LayerCell({
 
   return h(
     "div",
-    { className: `me-row-label${active ? " me-row-active" : ""}` },
+    {
+      className: `me-row-label${active ? " me-row-active" : ""}${layer.type === "folder" ? " me-row-folder" : ""}`,
+      style: { paddingLeft: `${4 + depth * 14}px` },
+    },
     h(
       "button",
       {
@@ -56,14 +65,26 @@ export function LayerCell({
       },
       flags.locked ? "🔒" : "🔓",
     ),
-    h("button", {
-      type: "button",
-      className: `me-layer-square${flags.outline ? " me-layer-square-on" : ""}`,
-      title: flags.outline ? "Show layer filled" : "Show layer as outlines",
-      ariaPressed: flags.outline ? "true" : "false",
-      style: { borderColor: OUTLINE_COLORS[layerIndex % OUTLINE_COLORS.length] },
-      onClick: () => onToggleOutline(layer.id),
-    }),
+    layer.type === "folder"
+      ? h(
+          "button",
+          {
+            type: "button",
+            className: "me-folder-toggle",
+            title: flags.collapsed ? "Expand folder" : "Collapse folder",
+            ariaExpanded: flags.collapsed ? "false" : "true",
+            onClick: () => onToggleCollapsed(layer.id),
+          },
+          flags.collapsed ? "▸" : "▾",
+        )
+      : h("button", {
+          type: "button",
+          className: `me-layer-square${flags.outline ? " me-layer-square-on" : ""}`,
+          title: flags.outline ? "Show layer filled" : "Show layer as outlines",
+          ariaPressed: flags.outline ? "true" : "false",
+          style: { borderColor: OUTLINE_COLORS[layerIndex % OUTLINE_COLORS.length] },
+          onClick: () => onToggleOutline(layer.id),
+        }),
     renaming !== null
       ? h("input", {
           className: "me-rename",
@@ -80,13 +101,13 @@ export function LayerCell({
           "span",
           {
             className: "me-row-name",
-            title: `${layer.name} — ${layer.actorIds.length} actor(s); click selects, double-click renames`,
+            title: `${layer.name} — ${actorCount} actor(s); click selects, double-click renames`,
             onClick: () => onSelectLayer(layer.id),
             onDblClick: () => setRenaming(layer.name),
           },
-          layer.name,
+          layer.type === "folder" ? `📁 ${layer.name}` : layer.name,
         ),
-    layer.actorIds.length > 1 && h("span", { className: "me-layer-count" }, layer.actorIds.length),
+    actorCount > 1 && h("span", { className: "me-layer-count" }, actorCount),
     h(
       "span",
       { className: "me-row-actions" },
@@ -117,6 +138,28 @@ export function LayerCell({
         {
           type: "button",
           className: "me-btn me-btn-add",
+          title: "Move into the folder above",
+          disabled: !canIndent,
+          onClick: () => onIndentLayer(layer.id),
+        },
+        "→",
+      ),
+      h(
+        "button",
+        {
+          type: "button",
+          className: "me-btn me-btn-add",
+          title: "Move out of folder",
+          disabled: !layer.parentId,
+          onClick: () => onOutdentLayer(layer.id),
+        },
+        "←",
+      ),
+      h(
+        "button",
+        {
+          type: "button",
+          className: "me-btn me-btn-add",
           title: "Add keyframe at the playhead",
           onClick: () => onAddKeyframe(layer.id),
         },
@@ -127,7 +170,7 @@ export function LayerCell({
         {
           type: "button",
           className: "me-btn me-btn-add me-btn-remove",
-          title: `Delete ${layer.name} and its ${layer.actorIds.length} actor(s)`,
+          title: `Delete ${layer.name} and its ${actorCount} actor(s)`,
           onClick: () => onDeleteLayer(layer.id),
         },
         "✕",

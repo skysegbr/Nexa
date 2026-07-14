@@ -7,7 +7,8 @@
 
 import { h, useEffect, useRef, useState } from "/dist/nexa.js";
 import { snapToFrame, frameOf, capturePointer, DEFAULT_FPS } from "./editorUtils.js";
-import { LayerCell } from "./LayerCell.js";
+import { LayerLabels } from "./LayerLabels.js";
+import { visibleLayers } from "./layerOps.js";
 import { TrackLane } from "./TrackLane.js";
 import { TransportBar } from "./TransportBar.js";
 
@@ -28,10 +29,14 @@ export function TimelinePanel({
   onToggleHidden,
   onToggleLocked,
   onToggleOutline,
+  onToggleCollapsed,
   onMoveLayer,
+  onIndentLayer,
+  onOutdentLayer,
   onSelectLayer,
   onRenameLayer,
   onAddLayer,
+  onAddFolder,
   onAddLabel,
   onRemoveLabel,
   onToggleLoop,
@@ -50,6 +55,12 @@ export function TimelinePanel({
   const frameMs = 1000 / fps;
   const totalFrames = Math.max(1, Math.round(doc.duration / frameMs));
   const actorsById = Object.fromEntries(doc.actors.map((actor) => [actor.id, actor]));
+  const shownLayers = visibleLayers(doc.layers, layerFlags);
+  const layerActions = {
+    onToggleHidden, onToggleLocked, onToggleOutline, onToggleCollapsed,
+    onMoveLayer, onIndentLayer, onOutdentLayer, onSelectLayer,
+    onRenameLayer, onAddKeyframe, onDeleteLayer, onAddLayer, onAddFolder,
+  };
 
   // UI clock: follow the real playhead while the movie runs (or after any
   // programmatic jump). State lives here, so only the panel re-renders.
@@ -163,30 +174,7 @@ export function TimelinePanel({
       "div",
       { className: "me-tracks" },
       // Fixed left column: Flash's layers panel.
-      h(
-        "div",
-        { className: "me-track-labels" },
-        h("div", { className: "me-labels-spacer" },
-          h("button", { type: "button", className: "me-new-layer", title: "New layer", onClick: onAddLayer }, "+ layer")),
-        doc.layers.map((layer, layerIndex) =>
-          h(LayerCell, {
-            key: layer.id,
-            layer,
-            layerIndex,
-            layerCount: doc.layers.length,
-            flags: layerFlags[layer.id] || {},
-            active: activeLayerId === layer.id,
-            onToggleHidden,
-            onToggleLocked,
-            onToggleOutline,
-            onMoveLayer,
-            onSelectLayer,
-            onRenameLayer,
-            onAddKeyframe,
-            onDeleteLayer,
-          }),
-        ),
-      ),
+      h(LayerLabels, { doc, layers: shownLayers, activeLayerId, layerFlags, actions: layerActions }),
       // Scrollable right strip: ruler + lanes, zoomed together.
       h(
         "div",
@@ -224,7 +212,7 @@ export function TimelinePanel({
               ),
             ),
           ),
-          doc.layers.map((layer) =>
+          shownLayers.map((layer) =>
             h(TrackLane, {
               key: layer.id,
               tracks: layer.actorIds

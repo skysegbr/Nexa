@@ -15,7 +15,7 @@ import { DEFAULT_FPS } from "./editorUtils.js";
 import { resolveActor } from "./symbolOps.js";
 import { ActorArtwork } from "./ActorArtwork.js";
 import { isVectorKind } from "./vectorGeometry.js";
-import { layerForActor, orderedActors } from "./layerOps.js";
+import { layerForActor, orderedActors, resolvedLayerFlags } from "./layerOps.js";
 
 function buildGhosts(doc, count) {
   const ghosts = [];
@@ -105,7 +105,7 @@ export function OnionSkin({ doc, playheadRef, count, layerFlags }) {
         orderedActors(doc)
           .filter((actor) => {
             const layer = layerForActor(doc, actor.id);
-            return !layerFlags[layer?.id]?.hidden;
+            return !layer || !resolvedLayerFlags(doc, layerFlags, layer.id).hidden;
           })
           .map((actor) => resolveActor(doc, actor))
           .map((actor) =>

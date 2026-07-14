@@ -169,7 +169,7 @@
 /* fixed layers column on the left, one shared scroll strip on the right */
 .me-tracks {
   display: grid;
-  grid-template-columns: 248px minmax(0, 1fr);
+  grid-template-columns: 292px minmax(0, 1fr);
   gap: 0.5rem;
   align-items: start;
 }
@@ -182,6 +182,9 @@
 
 /* keeps the layer cells aligned with their lanes across the ruler row */
 .me-labels-spacer {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
   height: 26px;
   flex-shrink: 0;
 }
@@ -226,6 +229,7 @@
 }
 
 .me-row-label {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 0.3rem;
@@ -238,6 +242,21 @@
 .me-row-active {
   background: rgba(53, 224, 194, 0.1);
   outline: 1px solid rgba(53, 224, 194, 0.45);
+}
+
+.me-row-folder {
+  color: #ffd166;
+  background-color: rgba(255, 209, 102, 0.04);
+}
+
+.me-folder-toggle {
+  width: 11px;
+  flex-shrink: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #ffd166;
+  cursor: pointer;
 }
 
 /* the selected actor's lane lights up too — object ↔ timeline, one thing */
@@ -306,9 +325,18 @@
 }
 
 .me-row-actions {
-  display: inline-flex;
-  gap: 0.25rem;
+  position: absolute;
+  right: 3px;
+  display: none;
+  gap: 0.12rem;
   flex-shrink: 0;
+  padding-left: 0.4rem;
+  background: linear-gradient(90deg, transparent, #121a36 16%);
+}
+
+.me-row-label:hover .me-row-actions,
+.me-row-label:focus-within .me-row-actions {
+  display: inline-flex;
 }
 
 .me-btn-remove {
