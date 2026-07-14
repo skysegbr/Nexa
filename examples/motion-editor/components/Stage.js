@@ -9,33 +9,13 @@
 // Flash's registration point.
 
 import { h, useRef, useState } from "/dist/nexa.js";
+import { tweenTranslation } from "./editorUtils.js";
 import { pathAnchors, smoothPath } from "./smoothPath.js";
 import { useStageCreate } from "./useStageCreate.js";
 import { useActorBox } from "./useActorBox.js";
 import { StageOverlay } from "./StageOverlay.js";
 import { OnionSkin } from "./OnionSkin.js";
-
-const HANDLES = ["nw", "ne", "sw", "se"];
-
-const baseOf = (actor) => ({ x: actor.x + actor.w / 2, y: actor.y + actor.h / 2 });
-
-function actorStyle(actor) {
-  const style = {
-    left: `${actor.x}px`,
-    top: `${actor.y}px`,
-    width: `${actor.w}px`,
-    height: `${actor.h}px`,
-  };
-  if (actor.kind === "text") {
-    style.color = actor.fill;
-    style.fontSize = `${actor.h * 0.8}px`;
-    style.lineHeight = `${actor.h}px`;
-  } else {
-    style.background = actor.fill;
-    style.borderRadius = actor.kind === "ellipse" ? "50%" : "10px";
-  }
-  return style;
-}
+import { HANDLES, baseOf, actorStyle } from "./actorGeometry.js";
 
 export function Stage({
   tl,
@@ -54,8 +34,10 @@ export function Stage({
   onCreateActor,
   onSelectActor,
   onUpdateActor,
+  onKeyPosition,
 }) {
   const stageRef = useRef(null);
+  const tweenRef = useRef({ x: 0, y: 0 }); // tween offset at move-drag start
 
   const stagePoint = (event) => {
     const rect = stageRef.current.getBoundingClientRect();
@@ -63,7 +45,21 @@ export function Stage({
   };
 
   const create = useStageCreate({ tool, fill, onCreate: onCreateActor, stagePoint });
-  const actorBox = useActorBox({ onCommit: (id, box) => onUpdateActor(id, box) });
+
+  // Flash's auto-key: a MOVE gesture records the drop as a position
+  // keyframe at the playhead (base + keyframe x/y + tween offset must land
+  // on the drop point, so the actor doesn't jump on release). Resizing
+  // still edits the actor's base box — keyframes don't tween w/h.
+  const actorBox = useActorBox({
+    onCommit: (id, box, mode) => {
+      if (mode !== "move") return onUpdateActor(id, box);
+      const base = doc.actors.find((actor) => actor.id === id);
+      onKeyPosition(id, {
+        x: Math.round(box.x + tweenRef.current.x - base.x),
+        y: Math.round(box.y + tweenRef.current.y - base.y),
+      });
+    },
+  });
 
   // The live document view: the actor being moved/resized previews from the
   // local drag box.
@@ -77,6 +73,7 @@ export function Stage({
   const actorPointerDown = (event, actor) => {
     if (tool !== "select" || drawing) return;
     onSelectActor(actor.id);
+    tweenRef.current = tweenTranslation(event.currentTarget);
     actorBox.start(event, actorsById[actor.id], "move", stagePoint);
   };
 

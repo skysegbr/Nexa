@@ -1,7 +1,7 @@
 // Move/resize gesture for the selected actor (selection tool): the drag
-// mutates LOCAL state for live preview and commits a single updateActor
-// (one undo step) on release. `mode` is "move" or a corner ("nw", "ne",
-// "sw", "se").
+// mutates LOCAL state for live preview and commits ONCE (one undo step) on
+// release — the owner routes the commit by `mode`, "move" or a corner
+// ("nw", "ne", "sw", "se").
 
 import { useState } from "/dist/nexa.js";
 
@@ -47,10 +47,10 @@ export function useActorBox({ onCommit }) {
 
   const end = () => {
     if (!drag) return;
-    const { id, box, startBox } = drag;
+    const { id, mode, box, startBox } = drag;
     setDrag(null);
     if (box.x !== startBox.x || box.y !== startBox.y || box.w !== startBox.w || box.h !== startBox.h) {
-      onCommit(id, box);
+      onCommit(id, box, mode);
     }
   };
 

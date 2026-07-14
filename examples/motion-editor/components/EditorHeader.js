@@ -21,7 +21,7 @@ export function EditorHeader({ editor, drawing, onLoad, onNew }) {
       { className: "me-hint" },
       drawing
         ? "DRAWING GUIDE: click points on the stage · finish in the inspector · Esc cancels"
-        : "drag diamonds (shift = multi) · + adds at the playhead · Ctrl+C/V copies · Ctrl+D duplicates the actor · Del deletes · Ctrl+Z undo",
+        : "dragging an actor keys its position at the playhead · drag diamonds (shift = multi) · Ctrl+C/V copies · Ctrl+D duplicates · Del deletes · Ctrl+Z undo",
     ),
   );
 }

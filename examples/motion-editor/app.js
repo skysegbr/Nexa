@@ -160,6 +160,7 @@ function App() {
             onCreateActor: createActor,
             onSelectActor: selectActor,
             onUpdateActor: editor.updateActor,
+            onKeyPosition: editor.keyAtPlayhead,
           }),
         ),
         h(TimelinePanel, {

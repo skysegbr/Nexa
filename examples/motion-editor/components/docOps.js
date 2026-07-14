@@ -61,6 +61,22 @@ export function moveActorLayerDoc(doc, id, delta) {
   return { ...doc, actors };
 }
 
+// Flash's auto-key: write `patch` into the keyframe sitting exactly at
+// `at`, or insert a new keyframe there. Returns null when nothing would
+// change (dropping an actor back on its own spot must not touch history).
+export function writeKeyframeAtDoc(doc, trackName, at, patch) {
+  const keyframes = doc.tracks[trackName] || [];
+  const index = keyframes.findIndex((keyframe) => keyframe.at === at);
+  if (index !== -1 && Object.keys(patch).every((key) => Object.is(keyframes[index][key], patch[key]))) {
+    return null;
+  }
+  const nextTrack =
+    index !== -1
+      ? keyframes.map((keyframe, i) => (i === index ? { ...keyframe, ...patch } : keyframe))
+      : [...keyframes, { at, ...patch }];
+  return { ...doc, tracks: { ...doc.tracks, [trackName]: nextTrack } };
+}
+
 export function deleteActorDoc(doc, id) {
   // Unknown id (stale selection): committing anyway would push a
   // content-identical history entry — the "undo does nothing" bug.

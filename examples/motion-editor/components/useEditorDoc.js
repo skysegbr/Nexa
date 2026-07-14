@@ -6,7 +6,7 @@
 
 import { useHistory, useRef, useState } from "/dist/nexa.js";
 import { snap, selKey } from "./editorUtils.js";
-import { addActorDoc, duplicateActorDoc, moveActorLayerDoc, deleteActorDoc } from "./docOps.js";
+import { addActorDoc, duplicateActorDoc, moveActorLayerDoc, deleteActorDoc, writeKeyframeAtDoc } from "./docOps.js";
 
 export function useEditorDoc(initialDoc, playheadRef) {
   const { state: doc, set: setDoc, undo, redo, canUndo, canRedo } = useHistory(initialDoc, { limit: 100 });
@@ -49,6 +49,13 @@ export function useEditorDoc(initialDoc, playheadRef) {
     const nextTrack = [...(effective.tracks[trackName] || []), { at }];
     setDoc({ ...effective, tracks: { ...effective.tracks, [trackName]: nextTrack } });
     setSelected([{ track: trackName, index: nextTrack.length - 1 }]);
+  };
+
+  // Flash's auto-key: dragging an actor on the stage records its position
+  // as a keyframe AT THE PLAYHEAD (updating the one already there, if any).
+  const keyAtPlayhead = (trackName, patch) => {
+    const next = writeKeyframeAtDoc(effective, trackName, snap(playheadRef.current), patch);
+    if (next) setDoc(next);
   };
 
   const deleteSelected = () => {
@@ -223,6 +230,7 @@ export function useEditorDoc(initialDoc, playheadRef) {
     canRedo,
     updateKeyframe,
     addKeyframe,
+    keyAtPlayhead,
     deleteSelected,
     setDuration,
     copySelected,
