@@ -26,6 +26,8 @@ import { useEditorShortcuts } from "./components/useEditorShortcuts.js";
 import { useStageController } from "./components/useStageController.js";
 import { applySpecToDoc } from "./components/codeParse.js";
 import { useDrawingTools } from "./components/useDrawingTools.js";
+import { useLayers } from "./components/useLayers.js";
+import { layerTimelineBindings } from "./components/layerTimelineBindings.js";
 function App() {
   const playheadRef = useRef(0);
   const editor = useEditorDoc(INITIAL_DOC, playheadRef);
@@ -33,13 +35,7 @@ function App() {
   const drawingTools = useDrawingTools();
   const { tool, setTool } = drawingTools;
   const [actorSel, setActorSel] = useState(null); // actor id | null
-
-  // Layer chrome, Flash's eye and padlock: editor-side state keyed by actor
-  // id — NOT part of the document, so toggling never pollutes the undo
-  // history, the export, or saved projects.
-  const [layerFlags, setLayerFlags] = useState({}); // id → { hidden, locked }
-  const toggleLayerFlag = (id, key) =>
-    setLayerFlags((flags) => ({ ...flags, [id]: { ...flags[id], [key]: !flags[id]?.[key] } }));
+  const layers = useLayers(editor.doc);
 
   // Onion skin toggle + how many 100ms ghosts each side of the playhead.
   const [onion, setOnion] = useState({ on: false, count: 2 });
@@ -48,16 +44,20 @@ function App() {
   // sidebar shows one inspector at a time.
   const selectActor = (id) => {
     setActorSel(id);
+    if (id) layers.selectActor(id);
     if (id) editor.clearSelection();
   };
 
   const selectKeyframe = (entry, additive) => {
     setActorSel(null);
+    layers.selectActor(entry.track);
     editor.select(entry, additive);
   };
 
   const createActor = (actor) => {
-    editor.addActor(actor);
+    const id = editor.addActor(actor, layers.activeId);
+    setActorSel(id);
+    editor.clearSelection();
     setTool("select"); // back to selection after placing, like Flash
   };
 
@@ -69,19 +69,17 @@ function App() {
 
   const deleteActor = (id) => {
     editor.deleteActor(id);
-    // Drop the layer flags too: a future actor can reuse the freed id and
-    // must not inherit a stale eye/padlock.
-    setLayerFlags(({ [id]: _dropped, ...rest }) => rest);
     setActorSel((current) => (current === id ? null : current));
   };
 
   const selectedActorSource = actorSel && editor.doc.actors.find((actor) => actor.id === actorSel);
   const library = libraryFor(editor, selectedActorSource, createActor);
   const selectedActor = library.selected;
+  const layerTimeline = layerTimelineBindings({ editor, layers, setActorSelection: setActorSel });
   const loadProject = (project) => {
     editor.load(project);
     setActorSel(null);
-    setLayerFlags({});
+    layers.reset();
   };
 
   const tl = useStageController(INITIAL_DOC, editor.committedDoc, playheadRef);
@@ -154,7 +152,8 @@ function App() {
             actorSel,
             drawing,
             ...drawingTools.stageProps,
-            layerFlags,
+            activeLayerId: layers.activeId,
+            layerFlags: layers.flags,
             onion,
             playheadRef,
             onDrawPoint: addDrawingPoint,
@@ -169,26 +168,17 @@ function App() {
           tl,
           doc: editor.doc,
           selected: editor.selected,
-          actorSel,
-          layerFlags,
+          ...layerTimeline,
           playheadRef,
-          onSelect: selectKeyframe,
           onDragStart: (entry, additive) => {
             setActorSel(null);
+            layers.selectActor(entry.track);
             editor.dragStart(entry, additive);
           },
           onDragPreview: editor.dragPreview,
           onDragCommit: editor.dragCommit,
-          onAddKeyframe: editor.addKeyframe,
-          onDeleteActor: deleteActor,
           onSetDuration: (ms) => Number.isFinite(ms) && ms >= 100 && editor.setDocProp("duration", ms),
           onSetFps: (fps) => Number.isFinite(fps) && fps >= 1 && fps <= 120 && editor.setDocProp("fps", Math.round(fps)),
-          onToggleHidden: (id) => toggleLayerFlag(id, "hidden"),
-          onToggleLocked: (id) => toggleLayerFlag(id, "locked"),
-          onToggleOutline: (id) => toggleLayerFlag(id, "outline"),
-          onMoveLayer: editor.moveActorLayer,
-          onSelectActor: selectActor,
-          onRenameActor: (id, label) => editor.updateActor(id, { label }),
           onAddLabel: (name) => editor.setLabel(name, Math.round(playheadRef.current)),
           onRemoveLabel: (name) => editor.setLabel(name, undefined),
           onToggleLoop: () => editor.setDocProp("loop", editor.doc.loop ? undefined : true),
@@ -208,7 +198,13 @@ function App() {
               fps: editor.doc.fps,
               symbolName: library.selectedSymbol?.name,
               onEdit: library.edit,
-              onArrange: (delta) => editor.moveActorLayer(selectedActor.id, delta),
+              layers: editor.doc.layers,
+              layerId: editor.doc.layers.find((layer) => layer.actorIds.includes(selectedActor.id))?.id,
+              onMoveToLayer: (layerId) => {
+                editor.moveActorToLayer(selectedActor.id, layerId);
+                layers.select(layerId);
+              },
+              onArrange: (delta) => editor.arrangeActor(selectedActor.id, delta),
               onDuplicate: duplicateSelectedActor,
               onSaveSymbol: library.save,
               onDelete: () => deleteActor(selectedActor.id),

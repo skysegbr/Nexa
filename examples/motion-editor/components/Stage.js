@@ -19,7 +19,7 @@ import { baseOf, stageActorStyle } from "./actorGeometry.js";
 import { resolveActor } from "./symbolOps.js";
 import { ActorArtwork } from "./ActorArtwork.js";
 import { OUTLINE_COLORS } from "../data.js";
-
+import { layerForActor, orderedActors } from "./layerOps.js";
 export function Stage({
   tl,
   doc,
@@ -31,6 +31,7 @@ export function Stage({
   fill,
   stroke,
   strokeWidth,
+  activeLayerId,
   layerFlags,
   onion,
   playheadRef,
@@ -49,7 +50,8 @@ export function Stage({
     return { x: event.clientX - rect.left, y: event.clientY - rect.top };
   };
 
-  const create = useStageCreate({ tool, fill, stroke, strokeWidth, onCreate: onCreateActor, stagePoint });
+  const activeFlags = layerFlags[activeLayerId] || {};
+  const create = useStageCreate({ tool, fill, stroke, strokeWidth, disabled: activeFlags.locked || activeFlags.hidden, onCreate: onCreateActor, stagePoint });
 
   // Flash's auto-key: a MOVE gesture records the drop as a position
   // keyframe at the playhead (base + keyframe x/y + tween offset must land
@@ -66,13 +68,12 @@ export function Stage({
     },
   });
 
-  // The live document view: the actor being moved/resized previews from the
-  // local drag box.
+  // The live document view: the actor being moved/resized previews locally.
   const liveActor = (actor) => {
     const box = actorBox.boxOf(actor.id);
     return box ? { ...actor, ...box } : actor;
   };
-  const resolvedActors = doc.actors.map((actor) => resolveActor(doc, actor));
+  const resolvedActors = orderedActors(doc).map((actor) => resolveActor(doc, actor));
   const actorsById = Object.fromEntries(resolvedActors.map((actor) => [actor.id, liveActor(actor)]));
   const selectedActor = actorSel ? actorsById[actorSel] : null;
 
@@ -93,7 +94,8 @@ export function Stage({
   // gesture (move/resize) — Flash's padlock. Hidden layers keep their
   // track() binding so the controller stays warm; visibility:hidden also
   // makes them unclickable for free.
-  const selectedFlags = actorSel ? layerFlags[actorSel] || {} : {};
+  const selectedLayer = actorSel ? layerForActor(doc, actorSel) : null;
+  const selectedFlags = selectedLayer ? layerFlags[selectedLayer.id] || {} : {};
 
   // Selection chrome lives on the MEASURED visual box (see SelectionBox).
   const selMeasured = useMeasuredBox(stageRef, tool === "select" && !drawing ? actorSel : null);
@@ -190,8 +192,10 @@ export function Stage({
       },
     },
     onion.on && h(OnionSkin, { doc: committedDoc, playheadRef, count: onion.count, layerFlags }),
-    resolvedActors.map((actor, layerIndex) => {
-      const flags = layerFlags[actor.id] || {};
+    resolvedActors.map((actor) => {
+      const layer = layerForActor(doc, actor.id);
+      const layerIndex = Math.max(0, doc.layers.findIndex((entry) => entry.id === layer?.id));
+      const flags = layer ? layerFlags[layer.id] || {} : {};
       return h(
         "div",
         {

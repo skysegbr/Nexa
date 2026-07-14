@@ -15,10 +15,10 @@ function normalizeBox(x1, y1, x2, y2) {
   };
 }
 
-export function useStageCreate({ tool, fill, stroke, strokeWidth, onCreate, stagePoint }) {
+export function useStageCreate({ tool, fill, stroke, strokeWidth, disabled, onCreate, stagePoint }) {
   const [createDraft, setCreateDraft] = useState(null); // { points: [{ x, y }] }
 
-  const active = ["rect", "ellipse", "text", "line", "pencil"].includes(tool);
+  const active = !disabled && ["rect", "ellipse", "text", "line", "pencil"].includes(tool);
 
   const onPointerDown = (event) => {
     if (!active) return false;

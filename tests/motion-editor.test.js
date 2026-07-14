@@ -14,6 +14,8 @@ import {
   resolveActor,
 } from "../examples/motion-editor/components/symbolOps.js";
 import { vectorActorFromPoints } from "../examples/motion-editor/components/vectorGeometry.js";
+import { addLayerDoc, deleteLayerDoc, moveActorToLayerDoc, normalizeLayers, orderedActors } from "../examples/motion-editor/components/layerOps.js";
+import { addActorDoc } from "../examples/motion-editor/components/docOps.js";
 
 const legacyDoc = () => ({
   duration: 1000,
@@ -27,6 +29,63 @@ test("motion editor: legacy documents normalize to the current schema", async ()
   assertEqual(doc.schemaVersion, MOTION_DOCUMENT_VERSION);
   assertEqual(doc.fps, 24);
   assertEqual(doc.library[0].id, "symbol-1");
+  assertEqual(doc.layers[0].actorIds[0], "box");
+});
+
+test("motion editor: layers normalize membership without duplicating actors", async () => {
+  const actors = [{ id: "a", label: "A" }, { id: "b", label: "B" }];
+  const layers = normalizeLayers(
+    [{ id: "front", name: "Front", actorIds: ["a", "a", "missing"] }],
+    actors,
+  );
+  assertEqual(layers[0].actorIds.join(","), "a");
+  assertEqual(layers[1].actorIds.join(","), "b");
+});
+
+test("motion editor: actors can move between independent layers", async () => {
+  let doc = normalizeMotionDocument({ ...legacyDoc(), actors: [
+    ...legacyDoc().actors,
+    { id: "ball", label: "Ball", kind: "ellipse", x: 0, y: 0, w: 20, h: 20, fill: "#0f0" },
+  ], tracks: { ...legacyDoc().tracks, ball: [{ at: 0 }] } });
+  const boxLayer = doc.layers.find((layer) => layer.actorIds.includes("box"));
+  doc = moveActorToLayerDoc(doc, "ball", boxLayer.id);
+  assertEqual(doc.layers.find((layer) => layer.id === boxLayer.id).actorIds.join(","), "box,ball");
+  assertEqual(orderedActors(doc).map((actor) => actor.id).join(","), "box,ball");
+});
+
+test("motion editor: v2 migration preserves paint order behind Flash-style rows", async () => {
+  const old = legacyDoc();
+  old.actors.push({ id: "front", label: "Front", kind: "rect", x: 0, y: 0, w: 10, h: 10, fill: "#fff" });
+  old.tracks.front = [{ at: 0 }];
+  const doc = normalizeMotionDocument(old);
+  assertEqual(doc.layers[0].actorIds[0], "front", "top row should be the front actor");
+  assertEqual(orderedActors(doc).map((actor) => actor.id).join(","), "box,front");
+});
+
+test("motion editor: new actors join the active layer", async () => {
+  const doc = normalizeMotionDocument(legacyDoc());
+  const next = addActorDoc(
+    doc,
+    { kind: "rect", x: 10, y: 10, w: 20, h: 20, fill: "#00f" },
+    doc.layers[0].id,
+  );
+  assertEqual(next.doc.layers.length, 1);
+  assertEqual(next.doc.layers[0].actorIds.includes(next.id), true);
+});
+
+test("motion editor: new layers are inserted at the top of the Flash stack", async () => {
+  const doc = normalizeMotionDocument(legacyDoc());
+  const next = addLayerDoc(doc);
+  assertEqual(next.doc.layers[0].id, next.id);
+  assertEqual(next.doc.layers[1].actorIds[0], "box");
+});
+
+test("motion editor: deleting a layer removes its member tracks atomically", async () => {
+  const doc = normalizeMotionDocument(legacyDoc());
+  const next = deleteLayerDoc(doc, doc.layers[0].id);
+  assertEqual(next.actors.length, 0);
+  assertEqual(next.tracks.box, undefined);
+  assertEqual(next.layers.length, 1, "an empty document should retain one layer");
 });
 
 test("motion editor: serialization removes session keyframe ids", async () => {

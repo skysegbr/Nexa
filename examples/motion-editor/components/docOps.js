@@ -3,6 +3,8 @@
 // stays the single owner of history/selection while the array juggling
 // lives here.
 
+import { addLayerDoc, arrangeActorInLayerDoc, layerForActor } from "./layerOps.js";
+
 // Every keyframe carries a session-unique `_id`: selection, drags and the
 // clipboard target keyframes BY ID, so undo/redo reordering an array never
 // re-aims them at a different diamond. `_`-prefixed keys are editor-side
@@ -27,19 +29,28 @@ function nextIdFor(doc, kind) {
   return { id: `${kind}-${n}`, n };
 }
 
-export function addActorDoc(doc, actor) {
+export function addActorDoc(doc, actor, targetLayerId) {
   const { labelBase, ...props } = actor;
   const { id, n } = nextIdFor(doc, actor.kind);
   // Library instances label after their symbol ("estrela 2"), shapes
   // after their kind ("Rect 2").
   const label = `${labelBase || `${actor.kind[0].toUpperCase()}${actor.kind.slice(1)}`} ${n}`;
+  const nextDoc = {
+    ...doc,
+    actors: [...doc.actors, { ...props, id, label }],
+    tracks: { ...doc.tracks, [id]: [{ at: 0, x: 0, y: 0, opacity: 1, _id: freshKeyframeId() }] },
+  };
+  const hasTarget = (doc.layers || []).some((layer) => layer.id === targetLayerId);
+  const created = hasTarget ? null : addLayerDoc(nextDoc, label);
+  const withLayer = created ? created.doc : nextDoc;
+  const layerId = hasTarget ? targetLayerId : created.id;
   return {
     id,
     doc: {
-      ...doc,
-      actors: [...doc.actors, { ...props, id, label }],
-      // A starter keyframe at 0 so the new row has a diamond to work from.
-      tracks: { ...doc.tracks, [id]: [{ at: 0, x: 0, y: 0, opacity: 1, _id: freshKeyframeId() }] },
+      ...withLayer,
+      layers: withLayer.layers.map((layer) =>
+        layer.id === layerId ? { ...layer, actorIds: [...layer.actorIds, id] } : layer,
+      ),
     },
   };
 }
@@ -51,6 +62,7 @@ export function duplicateActorDoc(doc, id) {
   if (!source) return null;
   const { id: copyId } = nextIdFor(doc, source.kind);
   const copy = { ...source, id: copyId, label: `${source.label} copy`, x: source.x + 16, y: source.y + 16 };
+  const sourceLayer = layerForActor(doc, id);
   return {
     id: copyId,
     doc: {
@@ -60,25 +72,20 @@ export function duplicateActorDoc(doc, id) {
         ...doc.tracks,
         [copyId]: (doc.tracks[id] || []).map((keyframe) => ({ ...keyframe, _id: freshKeyframeId() })),
       },
+      layers: doc.layers.map((layer) => {
+        if (layer.id !== sourceLayer?.id) return layer;
+        const actorIds = [...layer.actorIds];
+        actorIds.splice(actorIds.indexOf(id) + 1, 0, copyId);
+        return { ...layer, actorIds };
+      }),
     },
   };
 }
 
-// Z-order, Flash's Arrange: actors paint in document order, so moving an
-// actor within the array is moving it between layers. `delta` is ±1 for
-// one step, ±Infinity for front/back.
+// Arrange an actor inside its current layer. Moving between layers is an
+// explicit operation in layerOps, matching Flash's separate concepts.
 export function moveActorLayerDoc(doc, id, delta) {
-  const index = doc.actors.findIndex((actor) => actor.id === id);
-  if (index === -1) return null;
-  const target = Math.max(
-    0,
-    Math.min(doc.actors.length - 1, delta === Infinity ? doc.actors.length - 1 : delta === -Infinity ? 0 : index + delta),
-  );
-  if (target === index) return null;
-  const actors = [...doc.actors];
-  const [moved] = actors.splice(index, 1);
-  actors.splice(target, 0, moved);
-  return { ...doc, actors };
+  return arrangeActorInLayerDoc(doc, id, delta);
 }
 
 // Flash's auto-key: write `patch` into the keyframe sitting exactly at
@@ -152,5 +159,6 @@ export function deleteActorDoc(doc, id) {
     ...doc,
     actors: doc.actors.filter((actor) => actor.id !== id),
     tracks,
+    layers: doc.layers.map((layer) => ({ ...layer, actorIds: layer.actorIds.filter((actorId) => actorId !== id) })),
   };
 }

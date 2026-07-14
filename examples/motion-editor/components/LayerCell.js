@@ -1,6 +1,6 @@
 // One row of the layers panel (the timeline's label column): Flash's eye
 // (hide), padlock (lock) and outline square (show the layer as colored
-// outlines), click to select the actor, double-click to rename inline,
+// outlines), click to select the layer, double-click to rename inline,
 // arrows to move the layer, and the keyframe/delete actions. Rows
 // top→bottom paint back→front on the stage.
 
@@ -8,7 +8,7 @@ import { h, useState } from "/dist/nexa.js";
 import { OUTLINE_COLORS } from "../data.js";
 
 export function LayerCell({
-  actor,
+  layer,
   layerIndex,
   layerCount,
   flags,
@@ -17,17 +17,17 @@ export function LayerCell({
   onToggleLocked,
   onToggleOutline,
   onMoveLayer,
-  onSelectActor,
-  onRenameActor,
+  onSelectLayer,
+  onRenameLayer,
   onAddKeyframe,
-  onDeleteActor,
+  onDeleteLayer,
 }) {
   const [renaming, setRenaming] = useState(null); // draft label | null
 
   const commitRename = () => {
     if (renaming === null) return;
     const label = renaming.trim();
-    if (label) onRenameActor(actor.id, label);
+    if (label) onRenameLayer(layer.id, label);
     setRenaming(null);
   };
 
@@ -41,7 +41,7 @@ export function LayerCell({
         className: `me-layer-toggle${flags.hidden ? " me-layer-off" : ""}`,
         title: flags.hidden ? "Show layer" : "Hide layer",
         ariaPressed: flags.hidden ? "true" : "false",
-        onClick: () => onToggleHidden(actor.id),
+        onClick: () => onToggleHidden(layer.id),
       },
       flags.hidden ? "◌" : "👁",
     ),
@@ -52,7 +52,7 @@ export function LayerCell({
         className: `me-layer-toggle${flags.locked ? "" : " me-layer-off"}`,
         title: flags.locked ? "Unlock layer (stage editing)" : "Lock layer (blocks stage editing)",
         ariaPressed: flags.locked ? "true" : "false",
-        onClick: () => onToggleLocked(actor.id),
+        onClick: () => onToggleLocked(layer.id),
       },
       flags.locked ? "🔒" : "🔓",
     ),
@@ -62,7 +62,7 @@ export function LayerCell({
       title: flags.outline ? "Show layer filled" : "Show layer as outlines",
       ariaPressed: flags.outline ? "true" : "false",
       style: { borderColor: OUTLINE_COLORS[layerIndex % OUTLINE_COLORS.length] },
-      onClick: () => onToggleOutline(actor.id),
+      onClick: () => onToggleOutline(layer.id),
     }),
     renaming !== null
       ? h("input", {
@@ -80,12 +80,13 @@ export function LayerCell({
           "span",
           {
             className: "me-row-name",
-            title: `${actor.label} — click selects, double-click renames`,
-            onClick: () => onSelectActor(actor.id),
-            onDblClick: () => setRenaming(actor.label),
+            title: `${layer.name} — ${layer.actorIds.length} actor(s); click selects, double-click renames`,
+            onClick: () => onSelectLayer(layer.id),
+            onDblClick: () => setRenaming(layer.name),
           },
-          actor.label,
+          layer.name,
         ),
+    layer.actorIds.length > 1 && h("span", { className: "me-layer-count" }, layer.actorIds.length),
     h(
       "span",
       { className: "me-row-actions" },
@@ -94,9 +95,9 @@ export function LayerCell({
         {
           type: "button",
           className: "me-btn me-btn-add",
-          title: "Move layer up (send backward)",
+          title: "Move layer up (bring forward)",
           disabled: layerIndex === 0,
-          onClick: () => onMoveLayer(actor.id, -1),
+          onClick: () => onMoveLayer(layer.id, -1),
         },
         "↑",
       ),
@@ -105,9 +106,9 @@ export function LayerCell({
         {
           type: "button",
           className: "me-btn me-btn-add",
-          title: "Move layer down (bring forward)",
+          title: "Move layer down (send backward)",
           disabled: layerIndex === layerCount - 1,
-          onClick: () => onMoveLayer(actor.id, 1),
+          onClick: () => onMoveLayer(layer.id, 1),
         },
         "↓",
       ),
@@ -117,7 +118,7 @@ export function LayerCell({
           type: "button",
           className: "me-btn me-btn-add",
           title: "Add keyframe at the playhead",
-          onClick: () => onAddKeyframe(actor.id),
+          onClick: () => onAddKeyframe(layer.id),
         },
         "+",
       ),
@@ -126,8 +127,8 @@ export function LayerCell({
         {
           type: "button",
           className: "me-btn me-btn-add me-btn-remove",
-          title: `Delete ${actor.label} (actor + track)`,
-          onClick: () => onDeleteActor(actor.id),
+          title: `Delete ${layer.name} and its ${layer.actorIds.length} actor(s)`,
+          onClick: () => onDeleteLayer(layer.id),
         },
         "✕",
       ),

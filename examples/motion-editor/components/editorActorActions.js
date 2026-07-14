@@ -1,0 +1,95 @@
+// Actor/layer mutation facade for useEditorDoc. Keeping these related
+// transactions together prevents the root document hook from becoming the
+// monolith warned about in the Nexa AI spec.
+
+import {
+  addActorDoc,
+  deleteActorDoc,
+  duplicateActorDoc,
+  moveActorLayerDoc,
+} from "./docOps.js";
+import { addLayerDoc, deleteLayerDoc, moveActorToLayerDoc, moveLayerDoc } from "./layerOps.js";
+
+export function createActorActions({ effective, setDoc, setSelected }) {
+  const updateActor = (id, patch) => {
+    const current = effective.actors.find((actor) => actor.id === id);
+    if (!current || Object.keys(patch).every((key) => Object.is(current[key], patch[key]))) return;
+    setDoc({
+      ...effective,
+      actors: effective.actors.map((actor) => (actor.id === id ? { ...actor, ...patch } : actor)),
+    });
+  };
+
+  const addActor = (actor, layerId) => {
+    const next = addActorDoc(effective, actor, layerId);
+    setDoc(next.doc);
+    setSelected([{ track: next.id, id: next.doc.tracks[next.id][0]._id }]);
+    return next.id;
+  };
+
+  const duplicateActor = (id) => {
+    const next = duplicateActorDoc(effective, id);
+    if (!next) return null;
+    setDoc(next.doc);
+    setSelected([]);
+    return next.id;
+  };
+
+  const arrangeActor = (id, delta) => {
+    const next = moveActorLayerDoc(effective, id, delta);
+    if (next) setDoc(next);
+  };
+
+  const deleteActor = (id) => {
+    const next = deleteActorDoc(effective, id);
+    if (!next) return;
+    setDoc(next);
+    setSelected((current) => current.filter((entry) => entry.track !== id));
+  };
+
+  const addLayer = (name) => {
+    const next = addLayerDoc(effective, name);
+    setDoc(next.doc);
+    return next.id;
+  };
+
+  const updateLayer = (id, patch) => {
+    const current = effective.layers.find((layer) => layer.id === id);
+    if (!current || Object.keys(patch).every((key) => Object.is(current[key], patch[key]))) return;
+    setDoc({
+      ...effective,
+      layers: effective.layers.map((layer) => (layer.id === id ? { ...layer, ...patch } : layer)),
+    });
+  };
+
+  const moveLayer = (id, delta) => {
+    const next = moveLayerDoc(effective, id, delta);
+    if (next) setDoc(next);
+  };
+
+  const moveActorToLayer = (actorId, layerId) => {
+    const next = moveActorToLayerDoc(effective, actorId, layerId);
+    if (next) setDoc(next);
+  };
+
+  const deleteLayer = (id) => {
+    const doomed = new Set(effective.layers.find((layer) => layer.id === id)?.actorIds || []);
+    const next = deleteLayerDoc(effective, id);
+    if (!next) return;
+    setDoc(next);
+    setSelected((current) => current.filter((entry) => !doomed.has(entry.track)));
+  };
+
+  return {
+    addActor,
+    duplicateActor,
+    deleteActor,
+    updateActor,
+    arrangeActor,
+    addLayer,
+    updateLayer,
+    moveLayer,
+    moveActorToLayer,
+    deleteLayer,
+  };
+}

@@ -186,6 +186,26 @@
   flex-shrink: 0;
 }
 
+.me-new-layer {
+  padding: 0.15rem 0.45rem;
+  border: 1px solid #2a3560;
+  border-radius: 5px;
+  background: #121a36;
+  color: #8fa1e8;
+  font-size: 0.68rem;
+  cursor: pointer;
+}
+
+.me-layer-count {
+  min-width: 18px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: rgba(79, 124, 255, 0.18);
+  color: #8fa1e8;
+  font-size: 0.62rem;
+  text-align: center;
+}
+
 .me-track-labels .me-row-label {
   height: 30px;
 }

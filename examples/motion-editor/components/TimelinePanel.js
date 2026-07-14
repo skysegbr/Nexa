@@ -1,6 +1,6 @@
 // The timeline panel, Flash 8 layout: transport bar, a frame-numbered
 // ruler with the playhead, named label markers and draggable onion-skin
-// brackets, and one frame-gridded lane per track (see TrackLane). The
+// brackets, and one frame-gridded lane per layer (see TrackLane). The
 // label column doubles as Flash's layers panel (see LayerCell). Ruler +
 // lanes live inside one horizontally scrollable strip whose inner width
 // is the zoom factor.
@@ -15,23 +15,23 @@ export function TimelinePanel({
   tl,
   doc,
   selected,
-  actorSel,
+  activeLayerId,
   layerFlags,
   playheadRef,
-  onSelect,
   onDragStart,
   onDragPreview,
   onDragCommit,
   onAddKeyframe,
-  onDeleteActor,
+  onDeleteLayer,
   onSetDuration,
   onSetFps,
   onToggleHidden,
   onToggleLocked,
   onToggleOutline,
   onMoveLayer,
-  onSelectActor,
-  onRenameActor,
+  onSelectLayer,
+  onRenameLayer,
+  onAddLayer,
   onAddLabel,
   onRemoveLabel,
   onToggleLoop,
@@ -49,6 +49,7 @@ export function TimelinePanel({
   const fps = doc.fps || DEFAULT_FPS;
   const frameMs = 1000 / fps;
   const totalFrames = Math.max(1, Math.round(doc.duration / frameMs));
+  const actorsById = Object.fromEntries(doc.actors.map((actor) => [actor.id, actor]));
 
   // UI clock: follow the real playhead while the movie runs (or after any
   // programmatic jump). State lives here, so only the panel re-renders.
@@ -133,7 +134,6 @@ export function TimelinePanel({
   return h(
     "section",
     { className: "me-timeline", ariaLabel: "Timeline" },
-
     h(TransportBar, {
       tl,
       playing,
@@ -159,7 +159,6 @@ export function TimelinePanel({
       onSpeed: setSpeed,
       onAddLabel,
     }),
-
     h(
       "div",
       { className: "me-tracks" },
@@ -167,23 +166,24 @@ export function TimelinePanel({
       h(
         "div",
         { className: "me-track-labels" },
-        h("div", { className: "me-labels-spacer" }),
-        doc.actors.map((actor, layerIndex) =>
+        h("div", { className: "me-labels-spacer" },
+          h("button", { type: "button", className: "me-new-layer", title: "New layer", onClick: onAddLayer }, "+ layer")),
+        doc.layers.map((layer, layerIndex) =>
           h(LayerCell, {
-            key: actor.id,
-            actor,
+            key: layer.id,
+            layer,
             layerIndex,
-            layerCount: doc.actors.length,
-            flags: layerFlags[actor.id] || {},
-            active: actorSel === actor.id,
+            layerCount: doc.layers.length,
+            flags: layerFlags[layer.id] || {},
+            active: activeLayerId === layer.id,
             onToggleHidden,
             onToggleLocked,
             onToggleOutline,
             onMoveLayer,
-            onSelectActor,
-            onRenameActor,
+            onSelectLayer,
+            onRenameLayer,
             onAddKeyframe,
-            onDeleteActor,
+            onDeleteLayer,
           }),
         ),
       ),
@@ -224,13 +224,15 @@ export function TimelinePanel({
               ),
             ),
           ),
-          doc.actors.map((actor) =>
+          doc.layers.map((layer) =>
             h(TrackLane, {
-              key: actor.id,
-              actor,
-              keyframes: doc.tracks[actor.id] || [],
+              key: layer.id,
+              tracks: layer.actorIds
+                .map((actorId) => actorsById[actorId])
+                .filter(Boolean)
+                .map((actor) => ({ actor, keyframes: doc.tracks[actor.id] || [] })),
               selected,
-              active: actorSel === actor.id,
+              active: activeLayerId === layer.id,
               playheadPct: pct(playhead),
               pct,
               frameGrid,

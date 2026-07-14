@@ -2,7 +2,9 @@
 // not runtime specs: normalize them here before any hook or panel consumes
 // them, and keep session-only fields out of files/localStorage.
 
-export const MOTION_DOCUMENT_VERSION = 2;
+import { normalizeLayers } from "./layerOps.js";
+
+export const MOTION_DOCUMENT_VERSION = 3;
 
 const isRecord = (value) => Boolean(value) && typeof value === "object" && !Array.isArray(value);
 
@@ -51,6 +53,7 @@ export function normalizeMotionDocument(input, fallback = {}) {
     stageColor: typeof source.stageColor === "string" ? source.stageColor : base.stageColor || "#ffffff",
     actors: actors.map((actor) => ({ ...actor })),
     tracks,
+    layers: normalizeLayers(source.layers, actors),
     library: normalizeLibrary(source.library ?? base.library),
     labels: isRecord(source.labels) ? { ...source.labels } : undefined,
     loop: source.loop || undefined,

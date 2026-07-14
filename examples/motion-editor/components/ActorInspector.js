@@ -35,6 +35,8 @@ function parseFill(fill) {
 export function ActorInspector({
   actor,
   symbolName,
+  layers,
+  layerId,
   keyframes,
   fps,
   onEdit,
@@ -42,6 +44,7 @@ export function ActorInspector({
   onArrange,
   onDuplicate,
   onSaveSymbol,
+  onMoveToLayer,
   onJumpKeyframe,
   onApplyTrack,
 }) {
@@ -101,6 +104,17 @@ export function ActorInspector({
     numberField("y", actor.y),
     numberField("w", actor.w, 12),
     numberField("h", actor.h, 12),
+
+    h(
+      "label",
+      { className: "me-field" },
+      h("span", null, "layer"),
+      h(
+        "select",
+        { value: layerId || "", onChange: (e) => onMoveToLayer(e.target.value) },
+        layers.map((layer) => h("option", { key: layer.id, value: layer.id }, layer.name)),
+      ),
+    ),
 
     h(
       "div",

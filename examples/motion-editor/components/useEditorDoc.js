@@ -7,10 +7,6 @@ import { useHistory, useRef, useState } from "/dist/nexa.js";
 import { snapToFrame } from "./editorUtils.js";
 import { normalizeMotionDocument } from "./documentSchema.js";
 import {
-  addActorDoc,
-  duplicateActorDoc,
-  moveActorLayerDoc,
-  deleteActorDoc,
   writeKeyframeAtDoc,
   withKeyframeIds,
   freshKeyframeId,
@@ -19,6 +15,7 @@ import {
   moveKeyframesDoc,
   setLabelDoc,
 } from "./docOps.js";
+import { createActorActions } from "./editorActorActions.js";
 
 export function useEditorDoc(initialDoc, playheadRef) {
   const [initial] = useState(() => withKeyframeIds(normalizeMotionDocument(initialDoc, initialDoc)));
@@ -68,6 +65,28 @@ export function useEditorDoc(initialDoc, playheadRef) {
     const nextTrack = [...(effective.tracks[trackName] || []), keyframe];
     setDoc({ ...effective, tracks: { ...effective.tracks, [trackName]: nextTrack } });
     setSelected([{ track: trackName, id: keyframe._id }]);
+  };
+
+  // Flash keys the whole layer: one atomic history step, one keyframe per
+  // member actor, while preserving the runtime's independent tracks.
+  const addLayerKeyframe = (layerId) => {
+    const layer = effective.layers.find((entry) => entry.id === layerId);
+    if (!layer || layer.actorIds.length === 0) return;
+    const at = snap(playheadRef.current);
+    const tracks = { ...effective.tracks };
+    const nextSelection = [];
+    let changed = false;
+    for (const track of layer.actorIds) {
+      const existing = (tracks[track] || []).find((keyframe) => keyframe.at === at);
+      const keyframe = existing || { at, _id: freshKeyframeId() };
+      if (!existing) {
+        tracks[track] = [...(tracks[track] || []), keyframe];
+        changed = true;
+      }
+      nextSelection.push({ track, id: keyframe._id });
+    }
+    if (changed) setDoc({ ...effective, tracks });
+    setSelected(nextSelection);
   };
 
   // Flash's auto-key: dragging an actor on the stage records its position
@@ -165,45 +184,7 @@ export function useEditorDoc(initialDoc, playheadRef) {
     }
   };
 
-  // ── actors: created with the stage tools, deleted from their row ──
-
-  const updateActor = (id, patch) => {
-    const current = effective.actors.find((actor) => actor.id === id);
-    if (!current || Object.keys(patch).every((key) => Object.is(current[key], patch[key]))) {
-      return;
-    }
-    setDoc({
-      ...effective,
-      actors: effective.actors.map((actor) => (actor.id === id ? { ...actor, ...patch } : actor)),
-    });
-  };
-
-  const addActor = (actor) => {
-    const next = addActorDoc(effective, actor);
-    setDoc(next.doc);
-    setSelected([{ track: next.id, id: next.doc.tracks[next.id][0]._id }]);
-  };
-
-  // ONE history step; returns the new id (null for stale ids).
-  const duplicateActor = (id) => {
-    const next = duplicateActorDoc(effective, id);
-    if (!next) return null;
-    setDoc(next.doc);
-    setSelected([]);
-    return next.id;
-  };
-
-  const moveActorLayer = (id, delta) => {
-    const next = moveActorLayerDoc(effective, id, delta);
-    if (next) setDoc(next);
-  };
-
-  const deleteActor = (id) => {
-    const next = deleteActorDoc(effective, id);
-    if (!next) return;
-    setDoc(next);
-    setSelected((current) => current.filter((entry) => entry.track !== id));
-  };
+  const actorActions = createActorActions({ effective, setDoc, setSelected });
 
   // Loading a project is a normal (undoable) history step. Old saves
   // inherit the starter cast, every actor gets a tracks entry, and
@@ -217,11 +198,7 @@ export function useEditorDoc(initialDoc, playheadRef) {
 
   return {
     load,
-    addActor,
-    duplicateActor,
-    deleteActor,
-    updateActor,
-    moveActorLayer,
+    ...actorActions,
     clearSelection,
     doc: effective,
     // The committed document (no in-flight drag draft): rebuild triggers key
@@ -234,6 +211,7 @@ export function useEditorDoc(initialDoc, playheadRef) {
     canRedo,
     updateKeyframe,
     addKeyframe,
+    addLayerKeyframe,
     keyAtPlayhead,
     deleteSelected,
     setDocProp,
