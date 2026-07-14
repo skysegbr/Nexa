@@ -1,24 +1,49 @@
-// The document's symbol library (Flash's Library panel): shape + paint
-// saved from a stage actor, no keyframes; instances are ordinary actors.
-// Plain per-render helper — the document itself lives in useEditorDoc.
+// Adapter between the editor hook and the pure linked-symbol operations.
+
+import {
+  convertActorToSymbolDoc,
+  editActorOrSymbolDoc,
+  removeSymbolDoc,
+  resolveActor,
+  symbolUsage,
+} from "./symbolOps.js";
 
 export function libraryFor(editor, selectedActor, createActor) {
   const items = editor.doc.library || [];
+  const selected = selectedActor ? resolveActor(editor.doc, selectedActor) : null;
 
   const save = () => {
     if (!selectedActor) return;
-    const { label, kind, w, h, fill, text } = selectedActor;
-    const symbol = { name: label, kind, w, h, fill, text };
-    editor.setDocProp("library", [...items.filter((item) => item.name !== label), symbol]);
+    editor.transact((doc) => convertActorToSymbolDoc(doc, selectedActor.id));
+  };
+
+  const edit = (patch) => {
+    if (selectedActor) editor.transact((doc) => editActorOrSymbolDoc(doc, selectedActor.id, patch));
   };
 
   const place = (item) => {
     const offset = (editor.doc.actors.length % 6) * 24;
-    createActor({ ...item, name: undefined, labelBase: item.name, x: 48 + offset, y: 48 + offset });
+    createActor({
+      kind: item.kind,
+      symbolId: item.id,
+      labelBase: item.name,
+      x: 48 + offset,
+      y: 48 + offset,
+      w: item.w,
+      h: item.h,
+    });
   };
 
-  const remove = (name) =>
-    editor.setDocProp("library", items.filter((item) => item.name !== name));
+  const remove = (id) => editor.transact((doc) => removeSymbolDoc(doc, id));
 
-  return { items, save, place, remove };
+  return {
+    items,
+    selected,
+    selectedSymbol: selectedActor?.symbolId ? items.find((item) => item.id === selectedActor.symbolId) : null,
+    usage: symbolUsage(editor.doc),
+    save,
+    edit,
+    place,
+    remove,
+  };
 }

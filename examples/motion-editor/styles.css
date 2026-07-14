@@ -1,6 +1,8 @@
 @import url("./components/Stage.css");
 @import url("./components/TimelinePanel.css");
 @import url("./components/Inspector.css");
+@import url("./components/ActorInspector.css");
+@import url("./components/ActorArtwork.css");
 @import url("./components/CodePane.css");
 @import url("./components/ProjectBar.css");
 @import url("./components/Toolbox.css");

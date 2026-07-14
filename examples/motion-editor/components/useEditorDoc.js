@@ -5,6 +5,7 @@
 
 import { useHistory, useRef, useState } from "/dist/nexa.js";
 import { snapToFrame } from "./editorUtils.js";
+import { normalizeMotionDocument } from "./documentSchema.js";
 import {
   addActorDoc,
   duplicateActorDoc,
@@ -20,7 +21,7 @@ import {
 } from "./docOps.js";
 
 export function useEditorDoc(initialDoc, playheadRef) {
-  const [initial] = useState(() => withKeyframeIds(initialDoc));
+  const [initial] = useState(() => withKeyframeIds(normalizeMotionDocument(initialDoc, initialDoc)));
   const { state: doc, set: setDoc, undo, redo, canUndo, canRedo } = useHistory(initial, { limit: 100 });
   const [draft, setDraft] = useState(null); // in-flight drag document
   const [selected, setSelected] = useState([]); // [{ track, id }]
@@ -95,6 +96,11 @@ export function useEditorDoc(initialDoc, playheadRef) {
     }
   };
 
+  // One undoable transaction for linked operations spanning document branches.
+  const transact = (transform) => {
+    const next = transform(effective);
+    if (next && next !== effective) setDoc(next);
+  };
   // Labels ship with the export; `ms: undefined` removes one.
   const setLabel = (name, ms) => setDoc(setLabelDoc(effective, name, ms));
 
@@ -203,14 +209,7 @@ export function useEditorDoc(initialDoc, playheadRef) {
   // inherit the starter cast, every actor gets a tracks entry, and
   // keyframe ids are regenerated (saved ids come from an older session).
   const load = (nextDoc) => {
-    const actors = nextDoc.actors ?? initialDoc.actors;
-    const tracks = { ...nextDoc.tracks };
-    for (const actor of actors) {
-      if (!tracks[actor.id]) {
-        tracks[actor.id] = [];
-      }
-    }
-    setDoc(withKeyframeIds({ ...nextDoc, actors, tracks }));
+    setDoc(withKeyframeIds(normalizeMotionDocument(nextDoc, initialDoc)));
     setSelected([]);
   };
 
@@ -238,6 +237,7 @@ export function useEditorDoc(initialDoc, playheadRef) {
     keyAtPlayhead,
     deleteSelected,
     setDocProp,
+    transact,
     setLabel,
     setTrack,
     copySelected,

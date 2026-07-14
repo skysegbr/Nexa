@@ -4,9 +4,11 @@
 // tools, deleted from their track row, saved with the project.
 
 export const INITIAL_DOC = {
+  schemaVersion: 2,
   duration: 3000,
   fps: 24,
   stageColor: "#0d1226",
+  library: [],
   actors: [
     { id: "box", label: "Box", kind: "rect", x: 60, y: 60, w: 56, h: 56, fill: "linear-gradient(135deg, #4f7cff, #35e0c2)" },
     { id: "ball", label: "Ball", kind: "ellipse", x: 60, y: 140, w: 44, h: 44, fill: "radial-gradient(circle at 32% 28%, #ffd166, #ef476f)" },
@@ -34,11 +36,13 @@ export const INITIAL_DOC = {
 
 // Stage tools, Flash-style (adapted from the drawEasyNexa toolbox).
 export const TOOLS = [
-  { id: "select", label: "Select", icon: "➤" },
-  { id: "transform", label: "Free Transform (rotate/scale)", icon: "⤾" },
-  { id: "rect", label: "Rectangle", icon: "▭" },
-  { id: "ellipse", label: "Ellipse", icon: "◯" },
-  { id: "text", label: "Text", icon: "T" },
+  { id: "select", label: "Select (V)", icon: "➤" },
+  { id: "transform", label: "Free Transform (Q)", icon: "⤾" },
+  { id: "line", label: "Line (N)", icon: "╱" },
+  { id: "pencil", label: "Pencil (Y)", icon: "✎" },
+  { id: "rect", label: "Rectangle (R)", icon: "▭" },
+  { id: "ellipse", label: "Ellipse (O)", icon: "◯" },
+  { id: "text", label: "Text (T)", icon: "T" },
 ];
 
 // Fill palette for newly created actors.

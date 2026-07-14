@@ -16,6 +16,9 @@ import { guidesFor } from "./stageGuides.js";
 import { SelectionBox } from "./SelectionBox.js";
 import { useMeasuredBox } from "./useMeasuredBox.js";
 import { baseOf, stageActorStyle } from "./actorGeometry.js";
+import { resolveActor } from "./symbolOps.js";
+import { ActorArtwork } from "./ActorArtwork.js";
+import { OUTLINE_COLORS } from "../data.js";
 
 export function Stage({
   tl,
@@ -26,6 +29,8 @@ export function Stage({
   drawing,
   tool,
   fill,
+  stroke,
+  strokeWidth,
   layerFlags,
   onion,
   playheadRef,
@@ -44,7 +49,7 @@ export function Stage({
     return { x: event.clientX - rect.left, y: event.clientY - rect.top };
   };
 
-  const create = useStageCreate({ tool, fill, onCreate: onCreateActor, stagePoint });
+  const create = useStageCreate({ tool, fill, stroke, strokeWidth, onCreate: onCreateActor, stagePoint });
 
   // Flash's auto-key: a MOVE gesture records the drop as a position
   // keyframe at the playhead (base + keyframe x/y + tween offset must land
@@ -67,7 +72,8 @@ export function Stage({
     const box = actorBox.boxOf(actor.id);
     return box ? { ...actor, ...box } : actor;
   };
-  const actorsById = Object.fromEntries(doc.actors.map((actor) => [actor.id, liveActor(actor)]));
+  const resolvedActors = doc.actors.map((actor) => resolveActor(doc, actor));
+  const actorsById = Object.fromEntries(resolvedActors.map((actor) => [actor.id, liveActor(actor)]));
   const selectedActor = actorSel ? actorsById[actorSel] : null;
 
   const actorPointerDown = (event, actor) => {
@@ -184,7 +190,7 @@ export function Stage({
       },
     },
     onion.on && h(OnionSkin, { doc: committedDoc, playheadRef, count: onion.count, layerFlags }),
-    doc.actors.map((actor, layerIndex) => {
+    resolvedActors.map((actor, layerIndex) => {
       const flags = layerFlags[actor.id] || {};
       return h(
         "div",
@@ -198,7 +204,10 @@ export function Stage({
           ref: tl.track(actor.id),
           onPointerDown: (e) => actorPointerDown(e, actor),
         },
-        actor.kind === "text" ? actor.text : "",
+        h(ActorArtwork, {
+          actor,
+          outlineColor: flags.outline ? OUTLINE_COLORS[layerIndex % OUTLINE_COLORS.length] : null,
+        }),
       );
     }),
     // Selection rect + name tag + resize handles on the visual box.
@@ -225,6 +234,7 @@ export function Stage({
       preview,
       drawingPoints: drawing ? drawing.points : [],
       draftBox: create.draftBox,
+      draftVector: create.draftVector,
       draftKind: tool,
       anchors: editableAnchors,
       anchorsBase: editableBase,

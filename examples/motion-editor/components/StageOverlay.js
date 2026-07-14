@@ -9,6 +9,7 @@ export function StageOverlay({
   preview,
   drawingPoints,
   draftBox,
+  draftVector,
   draftKind,
   anchors,
   anchorsBase,
@@ -55,6 +56,14 @@ export function StageOverlay({
               ry: draftBox.h / 2,
             }
           : { x: draftBox.x, y: draftBox.y, width: draftBox.w, height: draftBox.h }),
+      }),
+    draftVector &&
+      h("path", {
+        className: "me-vector-preview",
+        d: draftVector.path,
+        transform: `translate(${draftVector.x}, ${draftVector.y})`,
+        stroke: draftVector.stroke,
+        "stroke-width": draftVector.strokeWidth,
       }),
     // Draggable anchor handles for the selected keyframe's guide.
     anchors &&

@@ -6,7 +6,7 @@ Run `python server.py` at the repo root and open `http://localhost:8000/examples
 
 ## The core workflow (place → scrub → drag → play)
 
-1. **Create an actor**: pick the ▭ / ◯ / T tool, drag (or click, for text) on the stage. It gets a layer row and a starter keyframe at frame 1.
+1. **Create an actor**: pick ▭ / ◯ / T or draw with the Line/Pencil tools. Vector strokes are stored as portable SVG paths, and every actor gets a layer row plus a starter keyframe at frame 1.
 2. **Move the playhead**: click/drag on the timeline ruler, or press ▶ play.
 3. **Drag the actor** with the ➤ select tool: its position is recorded as a keyframe **at the playhead** (auto-key). A plain click never records anything — only a real drag does.
 4. **Press ▶ play**: the actor tweens between its keyframes.
@@ -35,10 +35,16 @@ Frames at the document's fps (default 24, editable in the transport — the read
 
 ## Keyboard
 
-`Ctrl+Z / Ctrl+Shift+Z / Ctrl+Y` undo/redo · `Ctrl+C / Ctrl+V` copy/paste keyframes to the playhead · `Ctrl+D` duplicate actor · `Del` delete selection · `Esc` cancel guide drawing.
+`Ctrl+Z / Ctrl+Shift+Z / Ctrl+Y` undo/redo · `Ctrl+C / Ctrl+V` copy/paste keyframes to the playhead · `Ctrl+D` duplicate actor · `Del` delete selection · `Esc` cancel guide drawing · `V/Q/N/Y/R/O/T` select Transform/Line/Pencil/Rectangle/Oval/Text tools.
 
 ## More
 
 - **Motion guides**: select a keyframe → *draw guide on stage* → click points → finish. Drag the anchors to reshape; *orient* rotates along the path.
-- **Library**: with an actor selected, *☆ to library* saves its shape as a named symbol (stored in the document); click a symbol to place an instance.
+- **Library**: with an actor selected, *☆ convert to symbol* creates a real linked symbol. Every placed instance shares its artwork, so editing the fill/text through one instance updates all of them; removing a symbol safely detaches its instances as independent artwork.
 - **Projects** save/load in localStorage from the header; *stage* picks the stage color. The Export pane always holds the current `useTimeline()` code — copy and paste it into any Nexa app.
+
+Project files carry a versioned editor schema. Legacy JSON is normalized on import, and session-only keyframe IDs are never written to saved/downloaded files.
+
+## Road to the Flash authoring model
+
+The runtime stays browser-native and small; Flash-like authoring belongs here in the editor. The next structural milestones are independent layers that can hold multiple actors, layer folders/masks/guides, scene navigation, a symbol-editing stage for nested MovieClips, and explicit frame/keyframe/blank-keyframe operations. That order avoids baking editor-only complexity into `nexa-motion.js`.

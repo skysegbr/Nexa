@@ -48,3 +48,9 @@
   font-size: 0.68rem;
   color: #5a6aa8;
 }
+
+.me-library-line,
+.me-library-pencil {
+  border: none;
+  font-size: 1rem;
+}

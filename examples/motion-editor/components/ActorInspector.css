@@ -1,0 +1,9 @@
+.me-symbol-link {
+  margin: -0.15rem 0 0.2rem;
+  padding: 0.35rem 0.5rem;
+  border: 1px solid rgba(53, 224, 194, 0.35);
+  border-radius: 6px;
+  background: rgba(53, 224, 194, 0.08);
+  color: #35e0c2;
+  font-size: 0.72rem;
+}

@@ -12,6 +12,9 @@
 import { h, useEffect, useRef, useState } from "/dist/nexa.js";
 import { createTimeline } from "/dist/nexa-motion.js";
 import { DEFAULT_FPS } from "./editorUtils.js";
+import { resolveActor } from "./symbolOps.js";
+import { ActorArtwork } from "./ActorArtwork.js";
+import { isVectorKind } from "./vectorGeometry.js";
 
 function buildGhosts(doc, count) {
   const ghosts = [];
@@ -25,8 +28,10 @@ function buildGhosts(doc, count) {
   return ghosts;
 }
 
+const ghostColor = (offset) => offset < 0 ? "rgba(255, 109, 109, 0.9)" : "rgba(87, 227, 158, 0.9)";
+
 function ghostStyle(actor, offset) {
-  const color = offset < 0 ? "rgba(255, 109, 109, 0.9)" : "rgba(87, 227, 158, 0.9)";
+  const color = ghostColor(offset);
   const style = {
     left: `${actor.x}px`,
     top: `${actor.y}px`,
@@ -39,6 +44,8 @@ function ghostStyle(actor, offset) {
     style.color = color;
     style.fontSize = `${actor.h * 0.8}px`;
     style.lineHeight = `${actor.h}px`;
+  } else if (isVectorKind(actor.kind)) {
+    style.border = "none";
   } else if (actor.kind === "ellipse") {
     style.borderRadius = "50%";
   }
@@ -96,6 +103,7 @@ export function OnionSkin({ doc, playheadRef, count, layerFlags }) {
         },
         doc.actors
           .filter((actor) => !layerFlags[actor.id]?.hidden)
+          .map((actor) => resolveActor(doc, actor))
           .map((actor) =>
             h(
               "div",
@@ -105,7 +113,7 @@ export function OnionSkin({ doc, playheadRef, count, layerFlags }) {
                 style: ghostStyle(actor, offset),
                 ref: ctrl.track(actor.id),
               },
-              actor.kind === "text" ? actor.text : "",
+              h(ActorArtwork, { actor, outlineColor: ghostColor(offset) }),
             ),
           ),
       ),

@@ -1,0 +1,12 @@
+.me-kind-line,
+.me-kind-pencil {
+  box-shadow: none;
+}
+
+.me-vector-art {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}

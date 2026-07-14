@@ -4,6 +4,7 @@
 // edit).
 
 import { h, useLocalStorage, useRef, useState } from "/dist/nexa.js";
+import { serializeMotionDocument } from "./documentSchema.js";
 
 export function ProjectBar({ doc, onLoad, onNew }) {
   const [projects, setProjects] = useLocalStorage("me-projects", {});
@@ -14,11 +15,11 @@ export function ProjectBar({ doc, onLoad, onNew }) {
   const save = () => {
     const trimmed = name.trim();
     if (!trimmed) return;
-    setProjects({ ...projects, [trimmed]: doc });
+    setProjects({ ...projects, [trimmed]: serializeMotionDocument(doc) });
   };
 
   const download = () => {
-    const blob = new Blob([JSON.stringify(doc, null, 2)], { type: "application/json" });
+    const blob = new Blob([JSON.stringify(serializeMotionDocument(doc), null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;

@@ -10,7 +10,7 @@
 // is always the real runtime, never an approximation.
 
 import { h, render, useRef, useState } from "/dist/nexa.js";
-import { FILLS, INITIAL_DOC } from "./data.js";
+import { INITIAL_DOC } from "./data.js";
 import { Stage } from "./components/Stage.js";
 import { Toolbox } from "./components/Toolbox.js";
 import { TimelinePanel } from "./components/TimelinePanel.js";
@@ -25,13 +25,13 @@ import { useEditorDoc } from "./components/useEditorDoc.js";
 import { useEditorShortcuts } from "./components/useEditorShortcuts.js";
 import { useStageController } from "./components/useStageController.js";
 import { applySpecToDoc } from "./components/codeParse.js";
-
+import { useDrawingTools } from "./components/useDrawingTools.js";
 function App() {
   const playheadRef = useRef(0);
   const editor = useEditorDoc(INITIAL_DOC, playheadRef);
   const [drawing, setDrawing] = useState(null); // { track, index, points } | null
-  const [tool, setTool] = useState("select");
-  const [fill, setFill] = useState(FILLS[0]);
+  const drawingTools = useDrawingTools();
+  const { tool, setTool } = drawingTools;
   const [actorSel, setActorSel] = useState(null); // actor id | null
 
   // Layer chrome, Flash's eye and padlock: editor-side state keyed by actor
@@ -75,10 +75,9 @@ function App() {
     setActorSel((current) => (current === id ? null : current));
   };
 
-  const selectedActor = actorSel && editor.doc.actors.find((actor) => actor.id === actorSel);
-
-  const library = libraryFor(editor, selectedActor, createActor);
-
+  const selectedActorSource = actorSel && editor.doc.actors.find((actor) => actor.id === actorSel);
+  const library = libraryFor(editor, selectedActorSource, createActor);
+  const selectedActor = library.selected;
   const loadProject = (project) => {
     editor.load(project);
     setActorSel(null);
@@ -125,6 +124,7 @@ function App() {
       setDrawing(null);
       setActorSel(null);
     },
+    onTool: setTool,
   });
 
   return h(
@@ -145,7 +145,7 @@ function App() {
         h(
           "div",
           { className: "me-stage-row" },
-          h(Toolbox, { tool, onTool: setTool, fill, onFill: setFill }),
+          h(Toolbox, drawingTools.toolboxProps),
           h(Stage, {
             tl,
             doc: editor.doc,
@@ -153,8 +153,7 @@ function App() {
             selected: editor.selected,
             actorSel,
             drawing,
-            tool,
-            fill,
+            ...drawingTools.stageProps,
             layerFlags,
             onion,
             playheadRef,
@@ -207,7 +206,8 @@ function App() {
               actor: selectedActor,
               keyframes: editor.doc.tracks[selectedActor.id] || [],
               fps: editor.doc.fps,
-              onEdit: (patch) => editor.updateActor(selectedActor.id, patch),
+              symbolName: library.selectedSymbol?.name,
+              onEdit: library.edit,
               onArrange: (delta) => editor.moveActorLayer(selectedActor.id, delta),
               onDuplicate: duplicateSelectedActor,
               onSaveSymbol: library.save,
@@ -234,7 +234,7 @@ function App() {
           onFinishDrawing: finishDrawing,
           onCancelDrawing: () => setDrawing(null),
         }),
-        h(Library, { items: library.items, onPlace: library.place, onRemove: library.remove }),
+        h(Library, { items: library.items, usage: library.usage, onPlace: library.place, onRemove: library.remove }),
         h(CodePane, {
           doc: editor.doc,
           onApply: (spec) => {

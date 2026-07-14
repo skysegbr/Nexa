@@ -7,6 +7,7 @@
 import { h } from "/dist/nexa.js";
 import { FILLS } from "../data.js";
 import { TrackEditor } from "./TrackEditor.js";
+import { isVectorKind } from "./vectorGeometry.js";
 
 // #rgb / #rrggbb / #rrggbbaa / rgb() / rgba() → [r, g, b, a]; null for
 // anything else (gradients keep the mixer's alpha slider hidden).
@@ -33,6 +34,7 @@ function parseFill(fill) {
 
 export function ActorInspector({
   actor,
+  symbolName,
   keyframes,
   fps,
   onEdit,
@@ -43,6 +45,8 @@ export function ActorInspector({
   onJumpKeyframe,
   onApplyTrack,
 }) {
+  const paintField = isVectorKind(actor.kind) ? "stroke" : "fill";
+  const paint = actor[paintField] || "#4f7cff";
   const numberField = (name, value, min) =>
     h(
       "label",
@@ -68,6 +72,7 @@ export function ActorInspector({
     "section",
     { className: "me-inspector" },
     h("h2", { className: "me-panel-title" }, `Actor — ${actor.label}`),
+    symbolName && h("p", { className: "me-symbol-link" }, `◆ instance of ${symbolName}`),
 
     h(
       "label",
@@ -100,7 +105,7 @@ export function ActorInspector({
     h(
       "div",
       { className: "me-field" },
-      h("span", null, "fill"),
+      h("span", null, paintField),
       h(
         "div",
         { className: "me-fill-row" },
@@ -108,19 +113,19 @@ export function ActorInspector({
           h("button", {
             key: color,
             type: "button",
-            className: `me-swatch${actor.fill === color ? " me-swatch-active" : ""}`,
+            className: `me-swatch${paint === color ? " me-swatch-active" : ""}`,
             title: color,
-            ariaLabel: `Fill ${color}`,
+            ariaLabel: `${paintField} ${color}`,
             style: { background: color },
-            onClick: () => onEdit({ fill: color }),
+            onClick: () => onEdit({ [paintField]: color }),
           }),
         ),
         h("input", {
           type: "color",
           className: "me-fill-custom",
-          ariaLabel: "Custom fill",
-          value: actor.fill.startsWith("#") ? actor.fill.slice(0, 7) : "#4f7cff",
-          onInput: (e) => onEdit({ fill: e.target.value }),
+          ariaLabel: `Custom ${paintField}`,
+          value: paint.startsWith("#") ? paint.slice(0, 7) : "#4f7cff",
+          onInput: (e) => onEdit({ [paintField]: e.target.value }),
         }),
       ),
     ),
@@ -128,7 +133,7 @@ export function ActorInspector({
     // The color mixer: free CSS value (hex/rgba/gradient) + alpha slider
     // for the simple colors.
     (() => {
-      const rgba = parseFill(actor.fill);
+      const rgba = parseFill(paint);
       const alpha = rgba ? Math.round(rgba[3] * 100) : 100;
       return h(
         "div",
@@ -140,9 +145,9 @@ export function ActorInspector({
           h("input", {
             type: "text",
             className: "me-mixer-value",
-            ariaLabel: "Fill (any CSS color)",
-            value: actor.fill,
-            onChange: (e) => e.target.value.trim() && onEdit({ fill: e.target.value.trim() }),
+            ariaLabel: `${paintField} (any CSS color)`,
+            value: paint,
+            onChange: (e) => e.target.value.trim() && onEdit({ [paintField]: e.target.value.trim() }),
           }),
           rgba &&
             h("input", {
@@ -151,14 +156,16 @@ export function ActorInspector({
               min: 0,
               max: 100,
               value: alpha,
-              ariaLabel: "Fill alpha",
+              ariaLabel: `${paintField} alpha`,
               title: `alpha ${alpha}%`,
               onInput: (e) =>
-                onEdit({ fill: `rgba(${rgba[0]}, ${rgba[1]}, ${rgba[2]}, ${Number(e.target.value) / 100})` }),
+                onEdit({ [paintField]: `rgba(${rgba[0]}, ${rgba[1]}, ${rgba[2]}, ${Number(e.target.value) / 100})` }),
             }),
         ),
       );
     })(),
+
+    isVectorKind(actor.kind) && numberField("strokeWidth", actor.strokeWidth || 2, 1),
 
     // Flash's Arrange: paint order = layer order.
     h(
@@ -187,8 +194,14 @@ export function ActorInspector({
       ),
       h(
         "button",
-        { type: "button", className: "me-btn", title: "Save this actor's shape as a reusable library symbol", onClick: onSaveSymbol },
-        "☆ to library",
+        {
+          type: "button",
+          className: "me-btn",
+          disabled: Boolean(symbolName),
+          title: symbolName ? `Linked to “${symbolName}”` : "Convert this actor to a linked library symbol",
+          onClick: onSaveSymbol,
+        },
+        symbolName ? "◆ linked symbol" : "☆ convert to symbol",
       ),
       h(
         "button",

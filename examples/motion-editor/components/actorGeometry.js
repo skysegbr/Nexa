@@ -1,6 +1,7 @@
 // Shared geometry/paint helpers for stage actors.
 
 import { OUTLINE_COLORS } from "../data.js";
+import { isVectorKind } from "./vectorGeometry.js";
 
 export const HANDLES = ["nw", "ne", "sw", "se"];
 
@@ -13,6 +14,7 @@ export function stageActorStyle(live, flags, layerIndex) {
   if (flags.outline) {
     const color = OUTLINE_COLORS[layerIndex % OUTLINE_COLORS.length];
     if (live.kind === "text") style.color = color;
+    else if (isVectorKind(live.kind)) style.background = "none";
     else {
       style.background = "none";
       style.border = `1.5px solid ${color}`;
@@ -38,7 +40,7 @@ export function actorStyle(actor) {
     style.color = actor.fill;
     style.fontSize = `${actor.h * 0.8}px`;
     style.lineHeight = `${actor.h}px`;
-  } else {
+  } else if (!isVectorKind(actor.kind)) {
     style.background = actor.fill;
     style.borderRadius = actor.kind === "ellipse" ? "50%" : "10px";
   }
