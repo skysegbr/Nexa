@@ -6,7 +6,7 @@
 import { h } from "/dist/nexa.js";
 import { FILLS } from "../data.js";
 
-export function ActorInspector({ actor, onEdit, onDelete, onArrange }) {
+export function ActorInspector({ actor, onEdit, onDelete, onArrange, onDuplicate }) {
   const numberField = (name, value, min) =>
     h(
       "label",
@@ -105,9 +105,18 @@ export function ActorInspector({ actor, onEdit, onDelete, onArrange }) {
     ),
 
     h(
-      "button",
-      { type: "button", className: "me-btn me-btn-danger", onClick: onDelete },
-      "delete actor",
+      "div",
+      { className: "me-actor-actions" },
+      h(
+        "button",
+        { type: "button", className: "me-btn", title: "Duplicate actor + keyframes (Ctrl+D)", onClick: onDuplicate },
+        "⧉ duplicate",
+      ),
+      h(
+        "button",
+        { type: "button", className: "me-btn me-btn-danger", onClick: onDelete },
+        "delete actor",
+      ),
     ),
   );
 }

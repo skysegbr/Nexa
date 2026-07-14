@@ -13,6 +13,7 @@ import { pathAnchors, smoothPath } from "./smoothPath.js";
 import { useStageCreate } from "./useStageCreate.js";
 import { useActorBox } from "./useActorBox.js";
 import { StageOverlay } from "./StageOverlay.js";
+import { OnionSkin } from "./OnionSkin.js";
 
 const HANDLES = ["nw", "ne", "sw", "se"];
 
@@ -39,11 +40,15 @@ function actorStyle(actor) {
 export function Stage({
   tl,
   doc,
+  committedDoc,
   selected,
   actorSel,
   drawing,
   tool,
   fill,
+  layerFlags,
+  onion,
+  playheadRef,
   onDrawPoint,
   onEditGuide,
   onCreateActor,
@@ -74,6 +79,12 @@ export function Stage({
     onSelectActor(actor.id);
     actorBox.start(event, actorsById[actor.id], "move", stagePoint);
   };
+
+  // Locked layers keep their selection outline but reject every stage
+  // gesture (move/resize) — Flash's padlock. Hidden layers keep their
+  // track() binding so the controller stays warm; visibility:hidden also
+  // makes them unclickable for free.
+  const selectedFlags = actorSel ? layerFlags[actorSel] || {} : {};
 
   const stagePointerDown = (event) => {
     // Empty-stage click with the selection tool clears the actor selection.
@@ -176,16 +187,21 @@ export function Stage({
         actorBox.end();
       },
     },
+    onion.on && h(OnionSkin, { doc: committedDoc, playheadRef, count: onion.count, layerFlags }),
     doc.actors.map((actor) => {
       const live = actorsById[actor.id];
+      const flags = layerFlags[actor.id] || {};
+      const style = actorStyle(live);
+      if (flags.hidden) style.visibility = "hidden";
       return h(
         "div",
         {
           key: actor.id,
           className:
             `me-actor me-kind-${actor.kind} me-actor-${actor.id}` +
-            (actorSel === actor.id ? " me-actor-selected" : ""),
-          style: actorStyle(live),
+            (actorSel === actor.id ? " me-actor-selected" : "") +
+            (flags.locked ? " me-actor-locked" : ""),
+          style,
           ref: tl.track(actor.id),
           onPointerDown: (e) => actorPointerDown(e, actor),
         },
@@ -196,6 +212,8 @@ export function Stage({
     selectedActor &&
       tool === "select" &&
       !drawing &&
+      !selectedFlags.locked &&
+      !selectedFlags.hidden &&
       HANDLES.map((corner) =>
         h("div", {
           key: corner,

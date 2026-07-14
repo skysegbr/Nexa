@@ -74,6 +74,36 @@
   outline-offset: 2px;
 }
 
+/* Locked layer (timeline padlock): visible but deaf to stage gestures —
+   clicks fall through to the stage, selection happens in the layers panel. */
+.me-actor-locked {
+  pointer-events: none;
+}
+
+/* ── onion skin: ghost frames around the playhead ── */
+
+.me-onion {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* Per-offset transparency lives here so it COMPOSES with the opacity the
+   controller tweens on the ghosts themselves. */
+.me-onion-layer {
+  position: absolute;
+  inset: 0;
+}
+
+.me-ghost {
+  position: absolute;
+  border: 1.5px solid;
+  background: none;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
 /* corner resize handles for the selected actor */
 .me-handle {
   position: absolute;

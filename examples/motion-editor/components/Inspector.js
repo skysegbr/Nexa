@@ -8,6 +8,38 @@ import { h } from "/dist/nexa.js";
 import { easings } from "/dist/nexa-motion.js";
 import { KEYFRAME_FIELDS } from "../data.js";
 
+// The easing curve, drawn from the REAL easing function the runtime will
+// use (progress 0→1 left to right, eased value bottom to top). The vertical
+// range reserves headroom for the overshooting easings — outBack, outElastic
+// and inBack all leave [0, 1] on purpose.
+const CURVE_W = 180;
+const CURVE_H = 84;
+const V_MIN = -0.5;
+const V_MAX = 1.5;
+
+function EaseCurve({ name }) {
+  const fn = easings[name] || easings.linear;
+  const yOf = (value) => ((V_MAX - value) / (V_MAX - V_MIN)) * CURVE_H;
+  const points = [];
+  for (let i = 0; i <= 48; i += 1) {
+    const t = i / 48;
+    points.push(`${(t * CURVE_W).toFixed(1)},${yOf(fn(t)).toFixed(1)}`);
+  }
+  return h(
+    "svg",
+    {
+      className: "me-ease-curve",
+      viewBox: `0 0 ${CURVE_W} ${CURVE_H}`,
+      role: "img",
+      ariaLabel: `Easing curve: ${name || "linear"}`,
+    },
+    // Guide lines at value 0 (start) and 1 (target) — overshoot pokes past.
+    h("line", { className: "me-ease-grid", x1: 0, y1: yOf(0), x2: CURVE_W, y2: yOf(0) }),
+    h("line", { className: "me-ease-grid", x1: 0, y1: yOf(1), x2: CURVE_W, y2: yOf(1) }),
+    h("polyline", { className: "me-ease-line", points: points.join(" ") }),
+  );
+}
+
 export function Inspector({ doc, selected, drawing, onEdit, onDelete, onStartDrawing, onFinishDrawing, onCancelDrawing }) {
   if (selected.length === 0) {
     return h(
@@ -78,6 +110,7 @@ export function Inspector({ doc, selected, drawing, onEdit, onDelete, onStartDra
           .map((name) => h("option", { key: name, value: name }, name)),
       ),
     ),
+    h(EaseCurve, { name: keyframe.ease }),
 
     // ── motion guide (Flash's guide layer) ──
     h("h3", { className: "me-subtitle" }, "Motion guide"),

@@ -1,12 +1,13 @@
 // Editor keyboard shortcuts: Ctrl+Z / Ctrl+Shift+Z / Ctrl+Y for history,
-// Ctrl+C / Ctrl+V for keyframes, Delete/Backspace for the selection, Esc to
-// cancel guide drawing. Events originating in form fields are ignored —
-// inside an input, Ctrl+Z/C/V are the browser's native text editing. Copy is
-// also left alone while real text is selected on the page.
+// Ctrl+C / Ctrl+V for keyframes, Ctrl+D to duplicate the selected actor,
+// Delete/Backspace for the selection, Esc to cancel guide drawing. Events
+// originating in form fields are ignored — inside an input, Ctrl+Z/C/V are
+// the browser's native text editing. Copy is also left alone while real
+// text is selected on the page.
 
 import { useEffect } from "/dist/nexa.js";
 
-export function useEditorShortcuts({ undo, redo, onCopy, onPaste, onDelete, onEscape }) {
+export function useEditorShortcuts({ undo, redo, onCopy, onPaste, onDuplicate, onDelete, onEscape }) {
   useEffect(() => {
     const onKeyDown = (event) => {
       if (event.target.matches?.("input, select, textarea")) return;
@@ -27,6 +28,9 @@ export function useEditorShortcuts({ undo, redo, onCopy, onPaste, onDelete, onEs
       } else if (combo === "v") {
         event.preventDefault();
         onPaste();
+      } else if (combo === "d") {
+        event.preventDefault(); // the browser would bookmark the page
+        onDuplicate();
       } else if (event.key === "Delete" || event.key === "Backspace") {
         event.preventDefault();
         onDelete();

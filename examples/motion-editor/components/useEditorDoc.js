@@ -6,6 +6,7 @@
 
 import { useHistory, useRef, useState } from "/dist/nexa.js";
 import { snap, selKey } from "./editorUtils.js";
+import { addActorDoc, duplicateActorDoc, moveActorLayerDoc, deleteActorDoc } from "./docOps.js";
 
 export function useEditorDoc(initialDoc, playheadRef) {
   const { state: doc, set: setDoc, undo, redo, canUndo, canRedo } = useHistory(initialDoc, { limit: 100 });
@@ -158,47 +159,30 @@ export function useEditorDoc(initialDoc, playheadRef) {
   };
 
   const addActor = (actor) => {
-    // Unique id/label per kind: rect-1, rect-2, ...
-    let n = 1;
-    while (effective.actors.some((a) => a.id === `${actor.kind}-${n}`)) n += 1;
-    const id = `${actor.kind}-${n}`;
-    const label = `${actor.kind[0].toUpperCase()}${actor.kind.slice(1)} ${n}`;
-    setDoc({
-      ...effective,
-      actors: [...effective.actors, { ...actor, id, label }],
-      // A starter keyframe at 0 so the new row has a diamond to work from.
-      tracks: { ...effective.tracks, [id]: [{ at: 0, x: 0, y: 0, opacity: 1 }] },
-    });
-    setSelected([{ track: id, index: 0 }]);
+    const next = addActorDoc(effective, actor);
+    setDoc(next.doc);
+    setSelected([{ track: next.id, index: 0 }]);
   };
 
-  // Z-order, Flash's Arrange: actors paint in document order, so moving an
-  // actor within the array is moving it between layers. `delta` is ±1 for
-  // one step, ±Infinity for front/back.
+  // ONE history step; returns the new id (null for stale ids) so the
+  // caller can move the actor selection onto the copy.
+  const duplicateActor = (id) => {
+    const next = duplicateActorDoc(effective, id);
+    if (!next) return null;
+    setDoc(next.doc);
+    setSelected([]);
+    return next.id;
+  };
+
   const moveActorLayer = (id, delta) => {
-    const index = effective.actors.findIndex((actor) => actor.id === id);
-    if (index === -1) return;
-    const target = Math.max(0, Math.min(effective.actors.length - 1, delta === Infinity ? effective.actors.length - 1 : delta === -Infinity ? 0 : index + delta));
-    if (target === index) return;
-    const actors = [...effective.actors];
-    const [moved] = actors.splice(index, 1);
-    actors.splice(target, 0, moved);
-    setDoc({ ...effective, actors });
+    const next = moveActorLayerDoc(effective, id, delta);
+    if (next) setDoc(next);
   };
 
   const deleteActor = (id) => {
-    // Unknown id (stale selection): committing anyway would push a
-    // content-identical history entry — the "undo does nothing" bug.
-    if (!effective.actors.some((actor) => actor.id === id)) {
-      return;
-    }
-    const tracks = { ...effective.tracks };
-    delete tracks[id];
-    setDoc({
-      ...effective,
-      actors: effective.actors.filter((actor) => actor.id !== id),
-      tracks,
-    });
+    const next = deleteActorDoc(effective, id);
+    if (!next) return;
+    setDoc(next);
     setSelected((current) => current.filter((entry) => entry.track !== id));
   };
 
@@ -223,6 +207,7 @@ export function useEditorDoc(initialDoc, playheadRef) {
   return {
     load,
     addActor,
+    duplicateActor,
     deleteActor,
     updateActor,
     moveActorLayer,

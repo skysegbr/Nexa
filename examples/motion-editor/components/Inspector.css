@@ -87,3 +87,36 @@
   border-radius: 6px;
   background: #0a0f22;
 }
+
+/* easing curve preview (drawn from the runtime's real easing function) */
+.me-ease-curve {
+  width: 100%;
+  height: 84px;
+  margin-top: 0.2rem;
+  border: 1px solid #1d2440;
+  border-radius: 8px;
+  background: #0a0f22;
+}
+
+.me-ease-grid {
+  stroke: #2a3560;
+  stroke-width: 1;
+  stroke-dasharray: 3 4;
+}
+
+.me-ease-line {
+  fill: none;
+  stroke: #35e0c2;
+  stroke-width: 2;
+}
+
+/* duplicate + delete, side by side under the actor inspector */
+.me-actor-actions {
+  display: flex;
+  gap: 0.4rem;
+  margin-top: 0.4rem;
+}
+
+.me-actor-actions .me-btn-danger {
+  margin-top: 0;
+}

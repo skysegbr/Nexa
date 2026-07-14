@@ -9,8 +9,7 @@
 // controller and the stage rebinds through fresh track() refs: the preview
 // is always the real runtime, never an approximation.
 
-import { h, render, useEffect, useRef, useState } from "/dist/nexa.js";
-import { createTimeline } from "/dist/nexa-motion.js";
+import { h, render, useRef, useState } from "/dist/nexa.js";
 import { FILLS, INITIAL_DOC } from "./data.js";
 import { Stage } from "./components/Stage.js";
 import { Toolbox } from "./components/Toolbox.js";
@@ -19,17 +18,10 @@ import { Inspector } from "./components/Inspector.js";
 import { CodePane } from "./components/CodePane.js";
 import { smoothPath } from "./components/smoothPath.js";
 import { ActorInspector } from "./components/ActorInspector.js";
-import { ProjectBar } from "./components/ProjectBar.js";
+import { EditorHeader } from "./components/EditorHeader.js";
 import { useEditorDoc } from "./components/useEditorDoc.js";
 import { useEditorShortcuts } from "./components/useEditorShortcuts.js";
-
-function buildController(doc) {
-  return createTimeline({
-    duration: doc.duration,
-    tracks: doc.tracks,
-    autoplay: false,
-  });
-}
+import { useStageController } from "./components/useStageController.js";
 
 function App() {
   const playheadRef = useRef(0);
@@ -38,6 +30,16 @@ function App() {
   const [tool, setTool] = useState("select");
   const [fill, setFill] = useState(FILLS[0]);
   const [actorSel, setActorSel] = useState(null); // actor id | null
+
+  // Layer chrome, Flash's eye and padlock: editor-side state keyed by actor
+  // id — NOT part of the document, so toggling never pollutes the undo
+  // history, the export, or saved projects.
+  const [layerFlags, setLayerFlags] = useState({}); // id → { hidden, locked }
+  const toggleLayerFlag = (id, key) =>
+    setLayerFlags((flags) => ({ ...flags, [id]: { ...flags[id], [key]: !flags[id]?.[key] } }));
+
+  // Onion skin toggle + how many 100ms ghosts each side of the playhead.
+  const [onion, setOnion] = useState({ on: false, count: 2 });
 
   // Keyframe selection and actor selection are mutually exclusive — the
   // sidebar shows one inspector at a time.
@@ -56,31 +58,23 @@ function App() {
     setTool("select"); // back to selection after placing, like Flash
   };
 
+  const duplicateSelectedActor = () => {
+    if (!selectedActor) return;
+    const copyId = editor.duplicateActor(selectedActor.id);
+    if (copyId) setActorSel(copyId);
+  };
+
+  const deleteActor = (id) => {
+    editor.deleteActor(id);
+    // Drop the layer flags too: a future actor can reuse the freed id and
+    // must not inherit a stale eye/padlock.
+    setLayerFlags(({ [id]: _dropped, ...rest }) => rest);
+    setActorSel((current) => (current === id ? null : current));
+  };
+
   const selectedActor = actorSel && editor.doc.actors.find((actor) => actor.id === actorSel);
 
-  // Controller lifecycle: rebuild on every COMMITTED document change,
-  // parked at the same playhead so scrub position survives edits and undo.
-  // Drag drafts deliberately don't rebuild — recompiling every track (and
-  // re-measuring every guide path) per pointermove janks the exact
-  // interaction the editor is built around; the preview catches up on
-  // release, when the gesture commits.
-  const [tl, setTl] = useState(() => buildController(INITIAL_DOC));
-  const lastBuiltRef = useRef(INITIAL_DOC);
-  useEffect(() => {
-    if (lastBuiltRef.current === editor.committedDoc) return;
-    lastBuiltRef.current = editor.committedDoc;
-    tl.destroy();
-    const fresh = buildController(editor.committedDoc);
-    fresh.seek(Math.min(playheadRef.current, fresh.duration));
-    setTl(fresh);
-  });
-
-  // The rebuild effect above only destroys on REPLACEMENT — this one owns
-  // the final controller when the editor unmounts (rAF ticker + guide
-  // paths in the shared hidden svg must not outlive the app).
-  const tlRef = useRef(tl);
-  tlRef.current = tl;
-  useEffect(() => () => tlRef.current.destroy(), []);
+  const tl = useStageController(INITIAL_DOC, editor.committedDoc, playheadRef);
 
   // ── motion-guide drawing on the stage ──
 
@@ -106,12 +100,12 @@ function App() {
     redo: editor.redo,
     onCopy: editor.copySelected,
     onPaste: editor.pasteAtPlayhead,
+    onDuplicate: duplicateSelectedActor,
     onDelete: () => {
       // Branch on the VALIDATED selection — actorSel can dangle after the
       // actor was deleted elsewhere (row ✕, project load).
       if (selectedActor) {
-        editor.deleteActor(selectedActor.id);
-        setActorSel(null);
+        deleteActor(selectedActor.id);
       } else {
         editor.deleteSelected();
       }
@@ -125,35 +119,20 @@ function App() {
   return h(
     "div",
     { className: "me-app" },
-    h(
-      "header",
-      { className: "me-header" },
-      h("h1", { className: "me-brand" }, "⬡ Nexa ", h("em", null, "Motion Editor")),
-      h(
-        "div",
-        { className: "me-history" },
-        h("button", { type: "button", className: "me-btn", disabled: !editor.canUndo, onClick: editor.undo }, "↩ undo"),
-        h("button", { type: "button", className: "me-btn", disabled: !editor.canRedo, onClick: editor.redo }, "↪ redo"),
-      ),
-      h(ProjectBar, {
-        doc: editor.doc,
-        onLoad: (loaded) => {
-          editor.load(loaded);
-          setActorSel(null);
-        },
-        onNew: () => {
-          editor.load(INITIAL_DOC);
-          setActorSel(null);
-        },
-      }),
-      h(
-        "p",
-        { className: "me-hint" },
-        drawing
-          ? "DRAWING GUIDE: click points on the stage · finish in the inspector · Esc cancels"
-          : "drag diamonds (shift = multi) · + adds at the playhead · Ctrl+C/V copies to the playhead · Del deletes · Ctrl+Z undo",
-      ),
-    ),
+    h(EditorHeader, {
+      editor,
+      drawing,
+      onLoad: (loaded) => {
+        editor.load(loaded);
+        setActorSel(null);
+        setLayerFlags({});
+      },
+      onNew: () => {
+        editor.load(INITIAL_DOC);
+        setActorSel(null);
+        setLayerFlags({});
+      },
+    }),
     h(
       "main",
       { className: "me-main" },
@@ -167,11 +146,15 @@ function App() {
           h(Stage, {
             tl,
             doc: editor.doc,
+            committedDoc: editor.committedDoc,
             selected: editor.selected,
             actorSel,
             drawing,
             tool,
             fill,
+            layerFlags,
+            onion,
+            playheadRef,
             onDrawPoint: addDrawingPoint,
             onEditGuide: (track, index, path) => editor.updateKeyframe(track, index, { path }),
             onCreateActor: createActor,
@@ -183,6 +166,8 @@ function App() {
           tl,
           doc: editor.doc,
           selected: editor.selected,
+          actorSel,
+          layerFlags,
           playheadRef,
           onSelect: selectKeyframe,
           onDragStart: (entry, additive) => {
@@ -192,11 +177,17 @@ function App() {
           onDragPreview: editor.dragPreview,
           onDragCommit: editor.dragCommit,
           onAddKeyframe: editor.addKeyframe,
-          onDeleteActor: (id) => {
-            editor.deleteActor(id);
-            if (actorSel === id) setActorSel(null);
-          },
+          onDeleteActor: deleteActor,
           onSetDuration: editor.setDuration,
+          onToggleHidden: (id) => toggleLayerFlag(id, "hidden"),
+          onToggleLocked: (id) => toggleLayerFlag(id, "locked"),
+          onMoveLayer: editor.moveActorLayer,
+          onSelectActor: selectActor,
+          onRenameActor: (id, label) => editor.updateActor(id, { label }),
+          onion,
+          onOnionToggle: () => setOnion((current) => ({ ...current, on: !current.on })),
+          onOnionCount: (count) =>
+            Number.isFinite(count) && setOnion((current) => ({ ...current, count: Math.max(1, Math.min(6, Math.round(count))) })),
         }),
       ),
       h(
@@ -207,10 +198,8 @@ function App() {
               actor: selectedActor,
               onEdit: (patch) => editor.updateActor(selectedActor.id, patch),
               onArrange: (delta) => editor.moveActorLayer(selectedActor.id, delta),
-              onDelete: () => {
-                editor.deleteActor(selectedActor.id);
-                setActorSel(null);
-              },
+              onDuplicate: duplicateSelectedActor,
+              onDelete: () => deleteActor(selectedActor.id),
             })
           : h(Inspector, {
           doc: editor.doc,

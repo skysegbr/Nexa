@@ -1,15 +1,21 @@
 // The timeline panel: transport buttons, a scrubbable ruler with the
 // playhead, and one row per track where keyframes are draggable diamonds.
+// The label column doubles as Flash's layers panel: eye (hide), padlock
+// (lock), click to select the actor, double-click to rename, and arrows to
+// move the layer — rows top→bottom paint back→front on the stage.
 // Positions are percentages of the document duration, so the panel scales
 // with its container.
 
 import { h, useEffect, useRef, useState } from "/dist/nexa.js";
 import { snap } from "./editorUtils.js";
+import { LayerCell } from "./LayerCell.js";
 
 export function TimelinePanel({
   tl,
   doc,
   selected,
+  actorSel,
+  layerFlags,
   playheadRef,
   onSelect,
   onDragStart,
@@ -18,6 +24,14 @@ export function TimelinePanel({
   onAddKeyframe,
   onDeleteActor,
   onSetDuration,
+  onToggleHidden,
+  onToggleLocked,
+  onMoveLayer,
+  onSelectActor,
+  onRenameActor,
+  onion,
+  onOnionToggle,
+  onOnionCount,
 }) {
   const [playhead, setPlayhead] = useState(0);
   const [playing, setPlaying] = useState(false);
@@ -103,6 +117,30 @@ export function TimelinePanel({
       ),
       h("span", { className: "me-clock" }, `${(playhead / 1000).toFixed(2)}s`),
       h(
+        "button",
+        {
+          type: "button",
+          className: `me-btn${onion.on ? " me-btn-active" : ""}`,
+          title: "Onion skin: ghost the frames around the playhead",
+          ariaPressed: onion.on ? "true" : "false",
+          onClick: onOnionToggle,
+        },
+        "◉ onion",
+      ),
+      onion.on &&
+        h(
+          "label",
+          { className: "me-onion-range", title: "Ghost frames each side of the playhead (100ms apart)" },
+          "±",
+          h("input", {
+            type: "number",
+            min: 1,
+            max: 6,
+            value: onion.count,
+            onChange: (e) => onOnionCount(Number(e.target.value)),
+          }),
+        ),
+      h(
         "label",
         { className: "me-duration" },
         "duration (ms) ",
@@ -129,39 +167,24 @@ export function TimelinePanel({
       ),
     ),
 
-    doc.actors.map((actor) =>
-      h(
+    doc.actors.map((actor, layerIndex) => {
+      return h(
         "div",
         { key: actor.id, className: "me-row" },
-        h(
-          "div",
-          { className: "me-row-label" },
-          h("span", { className: "me-row-name" }, actor.label),
-          h(
-            "span",
-            { className: "me-row-actions" },
-            h(
-              "button",
-              {
-                type: "button",
-                className: "me-btn me-btn-add",
-                title: "Add keyframe at the playhead",
-                onClick: () => onAddKeyframe(actor.id),
-              },
-              "+",
-            ),
-            h(
-              "button",
-              {
-                type: "button",
-                className: "me-btn me-btn-add me-btn-remove",
-                title: `Delete ${actor.label} (actor + track)`,
-                onClick: () => onDeleteActor(actor.id),
-              },
-              "✕",
-            ),
-          ),
-        ),
+        h(LayerCell, {
+          actor,
+          layerIndex,
+          layerCount: doc.actors.length,
+          flags: layerFlags[actor.id] || {},
+          active: actorSel === actor.id,
+          onToggleHidden,
+          onToggleLocked,
+          onMoveLayer,
+          onSelectActor,
+          onRenameActor,
+          onAddKeyframe,
+          onDeleteActor,
+        }),
         h(
           "div",
           { className: "me-row-lane" },
@@ -184,7 +207,7 @@ export function TimelinePanel({
             }),
           ),
         ),
-      ),
-    ),
+      );
+    }),
   );
 }
