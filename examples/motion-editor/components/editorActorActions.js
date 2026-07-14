@@ -17,6 +17,7 @@ import {
   moveLayerDoc,
   outdentLayerDoc,
 } from "./layerOps.js";
+import { addMaskLayerDoc } from "./layerSpecialOps.js";
 
 export function createActorActions({ effective, setDoc, setSelected }) {
   const updateActor = (id, patch) => {
@@ -57,6 +58,12 @@ export function createActorActions({ effective, setDoc, setSelected }) {
 
   const addLayer = (name, type, parentId) => {
     const next = addLayerDoc(effective, name, type, parentId);
+    setDoc(next.doc);
+    return next.id;
+  };
+
+  const addMaskLayer = (targetId) => {
+    const next = addMaskLayerDoc(effective, targetId);
     setDoc(next.doc);
     return next.id;
   };
@@ -105,6 +112,7 @@ export function createActorActions({ effective, setDoc, setSelected }) {
     updateActor,
     arrangeActor,
     addLayer,
+    addMaskLayer,
     updateLayer,
     moveLayer,
     indentLayer,

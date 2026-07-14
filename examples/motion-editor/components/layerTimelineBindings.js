@@ -2,11 +2,12 @@
 // adapter but does not own hierarchy or selection transactions.
 
 import { layerDescendantIds } from "./layerOps.js";
+import { isLayerContainer } from "./layerTypes.js";
 
 export function layerTimelineBindings({ editor, layers, setActorSelection }) {
   const add = (type) => {
     const selected = editor.doc.layers.find((layer) => layer.id === layers.selectedId);
-    const parentId = selected?.type === "folder" ? selected.id : undefined;
+    const parentId = isLayerContainer(selected) ? selected.id : undefined;
     const id = editor.addLayer(undefined, type, parentId);
     if (parentId && layers.flags[parentId]?.collapsed) layers.toggle(parentId, "collapsed");
     layers.select(id);
@@ -45,5 +46,12 @@ export function layerTimelineBindings({ editor, layers, setActorSelection }) {
     onRenameLayer: (id, name) => editor.updateLayer(id, { name }),
     onAddLayer: () => add("normal"),
     onAddFolder: () => add("folder"),
+    onAddGuide: () => add("guide"),
+    onAddMask: () => {
+      const id = editor.addMaskLayer(layers.selectedId);
+      layers.select(id);
+      setActorSelection(null);
+      editor.clearSelection();
+    },
   };
 }

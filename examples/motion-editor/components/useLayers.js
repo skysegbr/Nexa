@@ -3,16 +3,17 @@
 
 import { useState } from "/dist/nexa.js";
 import { layerDescendantIds, layerForActor } from "./layerOps.js";
+import { isPaintLayer } from "./layerTypes.js";
 
 export function useLayers(doc) {
   const [selectedId, setSelectedId] = useState(doc.layers[0]?.id || null);
   const [flags, setFlags] = useState({});
   const selected = doc.layers.find((layer) => layer.id === selectedId) || doc.layers[0] || null;
   const descendants = selected ? layerDescendantIds(doc.layers, selected.id) : new Set();
-  const active = selected?.type === "normal"
+  const active = isPaintLayer(selected)
     ? selected
-    : doc.layers.find((layer) => layer.type === "normal" && descendants.has(layer.id))
-      || doc.layers.find((layer) => layer.type === "normal");
+    : doc.layers.find((layer) => isPaintLayer(layer) && descendants.has(layer.id))
+      || doc.layers.find(isPaintLayer);
 
   const selectActor = (actorId) => {
     const layer = layerForActor(doc, actorId);

@@ -30,7 +30,7 @@ An actor selection and a keyframe selection are mutually exclusive — the inspe
 
 Frames at the document's fps (default 24, editable in the transport — the readout shows `f41 · 24 fps · 1.7s`). Dots are keyframes; shaded spans with arrows are tweens (gold when the span ends on a motion guide). Everything snaps to the frame grid.
 
-- **Layers column**: `+ layer` creates an empty layer · `+ folder` creates a Flash-style layer folder · ▾/▸ expands or collapses it · →/← moves a row into/out of the folder · 👁 hide · 🔒 lock · colored square = outline mode · double-click renames · ↑↓ changes sibling paint order (top paints in front) · `+` keys every actor in a layer or folder · ✕ removes the row and, for folders, its complete subtree. Folder visibility, locking and outline mode propagate to descendants. A normal layer may contain several independently animated actors.
+- **Layers column**: `+ layer` creates an empty layer · `+ folder` creates a Flash-style folder · `+ mask` places an animated mask above the selected row and nests that row beneath it · `+ guide` creates editor-only reference artwork · ▾/▸ expands or collapses a folder/mask · →/← moves a row into/out of the container · 👁 hide · 🔒 lock · colored square = outline mode · double-click renames · ↑↓ changes sibling paint order (top paints in front) · `+` keys every actor in a layer or container · ✕ removes the row and its subtree. Container visibility, locking and outline mode propagate to descendants.
 - **Transport**: play/stop/rewind · ◉ onion skin (ghosts per frame; drag the ❲ ❳ brackets on the ruler to widen) · ∞ loop (exported) · spd (preview only) · zoom · 🏷 label at the playhead (exported for `gotoAndPlay`; double-click a marker removes it).
 
 ## Keyboard
@@ -40,6 +40,7 @@ Frames at the document's fps (default 24, editable in the transport — the read
 ## More
 
 - **Motion guides**: select a keyframe → *draw guide on stage* → click points → finish. Drag the anchors to reshape; *orient* rotates along the path.
+- **Mask and guide layers**: draw any supported artwork on a `◩ Mask` row to clip its nested layers; mask geometry follows its real animation track. `⌖ Guide` artwork remains visible as an outline while authoring but its tracks are omitted from exported `useTimeline()` code.
 - **Library**: with an actor selected, *☆ convert to symbol* creates a real linked symbol. Every placed instance shares its artwork, so editing the fill/text through one instance updates all of them; removing a symbol safely detaches its instances as independent artwork.
 - **Projects** save/load in localStorage from the header; *stage* picks the stage color. The Export pane always holds the current `useTimeline()` code — copy and paste it into any Nexa app.
 
@@ -47,4 +48,4 @@ Project files carry a versioned editor schema. Legacy JSON is normalized on impo
 
 ## Road to the Flash authoring model
 
-The runtime stays browser-native and small; Flash-like authoring belongs here in the editor. Schema v4 now has independent multi-actor layers and nested layer folders. The next structural milestones are masks/guides, scene navigation, a symbol-editing stage for nested MovieClips, and explicit frame/keyframe/blank-keyframe operations. That order avoids baking editor-only complexity into `nexa-motion.js`.
+The runtime stays browser-native and small; Flash-like authoring belongs here in the editor. Schema v5 now has independent multi-actor layers, nested folders, animated masks and editor-only guide layers. The next structural milestones are scene navigation, a symbol-editing stage for nested MovieClips, and explicit frame/keyframe/blank-keyframe operations. That order avoids baking editor-only complexity into `nexa-motion.js`.

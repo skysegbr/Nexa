@@ -15,11 +15,10 @@ import { TransformOverlay } from "./TransformOverlay.js";
 import { guidesFor } from "./stageGuides.js";
 import { SelectionBox } from "./SelectionBox.js";
 import { useMeasuredBox } from "./useMeasuredBox.js";
-import { baseOf, stageActorStyle } from "./actorGeometry.js";
+import { baseOf } from "./actorGeometry.js";
 import { resolveActor } from "./symbolOps.js";
-import { ActorArtwork } from "./ActorArtwork.js";
-import { OUTLINE_COLORS } from "../data.js";
 import { layerForActor, orderedActors, resolvedLayerFlags } from "./layerOps.js";
+import { StageActors } from "./StageActors.js";
 export function Stage({
   tl,
   doc,
@@ -192,27 +191,14 @@ export function Stage({
       },
     },
     onion.on && h(OnionSkin, { doc: committedDoc, playheadRef, count: onion.count, layerFlags }),
-    resolvedActors.map((actor) => {
-      const layer = layerForActor(doc, actor.id);
-      const layerIndex = Math.max(0, doc.layers.findIndex((entry) => entry.id === layer?.id));
-      const flags = layer ? resolvedLayerFlags(doc, layerFlags, layer.id) : {};
-      return h(
-        "div",
-        {
-          key: actor.id,
-          className:
-            `me-actor me-kind-${actor.kind} me-actor-${actor.id}` +
-            (actorSel === actor.id ? " me-actor-selected" : "") +
-            (flags.locked ? " me-actor-locked" : ""),
-          style: stageActorStyle(actorsById[actor.id], flags, layerIndex),
-          ref: tl.track(actor.id),
-          onPointerDown: (e) => actorPointerDown(e, actor),
-        },
-        h(ActorArtwork, {
-          actor,
-          outlineColor: flags.outline ? OUTLINE_COLORS[layerIndex % OUTLINE_COLORS.length] : null,
-        }),
-      );
+    h(StageActors, {
+      doc,
+      actorsById,
+      activeLayerId,
+      actorSel,
+      layerFlags,
+      tl,
+      onActorPointerDown: actorPointerDown,
     }),
     // Selection rect + name tag + resize handles on the visual box.
     selectedActor &&

@@ -4,7 +4,7 @@
 
 import { normalizeLayers } from "./layerOps.js";
 
-export const MOTION_DOCUMENT_VERSION = 4;
+export const MOTION_DOCUMENT_VERSION = 5;
 
 const isRecord = (value) => Boolean(value) && typeof value === "object" && !Array.isArray(value);
 

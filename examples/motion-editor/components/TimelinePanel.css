@@ -249,6 +249,16 @@
   background-color: rgba(255, 209, 102, 0.04);
 }
 
+.me-row-mask {
+  color: #c084fc;
+  background-color: rgba(192, 132, 252, 0.06);
+}
+
+.me-row-guide {
+  color: #7dd3fc;
+  background-color: rgba(125, 211, 252, 0.05);
+}
+
 .me-folder-toggle {
   width: 11px;
   flex-shrink: 0;
@@ -334,9 +344,23 @@
   background: linear-gradient(90deg, transparent, #121a36 16%);
 }
 
-.me-row-label:hover .me-row-actions,
-.me-row-label:focus-within .me-row-actions {
+.me-row-actions-open {
   display: inline-flex;
+}
+
+.me-layer-more {
+  width: 20px;
+  flex-shrink: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #7081c1;
+  cursor: pointer;
+}
+
+.me-layer-more:hover,
+.me-layer-more[aria-expanded="true"] {
+  color: #35e0c2;
 }
 
 .me-btn-remove {
@@ -357,6 +381,16 @@
   border-radius: 6px;
   border: 1px solid #1d2440;
   background-color: #0a0f22;
+}
+
+.me-lane-mask {
+  border-color: rgba(192, 132, 252, 0.45);
+  background-color: rgba(192, 132, 252, 0.04);
+}
+
+.me-lane-guide {
+  border-color: rgba(125, 211, 252, 0.38);
+  background-color: rgba(125, 211, 252, 0.035);
 }
 
 /* ── tween spans between keyframes, with Flash's arrow ── */

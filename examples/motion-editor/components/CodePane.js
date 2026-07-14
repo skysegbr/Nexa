@@ -5,6 +5,7 @@
 
 import { h, useMemo, useState } from "/dist/nexa.js";
 import { parseTimelineCode } from "./codeParse.js";
+import { publishedTrackEntries } from "./layerTypes.js";
 
 // new RegExp(string) instead of a literal: the repo's lightweight syntax
 // validator balances brackets and would trip on the character class.
@@ -27,7 +28,7 @@ export function generateCode(doc) {
     "  tracks: {",
   ];
 
-  for (const [name, keyframes] of Object.entries(doc.tracks)) {
+  for (const [name, keyframes] of publishedTrackEntries(doc)) {
     // Editor-generated track names (rect-1, text-2) are not valid JS
     // identifiers — quote them or the "ready-to-paste" code is a
     // SyntaxError.

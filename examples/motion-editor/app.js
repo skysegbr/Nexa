@@ -198,7 +198,7 @@ function App() {
               fps: editor.doc.fps,
               symbolName: library.selectedSymbol?.name,
               onEdit: library.edit,
-              layers: editor.doc.layers.filter((layer) => layer.type === "normal"),
+              layers: editor.doc.layers.filter((layer) => layer.type !== "folder"),
               layerId: editor.doc.layers.find((layer) => layer.actorIds.includes(selectedActor.id))?.id,
               onMoveToLayer: (layerId) => {
                 editor.moveActorToLayer(selectedActor.id, layerId);

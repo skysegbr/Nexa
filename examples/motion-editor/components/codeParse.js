@@ -4,6 +4,8 @@
 // Function constructor — the editor runs the user's own local code, the
 // same trust level as pasting it into their app.
 
+import { isPublishedActor } from "./layerTypes.js";
+
 export function parseTimelineCode(source) {
   const start = source.indexOf("useTimeline(");
   if (start === -1) {
@@ -103,7 +105,8 @@ export function applySpecToDoc(doc, spec) {
   }
   const tracks = {};
   for (const actor of actors) {
-    tracks[actor.id] = (spec.tracks[actor.id] || []).map((keyframe) => ({ ...keyframe }));
+    const source = isPublishedActor(doc, actor.id) ? spec.tracks[actor.id] || [] : doc.tracks[actor.id] || [];
+    tracks[actor.id] = source.map((keyframe) => ({ ...keyframe }));
   }
   return {
     ...doc,

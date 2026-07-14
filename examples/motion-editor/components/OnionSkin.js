@@ -105,7 +105,7 @@ export function OnionSkin({ doc, playheadRef, count, layerFlags }) {
         orderedActors(doc)
           .filter((actor) => {
             const layer = layerForActor(doc, actor.id);
-            return !layer || !resolvedLayerFlags(doc, layerFlags, layer.id).hidden;
+            return !layer || (layer.type !== "mask" && !resolvedLayerFlags(doc, layerFlags, layer.id).hidden);
           })
           .map((actor) => resolveActor(doc, actor))
           .map((actor) =>

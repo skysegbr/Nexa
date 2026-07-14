@@ -68,6 +68,16 @@ export function layerSiblingPosition(layers, id) {
   return { index: siblings.indexOf(layer), count: siblings.length };
 }
 
+export function layerHasAncestorType(layers, id, type) {
+  const byId = new Map(layers.map((layer) => [layer.id, layer]));
+  let current = byId.get(id);
+  while (current?.parentId) {
+    current = byId.get(current.parentId);
+    if (current?.type === type) return true;
+  }
+  return false;
+}
+
 export function resolvedLayerFlags(doc, flags, id) {
   const byId = new Map(doc.layers.map((layer) => [layer.id, layer]));
   const resolved = { ...(flags[id] || {}) };

@@ -19,6 +19,8 @@ export function LayerLabels({ doc, layers, activeLayerId, layerFlags, actions })
       { className: "me-labels-spacer" },
       h("button", { type: "button", className: "me-new-layer", title: "New layer", onClick: actions.onAddLayer }, "+ layer"),
       h("button", { type: "button", className: "me-new-layer", title: "New layer folder", onClick: actions.onAddFolder }, "+ folder"),
+      h("button", { type: "button", className: "me-new-layer", title: "Mask selected layer", onClick: actions.onAddMask }, "+ mask"),
+      h("button", { type: "button", className: "me-new-layer", title: "New authoring guide", onClick: actions.onAddGuide }, "+ guide"),
     ),
     layers.map((layer) => {
       const position = layerSiblingPosition(doc.layers, layer.id);

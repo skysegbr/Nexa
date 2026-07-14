@@ -4,6 +4,7 @@
 // lives here.
 
 import { addLayerDoc, arrangeActorInLayerDoc, layerForActor } from "./layerOps.js";
+import { isPaintLayer } from "./layerTypes.js";
 
 // Every keyframe carries a session-unique `_id`: selection, drags and the
 // clipboard target keyframes BY ID, so undo/redo reordering an array never
@@ -40,7 +41,7 @@ export function addActorDoc(doc, actor, targetLayerId) {
     actors: [...doc.actors, { ...props, id, label }],
     tracks: { ...doc.tracks, [id]: [{ at: 0, x: 0, y: 0, opacity: 1, _id: freshKeyframeId() }] },
   };
-  const hasTarget = (doc.layers || []).some((layer) => layer.id === targetLayerId && layer.type === "normal");
+  const hasTarget = (doc.layers || []).some((layer) => layer.id === targetLayerId && isPaintLayer(layer));
   const created = hasTarget ? null : addLayerDoc(nextDoc, label);
   const withLayer = created ? created.doc : nextDoc;
   const layerId = hasTarget ? targetLayerId : created.id;

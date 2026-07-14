@@ -27,6 +27,10 @@ import {
   visibleLayers,
 } from "../examples/motion-editor/components/layerOps.js";
 import { addActorDoc } from "../examples/motion-editor/components/docOps.js";
+import { generateCode } from "../examples/motion-editor/components/CodePane.js";
+import { applySpecToDoc } from "../examples/motion-editor/components/codeParse.js";
+import { addMaskLayerDoc } from "../examples/motion-editor/components/layerSpecialOps.js";
+import { maskForLayer } from "../examples/motion-editor/components/layerTypes.js";
 
 const legacyDoc = () => ({
   duration: 1000,
@@ -121,6 +125,55 @@ test("motion editor: actors cannot be placed directly in an authoring folder", a
   const next = addActorDoc(doc, { kind: "ellipse", x: 0, y: 0, w: 20, h: 20, fill: "#fff" }, folder.id);
   assertEqual(next.doc.layers.find((layer) => layer.id === folder.id).actorIds.length, 0);
   assertEqual(next.doc.layers.find((layer) => layer.actorIds.includes(next.id)).type, "normal");
+});
+
+test("motion editor: adding a mask wraps the selected layer", async () => {
+  const doc = normalizeMotionDocument(legacyDoc());
+  const targetId = doc.layers[0].id;
+  const next = addMaskLayerDoc(doc, targetId);
+  assertEqual(next.doc.layers[0].type, "mask");
+  assertEqual(next.doc.layers[1].parentId, next.id);
+  assertEqual(maskForLayer(next.doc, targetId).id, next.id);
+  const actor = addActorDoc(next.doc, { kind: "ellipse", x: 0, y: 0, w: 20, h: 20, fill: "#fff" }, next.id);
+  assertEqual(actor.doc.layers[0].actorIds.includes(actor.id), true, "mask layers should own editable artwork");
+  const second = addMaskLayerDoc(next.doc, targetId);
+  assertEqual(second.doc.layers.find((layer) => layer.id === second.id).parentId, undefined, "nested masks are avoided");
+  assertEqual(second.doc.layers.find((layer) => layer.id === targetId).parentId, next.id);
+});
+
+test("motion editor: schema v5 preserves mask and guide layer types", async () => {
+  const doc = normalizeMotionDocument({
+    duration: 1000,
+    actors: [{ id: "mask-art" }, { id: "content" }, { id: "guide-art" }],
+    tracks: { "mask-art": [{ at: 0 }], content: [{ at: 0 }], "guide-art": [{ at: 0 }] },
+    layers: [
+      { id: "mask", type: "mask", name: "Mask", actorIds: ["mask-art"] },
+      { id: "content-layer", type: "normal", name: "Content", parentId: "mask", actorIds: ["content"] },
+      { id: "guide", type: "guide", name: "Guide", actorIds: ["guide-art"] },
+    ],
+  });
+  assertEqual(doc.layers.map((layer) => layer.type).join(","), "mask,normal,guide");
+  assertEqual(doc.layers[1].parentId, "mask");
+});
+
+test("motion editor: mask and guide tracks stay editor-only on code export", async () => {
+  const doc = normalizeMotionDocument({
+    duration: 1000,
+    actors: [{ id: "maskArt" }, { id: "content" }, { id: "guideArt" }],
+    tracks: { maskArt: [{ at: 0 }], content: [{ at: 0 }], guideArt: [{ at: 0 }] },
+    layers: [
+      { id: "mask", type: "mask", actorIds: ["maskArt"] },
+      { id: "content-layer", type: "normal", parentId: "mask", actorIds: ["content"] },
+      { id: "guide", type: "guide", actorIds: ["guideArt"] },
+    ],
+  });
+  const code = generateCode(doc);
+  assertEqual(code.includes("maskArt:"), false);
+  assertEqual(code.includes("guideArt:"), false);
+  assertEqual(code.includes("content:"), true);
+  const applied = applySpecToDoc(doc, { duration: 1200, tracks: { content: [{ at: 100 }] } });
+  assertEqual(applied.tracks.maskArt[0].at, 0);
+  assertEqual(applied.tracks.guideArt[0].at, 0);
 });
 
 test("motion editor: moving a folder carries its complete subtree", async () => {

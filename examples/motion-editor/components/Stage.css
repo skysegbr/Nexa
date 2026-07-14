@@ -16,6 +16,46 @@
   cursor: crosshair;
 }
 
+.me-stage-art,
+.me-stage-layer {
+  position: absolute;
+  inset: 0;
+}
+
+.me-mask-defs {
+  position: absolute;
+  width: 0;
+  height: 0;
+}
+
+.me-mask-editor {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  z-index: 3;
+}
+
+.me-mask-use {
+  --me-mask-fill: rgba(192, 132, 252, 0.2);
+  --me-mask-stroke: #ffd166;
+  opacity: 0.72;
+  stroke-width: 1.5;
+  stroke-dasharray: 6 4;
+  cursor: move;
+}
+
+.me-stage-guide {
+  opacity: 0.72;
+}
+
+.me-stage-guide .me-actor {
+  outline: 1px dashed #ffd166;
+  outline-offset: 2px;
+  box-shadow: none;
+}
+
 .me-guides {
   position: absolute;
   inset: 0;

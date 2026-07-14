@@ -37,6 +37,8 @@ export function TimelinePanel({
   onRenameLayer,
   onAddLayer,
   onAddFolder,
+  onAddMask,
+  onAddGuide,
   onAddLabel,
   onRemoveLabel,
   onToggleLoop,
@@ -59,7 +61,7 @@ export function TimelinePanel({
   const layerActions = {
     onToggleHidden, onToggleLocked, onToggleOutline, onToggleCollapsed,
     onMoveLayer, onIndentLayer, onOutdentLayer, onSelectLayer,
-    onRenameLayer, onAddKeyframe, onDeleteLayer, onAddLayer, onAddFolder,
+    onRenameLayer, onAddKeyframe, onDeleteLayer, onAddLayer, onAddFolder, onAddMask, onAddGuide,
   };
 
   // UI clock: follow the real playhead while the movie runs (or after any
@@ -215,6 +217,7 @@ export function TimelinePanel({
           shownLayers.map((layer) =>
             h(TrackLane, {
               key: layer.id,
+              kind: layer.type,
               tracks: layer.actorIds
                 .map((actorId) => actorsById[actorId])
                 .filter(Boolean)

@@ -7,6 +7,7 @@ import { h, useRef } from "/dist/nexa.js";
 import { capturePointer } from "./editorUtils.js";
 
 export function TrackLane({
+  kind,
   tracks,
   selected,
   active,
@@ -56,7 +57,7 @@ export function TrackLane({
 
   return h(
     "div",
-    { className: `me-row-lane${active ? " me-lane-active" : ""}`, style: frameGrid },
+    { className: `me-row-lane me-lane-${kind}${active ? " me-lane-active" : ""}`, style: frameGrid },
     h("div", { className: "me-playhead me-playhead-lane", style: { left: playheadPct } }),
     spans.map((span) =>
       h("div", {

@@ -29,6 +29,11 @@ export function LayerCell({
   onDeleteLayer,
 }) {
   const [renaming, setRenaming] = useState(null); // draft label | null
+  const [actionsOpen, setActionsOpen] = useState(false);
+  const runAction = (action) => {
+    setActionsOpen(false);
+    action();
+  };
 
   const commitRename = () => {
     if (renaming === null) return;
@@ -40,7 +45,7 @@ export function LayerCell({
   return h(
     "div",
     {
-      className: `me-row-label${active ? " me-row-active" : ""}${layer.type === "folder" ? " me-row-folder" : ""}`,
+      className: `me-row-label me-row-${layer.type}${active ? " me-row-active" : ""}`,
       style: { paddingLeft: `${4 + depth * 14}px` },
     },
     h(
@@ -65,7 +70,7 @@ export function LayerCell({
       },
       flags.locked ? "🔒" : "🔓",
     ),
-    layer.type === "folder"
+    layer.type === "folder" || layer.type === "mask"
       ? h(
           "button",
           {
@@ -105,12 +110,25 @@ export function LayerCell({
             onClick: () => onSelectLayer(layer.id),
             onDblClick: () => setRenaming(layer.name),
           },
-          layer.type === "folder" ? `📁 ${layer.name}` : layer.name,
+          layer.type === "folder" ? `📁 ${layer.name}`
+            : layer.type === "mask" ? `◩ ${layer.name}`
+              : layer.type === "guide" ? `⌖ ${layer.name}` : layer.name,
         ),
     actorCount > 1 && h("span", { className: "me-layer-count" }, actorCount),
     h(
+      "button",
+      {
+        type: "button",
+        className: "me-layer-more",
+        title: `${layer.name} actions`,
+        ariaExpanded: actionsOpen ? "true" : "false",
+        onClick: () => setActionsOpen((open) => !open),
+      },
+      "…",
+    ),
+    h(
       "span",
-      { className: "me-row-actions" },
+      { className: `me-row-actions${actionsOpen ? " me-row-actions-open" : ""}` },
       h(
         "button",
         {
@@ -118,7 +136,7 @@ export function LayerCell({
           className: "me-btn me-btn-add",
           title: "Move layer up (bring forward)",
           disabled: layerIndex === 0,
-          onClick: () => onMoveLayer(layer.id, -1),
+          onClick: () => runAction(() => onMoveLayer(layer.id, -1)),
         },
         "↑",
       ),
@@ -129,7 +147,7 @@ export function LayerCell({
           className: "me-btn me-btn-add",
           title: "Move layer down (send backward)",
           disabled: layerIndex === layerCount - 1,
-          onClick: () => onMoveLayer(layer.id, 1),
+          onClick: () => runAction(() => onMoveLayer(layer.id, 1)),
         },
         "↓",
       ),
@@ -138,9 +156,9 @@ export function LayerCell({
         {
           type: "button",
           className: "me-btn me-btn-add",
-          title: "Move into the folder above",
+          title: "Move into the folder or mask above",
           disabled: !canIndent,
-          onClick: () => onIndentLayer(layer.id),
+          onClick: () => runAction(() => onIndentLayer(layer.id)),
         },
         "→",
       ),
@@ -151,7 +169,7 @@ export function LayerCell({
           className: "me-btn me-btn-add",
           title: "Move out of folder",
           disabled: !layer.parentId,
-          onClick: () => onOutdentLayer(layer.id),
+          onClick: () => runAction(() => onOutdentLayer(layer.id)),
         },
         "←",
       ),
@@ -161,7 +179,7 @@ export function LayerCell({
           type: "button",
           className: "me-btn me-btn-add",
           title: "Add keyframe at the playhead",
-          onClick: () => onAddKeyframe(layer.id),
+          onClick: () => runAction(() => onAddKeyframe(layer.id)),
         },
         "+",
       ),
@@ -171,7 +189,7 @@ export function LayerCell({
           type: "button",
           className: "me-btn me-btn-add me-btn-remove",
           title: `Delete ${layer.name} and its ${actorCount} actor(s)`,
-          onClick: () => onDeleteLayer(layer.id),
+          onClick: () => runAction(() => onDeleteLayer(layer.id)),
         },
         "✕",
       ),

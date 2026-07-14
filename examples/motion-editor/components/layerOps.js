@@ -2,14 +2,17 @@
 
 import {
   layerDescendantIds,
+  layerHasAncestorType,
   nextLayerId,
   parentKey,
   preorderLayers,
 } from "./layerTree.js";
+import { isLayerContainer, isPaintLayer, normalizeLayerType } from "./layerTypes.js";
 
 export {
   layerDepth,
   layerDescendantIds,
+  layerHasAncestorType,
   layerSiblingPosition,
   resolvedLayerFlags,
   visibleLayers,
@@ -27,9 +30,9 @@ export function normalizeLayers(input, actors) {
     let id = typeof candidate.id === "string" && candidate.id.trim() ? candidate.id.trim() : "";
     if (!id || usedLayers.has(id)) id = nextLayerId(layers);
     usedLayers.add(id);
-    const type = candidate.type === "folder" ? "folder" : "normal";
+    const type = normalizeLayerType(candidate.type);
     const members = [];
-    if (type === "normal") {
+    if (type !== "folder") {
       for (const actorId of Array.isArray(candidate.actorIds) ? candidate.actorIds : []) {
         if (!actorIds.has(actorId) || assigned.has(actorId)) continue;
         assigned.add(actorId);
@@ -48,14 +51,14 @@ export function normalizeLayers(input, actors) {
   const byId = new Map(layers.map((layer) => [layer.id, layer]));
   layers = layers.map((layer) => {
     const parent = byId.get(layer.parentId);
-    if (!parent || parent.type !== "folder" || parent.id === layer.id) {
+    if (!isLayerContainer(parent) || parent.id === layer.id) {
       const { parentId: _invalid, ...root } = layer;
       return root;
     }
     const seen = new Set([layer.id]);
     let cursor = parent;
     while (cursor) {
-      if (seen.has(cursor.id)) {
+      if (seen.has(cursor.id) || (layer.type === "mask" && cursor.type === "mask")) {
         const { parentId: _cycle, ...root } = layer;
         return root;
       }
@@ -103,11 +106,15 @@ export function orderedActors(doc) {
 
 export function addLayerDoc(doc, name, type = "normal", parentId) {
   const id = nextLayerId(doc.layers || []);
-  const parent = doc.layers.find((layer) => layer.id === parentId && layer.type === "folder");
+  const layerType = normalizeLayerType(type);
+  const parent = doc.layers.find((layer) => layer.id === parentId && isLayerContainer(layer));
   const layer = {
     id,
-    name: name || (type === "folder" ? `Folder ${doc.layers.filter((item) => item.type === "folder").length + 1}` : `Layer ${doc.layers.length + 1}`),
-    type: type === "folder" ? "folder" : "normal",
+    name: name || (layerType === "folder" ? `Folder ${doc.layers.filter((item) => item.type === "folder").length + 1}`
+      : layerType === "mask" ? `Mask ${doc.layers.filter((item) => item.type === "mask").length + 1}`
+        : layerType === "guide" ? `Guide ${doc.layers.filter((item) => item.type === "guide").length + 1}`
+          : `Layer ${doc.layers.length + 1}`),
+    type: layerType,
     actorIds: [],
     ...(parent ? { parentId: parent.id } : {}),
   };
@@ -137,7 +144,10 @@ export function canIndentLayer(layers, id) {
   const layer = layers.find((entry) => entry.id === id);
   if (!layer) return false;
   const siblings = layers.filter((entry) => parentKey(entry) === parentKey(layer));
-  return siblings[siblings.indexOf(layer) - 1]?.type === "folder";
+  const container = siblings[siblings.indexOf(layer) - 1];
+  if (!isLayerContainer(container)) return false;
+  if (layer.type !== "mask") return true;
+  return container.type !== "mask" && !layerHasAncestorType(layers, container.id, "mask");
 }
 
 export function indentLayerDoc(doc, id) {
@@ -145,7 +155,7 @@ export function indentLayerDoc(doc, id) {
   if (!layer) return null;
   const siblings = doc.layers.filter((entry) => parentKey(entry) === parentKey(layer));
   const folder = siblings[siblings.indexOf(layer) - 1];
-  if (folder?.type !== "folder") return null;
+  if (!canIndentLayer(doc.layers, id)) return null;
   const movingIds = layerDescendantIds(doc.layers, id);
   const moving = doc.layers.filter((entry) => movingIds.has(entry.id));
   moving[0] = { ...moving[0], parentId: folder.id };
@@ -172,7 +182,7 @@ export function outdentLayerDoc(doc, id) {
 }
 
 export function moveActorToLayerDoc(doc, actorId, layerId) {
-  const target = doc.layers.find((layer) => layer.id === layerId && layer.type === "normal");
+  const target = doc.layers.find((layer) => layer.id === layerId && isPaintLayer(layer));
   if (!target || !doc.actors.some((actor) => actor.id === actorId) || target.actorIds.includes(actorId)) return null;
   return {
     ...doc,
