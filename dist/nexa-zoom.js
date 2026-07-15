@@ -38,11 +38,21 @@ import { h, useEffect, useRef, useState } from "./nexa.js";
 //   easing        (t) => t easing function (default cubicEaseInOut)
 //   padding       fraction (0–0.45) of the viewport reserved as margin around
 //                 every framed frame (default 0.06). 0 = fill the viewport.
-//   controllerRef ref — set to { next, prev, goTo, index, frames } every render
-//   keyboardNav   bool, default true — Arrow/Space = step, Home/End = first/last
+//   controllerRef ref — { next, prev, goTo, reset, fitAll, index, frames }
+//   keyboardNav   bool, default true — Arrow/Space = step, Home/End = first/last;
+//                 with freeZoom, +/- zoom and 0/Esc recenter the current frame
 //   advanceOnClick bool, default true — tap on stage background advances
 //   swipeNav      bool, default true — horizontal swipe steps (touch/pen)
 //   freeZoom      bool, default false — wheel/pinch to zoom, drag to pan freely
+//                 (with flick momentum); double-click zooms toward the point
+//                 when advanceOnClick is off
+//   minZoom/maxZoom  freeZoom scale bounds as multiples of the frame fit
+//                 (default 0.2 and 12)
+//   autoplay      truthy — auto-advance; a number sets the interval ms
+//                 (default 4000), looping back to the first frame
+//   hashNav       bool, default false — sync the current frame id to location.hash
+//   onInteract    () => void — fired when the user first grabs the camera
+//                 (wheel/pinch/drag), e.g. to pause an autoplay tour
 //   ariaLabel     string — accessible name for the whole stage
 //
 // Respects prefers-reduced-motion: navigation jumps instead of animating.
@@ -78,19 +88,35 @@ function cameraFor(frame, vw, vh, padding = 0) {
   };
 }
 
+// The bounding box of every frame, as a pseudo-frame to fit an overview onto.
+function boundsOf(frames) {
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  for (const f of frames) {
+    minX = Math.min(minX, f.x);
+    minY = Math.min(minY, f.y);
+    maxX = Math.max(maxX, f.x + f.w);
+    maxY = Math.max(maxY, f.y + f.h);
+  }
+  return { x: minX, y: minY, w: maxX - minX, h: maxY - minY, rotate: 0 };
+}
+
 function applyCamera(worldEl, cam, vw, vh) {
   worldEl.style.transform =
     `translate(${vw / 2}px, ${vh / 2}px) scale(${cam.scale}) rotate(${-cam.rotate}deg) translate(${-cam.cx}px, ${-cam.cy}px)`;
 }
 
 class ZoomCameraController {
-  constructor(wrapEl, worldEl, { padding = 0, freeZoom = false, swipeNav = true, onSwipe } = {}) {
+  constructor(wrapEl, worldEl, opts = {}) {
+    const { padding = 0, freeZoom = false, swipeNav = true, minZoom = 0.2, maxZoom = 12, onSwipe, onInteract } = opts;
     this.wrap     = wrapEl;
     this.world    = worldEl;
     this.padding  = padding;
     this.freeZoom = freeZoom;
     this.swipeNav = swipeNav;
+    this.minZoom  = minZoom;
+    this.maxZoom  = maxZoom;
     this.onSwipe  = onSwipe;
+    this.onInteract = onInteract;
     this.vw       = 0;
     this.vh       = 0;
     this.cam      = { cx: 0, cy: 0, scale: 1, rotate: 0 };
@@ -104,11 +130,14 @@ class ZoomCameraController {
     this._dur   = 900;
     this._ease  = cubicEaseInOut;
 
-    // Gesture state.
+    // Gesture + momentum state.
     this._pointers = new Map(); // pointerId → { x, y }
     this._down     = null;      // first-pointer down position
     this._dragged  = false;     // a pan/pinch/swipe consumed this sequence → suppress the trailing click
     this._pinch    = 0;         // last two-finger distance
+    this._vel      = { x: 0, y: 0 }; // px/ms, for flick momentum
+    this._lastMove = 0;
+    this._glide    = null;      // momentum rAF handle
 
     this._onDown   = (e) => this._pointerDown(e);
     this._onMove   = (e) => this._pointerMove(e);
@@ -125,9 +154,11 @@ class ZoomCameraController {
     this._onResize();
   }
 
-  setInteraction(freeZoom, swipeNav) {
+  setInteraction(freeZoom, swipeNav, minZoom, maxZoom) {
     this.freeZoom = freeZoom;
     this.swipeNav = swipeNav;
+    if (minZoom != null) this.minZoom = minZoom;
+    if (maxZoom != null) this.maxZoom = maxZoom;
   }
 
   // Consume-and-clear the "a gesture just happened" flag, so the click that
@@ -171,6 +202,7 @@ class ZoomCameraController {
   jumpTo(frame) {
     if (!frame) return;
     this._cancel();
+    this._stopGlide();
     this._free = false;
     this._activeFrame = frame;
     this.cam = cameraFor(frame, this.vw, this.vh, this.padding);
@@ -179,13 +211,26 @@ class ZoomCameraController {
     applyCamera(this.world, this.cam, this.vw, this.vh);
   }
 
-  animateTo(frame, { duration = 900, easing = cubicEaseInOut } = {}) {
+  animateTo(frame, opts = {}) {
     if (!frame) return;
-    this._cancel();
     this._free = false;
     this._activeFrame = frame;
+    this._animateCam(cameraFor(frame, this.vw, this.vh, this.padding), opts);
+  }
+
+  // Ease the camera from where it is now to a target camera. Shared by frame
+  // navigation, reset() and fitAll(). Honours prefers-reduced-motion.
+  _animateCam(target, { duration = 900, easing = cubicEaseInOut } = {}) {
+    this._cancel();
+    this._stopGlide();
+    if (prefersReducedMotion()) {
+      this.cam = { ...target };
+      this._from = this.cam;
+      this._to = this.cam;
+      applyCamera(this.world, this.cam, this.vw, this.vh);
+      return;
+    }
     this._from = this.cam;
-    const target = cameraFor(frame, this.vw, this.vh, this.padding);
     this._to = { ...target, rotate: shortestRotate(this._from.rotate, target.rotate) };
     this._dur = Math.max(1, duration);
     this._ease = easing || cubicEaseInOut;
@@ -209,6 +254,20 @@ class ZoomCameraController {
     this._raf = requestAnimationFrame(tick);
   }
 
+  // Ease back to the active frame's fit, undoing any free exploration.
+  reset() {
+    if (!this._activeFrame) return;
+    this._free = false;
+    this._animateCam(cameraFor(this._activeFrame, this.vw, this.vh, this.padding));
+  }
+
+  // Zoom out to frame every frame at once (an overview of the whole canvas).
+  fitAll(frames) {
+    if (!frames || !frames.length) return;
+    this._free = true;
+    this._animateCam(cameraFor(boundsOf(frames), this.vw, this.vh, this.padding));
+  }
+
   _cancel() {
     if (this._raf != null) {
       cancelAnimationFrame(this._raf);
@@ -216,7 +275,7 @@ class ZoomCameraController {
     }
   }
 
-  // ── free camera: wheel/pinch zoom-to-cursor and drag pan ──
+  // ── free camera: wheel/pinch zoom-to-cursor, drag pan, momentum ──
 
   _fitScale() {
     return this._activeFrame
@@ -224,32 +283,62 @@ class ZoomCameraController {
       : (this.cam.scale || 1);
   }
 
-  zoomBy(factor, clientX, clientY) {
-    this._cancel();
-    const s = this.cam.scale;
-    const fit = this._fitScale();
-    const s2 = clamp(s * factor, fit * 0.2, fit * 12);
-    if (s2 === s) return;
+  _beginInteract() {
+    if (!this._free) this.onInteract?.();
     this._free = true;
+  }
+
+  // The camera that keeps the world point under (clientX, clientY) fixed while
+  // the scale becomes s2.
+  _zoomPoint(s2, clientX, clientY) {
+    const s = this.cam.scale;
     const rect = this.wrap.getBoundingClientRect();
     const dx = (clientX - rect.left) - this.vw / 2;
     const dy = (clientY - rect.top) - this.vh / 2;
     const rot = (this.cam.rotate * Math.PI) / 180;
     const cos = Math.cos(rot);
     const sin = Math.sin(rot);
-    const k = 1 / s - 1 / s2; // keep the world point under the cursor fixed
-    this.cam = {
+    const k = 1 / s - 1 / s2;
+    return {
       cx: this.cam.cx + (cos * dx - sin * dy) * k,
       cy: this.cam.cy + (sin * dx + cos * dy) * k,
       scale: s2,
       rotate: this.cam.rotate,
     };
+  }
+
+  _clampScale(factor) {
+    const fit = this._fitScale();
+    return clamp(this.cam.scale * factor, fit * this.minZoom, fit * this.maxZoom);
+  }
+
+  zoomBy(factor, clientX, clientY) {
+    this._cancel();
+    this._stopGlide();
+    const s2 = this._clampScale(factor);
+    if (s2 === this.cam.scale) return;
+    this._beginInteract();
+    this.cam = this._zoomPoint(s2, clientX, clientY);
     applyCamera(this.world, this.cam, this.vw, this.vh);
+  }
+
+  // Animated zoom toward a point — for double-click.
+  zoomAt(clientX, clientY, factor) {
+    const s2 = this._clampScale(factor);
+    if (s2 === this.cam.scale) return;
+    this._beginInteract();
+    this._animateCam(this._zoomPoint(s2, clientX, clientY), { duration: 320 });
+  }
+
+  // Zoom toward the viewport centre — for the +/- keys.
+  zoomCenter(factor) {
+    const rect = this.wrap.getBoundingClientRect();
+    this.zoomBy(factor, rect.left + this.vw / 2, rect.top + this.vh / 2);
   }
 
   panByScreen(dx, dy) {
     this._cancel();
-    this._free = true;
+    this._beginInteract();
     const s = this.cam.scale;
     const rot = (this.cam.rotate * Math.PI) / 180;
     const cos = Math.cos(rot);
@@ -262,6 +351,30 @@ class ZoomCameraController {
     applyCamera(this.world, this.cam, this.vw, this.vh);
   }
 
+  _startGlide() {
+    this._stopGlide();
+    let vx = this._vel.x;
+    let vy = this._vel.y;
+    let last = performance.now();
+    const step = (now) => {
+      const dt = Math.min(40, now - last);
+      last = now;
+      this.panByScreen(vx * dt, vy * dt);
+      const decay = Math.pow(0.94, dt / 16);
+      vx *= decay;
+      vy *= decay;
+      this._glide = Math.hypot(vx, vy) > 0.02 ? requestAnimationFrame(step) : null;
+    };
+    this._glide = requestAnimationFrame(step);
+  }
+
+  _stopGlide() {
+    if (this._glide != null) {
+      cancelAnimationFrame(this._glide);
+      this._glide = null;
+    }
+  }
+
   // ── gestures ──
 
   _capture() {
@@ -272,10 +385,13 @@ class ZoomCameraController {
 
   _pointerDown(e) {
     if (e.button != null && e.button > 0) return; // left / touch / pen only
+    this._stopGlide();
     this._pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
     if (this._pointers.size === 1) {
       this._down = { x: e.clientX, y: e.clientY };
       this._dragged = false;
+      this._vel = { x: 0, y: 0 };
+      this._lastMove = performance.now();
     } else if (this._pointers.size === 2) {
       const [a, b] = [...this._pointers.values()];
       this._pinch = Math.hypot(a.x - b.x, a.y - b.y);
@@ -308,6 +424,17 @@ class ZoomCameraController {
       if (far && (this.freeZoom || this.swipeNav)) this._capture();
       if (this.freeZoom) {
         this.panByScreen(e.clientX - px, e.clientY - py);
+        // Track velocity for flick momentum, but only from real time gaps —
+        // synthetic bursts (dt ≈ 0) would read as an absurd speed.
+        const now = performance.now();
+        const dt = now - this._lastMove;
+        if (dt >= 4) {
+          this._vel = {
+            x: this._vel.x * 0.4 + ((e.clientX - px) / dt) * 0.6,
+            y: this._vel.y * 0.4 + ((e.clientY - py) / dt) * 0.6,
+          };
+          this._lastMove = now;
+        }
         if (far) this._dragged = true;
         e.preventDefault();
       }
@@ -320,10 +447,14 @@ class ZoomCameraController {
     this._pinch = 0;
     if (this._pointers.size > 0) return; // still mid multi-touch
 
-    if (this._down && this.swipeNav && !this.freeZoom) {
+    if (this._down) {
       const dx = e.clientX - this._down.x;
       const dy = e.clientY - this._down.y;
-      if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) {
+      if (this.freeZoom) {
+        // A flick — release while still moving fast — glides to a stop.
+        const fresh = performance.now() - this._lastMove < 60;
+        if (this._dragged && fresh && Math.hypot(this._vel.x, this._vel.y) > 0.25) this._startGlide();
+      } else if (this.swipeNav && Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) {
         this.onSwipe?.(dx < 0 ? 1 : -1);
         this._dragged = true;
       }
@@ -339,6 +470,7 @@ class ZoomCameraController {
 
   destroy() {
     this._cancel();
+    this._stopGlide();
     this._ro.disconnect();
     this.wrap.removeEventListener("pointerdown", this._onDown);
     this.wrap.removeEventListener("pointermove", this._onMove);
@@ -349,6 +481,10 @@ class ZoomCameraController {
 }
 
 function jc(...c) { return c.filter(Boolean).join(" "); }
+
+function frameIds(frames, path) {
+  return path && path.length ? path.slice() : frames.map((f) => f.id);
+}
 
 export function ZoomStage({
   frames = [],
@@ -364,6 +500,11 @@ export function ZoomStage({
   advanceOnClick = true,
   swipeNav = true,
   freeZoom = false,
+  minZoom = 0.2,
+  maxZoom = 12,
+  autoplay,
+  hashNav = false,
+  onInteract,
   ariaLabel,
   className = "",
   style,
@@ -372,8 +513,17 @@ export function ZoomStage({
   const worldRef = useRef(null);
   const ctrlRef  = useRef(null);
   const navRef   = useRef({});
+  const cbRef    = useRef({});
+  cbRef.current = { onInteract };
 
-  const [internalIndex, setInternalIndex] = useState(defaultIndex);
+  const hashIndex = () => {
+    if (!hashNav || typeof location === "undefined") return -1;
+    return frameIds(frames, path).indexOf(decodeURIComponent(location.hash.replace(/^#/, "")));
+  };
+  const [internalIndex, setInternalIndex] = useState(() => {
+    const i = hashIndex();
+    return i >= 0 ? i : defaultIndex;
+  });
   const curIndex = index !== undefined ? index : internalIndex;
 
   const seq = path && path.length
@@ -405,6 +555,7 @@ export function ZoomStage({
     first: () => goTo(0),
     last: () => goTo(seq.length - 1),
     swipe: (dir) => { if (dir > 0) next(); else prev(); },
+    advance: () => { if (curIndex >= seq.length - 1) goTo(0); else next(); },
   };
 
   // Mount: build the imperative camera controller once.
@@ -414,7 +565,10 @@ export function ZoomStage({
       padding,
       freeZoom,
       swipeNav,
+      minZoom,
+      maxZoom,
       onSwipe: (dir) => navRef.current.swipe(dir),
+      onInteract: () => cbRef.current.onInteract?.(),
     });
     ctrlRef.current = ctrl;
     ctrl.jumpTo(seq[curIndex]);
@@ -422,15 +576,22 @@ export function ZoomStage({
   }, []);
 
   useEffect(() => { ctrlRef.current?.setPadding(padding); }, [padding]);
-  useEffect(() => { ctrlRef.current?.setInteraction(freeZoom, swipeNav); }, [freeZoom, swipeNav]);
+  useEffect(() => {
+    ctrlRef.current?.setInteraction(freeZoom, swipeNav, minZoom, maxZoom);
+  }, [freeZoom, swipeNav, minZoom, maxZoom]);
 
-  // Keyboard navigation. Ignore keys typed into form fields / editable content.
+  // Keyboard: nav always; zoom/recenter shortcuts only while freeZoom is on.
   useEffect(() => {
     if (!keyboardNav) return undefined;
     const onKeyDown = (e) => {
       const t = e.target;
       const tag = t?.tagName;
       if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || t?.isContentEditable) return;
+      if (freeZoom) {
+        if (e.key === "+" || e.key === "=") { e.preventDefault(); ctrlRef.current?.zoomCenter(1.3); return; }
+        if (e.key === "-" || e.key === "_") { e.preventDefault(); ctrlRef.current?.zoomCenter(1 / 1.3); return; }
+        if (e.key === "0" || e.key === "Escape") { e.preventDefault(); ctrlRef.current?.reset(); return; }
+      }
       if (e.key === "ArrowRight" || e.key === " ") { e.preventDefault(); navRef.current.next(); }
       else if (e.key === "ArrowLeft") { e.preventDefault(); navRef.current.prev(); }
       else if (e.key === "Home") { e.preventDefault(); navRef.current.first(); }
@@ -438,13 +599,48 @@ export function ZoomStage({
     };
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
-  }, [keyboardNav]);
+  }, [keyboardNav, freeZoom]);
+
+  // Autoplay: auto-advance, looping back to the first frame.
+  useEffect(() => {
+    if (!autoplay) return undefined;
+    const ms = typeof autoplay === "number" ? autoplay : 4000;
+    const id = setInterval(() => navRef.current.advance(), ms);
+    return () => clearInterval(id);
+  }, [autoplay]);
+
+  // Deep-linking: react to the URL hash (back/forward, shared links).
+  useEffect(() => {
+    if (!hashNav) return undefined;
+    const onHash = () => {
+      const id = decodeURIComponent(location.hash.replace(/^#/, ""));
+      if (id && seq.some((f) => f.id === id)) navRef.current.goTo(id);
+    };
+    window.addEventListener("hashchange", onHash);
+    return () => window.removeEventListener("hashchange", onHash);
+  }, [hashNav]);
+
+  useEffect(() => {
+    if (!hashNav) return;
+    const id = seq[curIndex]?.id;
+    if (id && decodeURIComponent(location.hash.replace(/^#/, "")) !== id) {
+      history.replaceState(null, "", `#${encodeURIComponent(id)}`);
+    }
+  }, [hashNav, curIndex]);
 
   // Exposed imperative API — reassigned every render so it always closes over
   // the current index/sequence (unlike PipelineCanvas's controllerRef, which
   // is set once on mount because it wraps a long-lived instance).
   if (controllerRef) {
-    controllerRef.current = { next, prev, goTo, index: curIndex, frames: seq };
+    controllerRef.current = {
+      next,
+      prev,
+      goTo,
+      reset: () => ctrlRef.current?.reset(),
+      fitAll: () => ctrlRef.current?.fitAll(seq),
+      index: curIndex,
+      frames: seq,
+    };
   }
 
   const active = seq[curIndex];
@@ -463,6 +659,11 @@ export function ZoomStage({
       onClick: () => {
         const consumed = ctrlRef.current?.consumedGesture();
         if (advanceOnClick && !consumed) next();
+      },
+      // Double-click zooms toward the point — but only when taps aren't already
+      // spoken for by advanceOnClick (a double-click is two taps).
+      onDblClick: (e) => {
+        if (freeZoom && !advanceOnClick) ctrlRef.current?.zoomAt(e.clientX, e.clientY, 1.9);
       },
     },
     h(

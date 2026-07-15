@@ -39,6 +39,10 @@ export interface ZoomController {
   prev(): void;
   /** Go to a frame by sequence index or id; `animate: false` jumps. */
   goTo(target: number | string, options?: { animate?: boolean }): void;
+  /** Ease back to the current frame's fit, undoing any free exploration. */
+  reset(): void;
+  /** Zoom out to frame every frame at once (a whole-canvas overview). */
+  fitAll(): void;
   /** Current step index into the (possibly path-reordered) sequence. */
   readonly index: number;
   /** The active navigation sequence (frames in `path` order). */
@@ -69,8 +73,21 @@ export interface ZoomStageProps {
   advanceOnClick?: boolean;
   /** Horizontal swipe steps on touch/pen (default true; off while `freeZoom`). */
   swipeNav?: boolean;
-  /** Wheel/pinch to zoom and drag to pan freely (default false). */
+  /** Wheel/pinch to zoom and drag to pan freely, with flick momentum
+   * (default false). Double-click zooms toward the point when `advanceOnClick`
+   * is off; with `keyboardNav`, +/- zoom and 0/Esc recenter the frame. */
   freeZoom?: boolean;
+  /** `freeZoom` scale bounds as multiples of the frame fit (defaults 0.2 / 12). */
+  minZoom?: number;
+  maxZoom?: number;
+  /** Auto-advance through the frames; a number sets the interval ms
+   * (default 4000), looping back to the first frame. */
+  autoplay?: boolean | number;
+  /** Sync the current frame id to `location.hash` (deep-linking; default false). */
+  hashNav?: boolean;
+  /** Fired when the user first grabs the camera (wheel/pinch/drag) — e.g. to
+   * pause an autoplay tour. */
+  onInteract?: () => void;
   /** Accessible name for the whole stage. */
   ariaLabel?: string;
   className?: string;

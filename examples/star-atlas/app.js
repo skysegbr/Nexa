@@ -3,7 +3,7 @@
 // flies the camera from constellation to constellation. app.js is the
 // orchestrator: it builds the frames and wires the transport.
 
-import { h, render, useEffect, useRef, useState } from "/dist/nexa.js";
+import { h, render, useRef, useState } from "/dist/nexa.js";
 import { ZoomStage } from "/dist/nexa-zoom.js";
 import { CONSTELLATIONS, TOUR, WORLD } from "./data.js";
 import { Starfield } from "./components/Starfield.js";
@@ -38,19 +38,6 @@ function App() {
     content: i === 0 ? h(Starfield) : h(Constellation, { data: CONSTELLATIONS[i - 1] }),
   }));
 
-  // Guided tour: fly to the next stop every few seconds, looping back to the
-  // whole-sky view at the end.
-  useEffect(() => {
-    if (!playing) return undefined;
-    const id = setInterval(() => {
-      const ctrl = controllerRef.current;
-      if (!ctrl) return;
-      if (ctrl.index >= STOPS - 1) ctrl.goTo(0);
-      else ctrl.next();
-    }, 3800);
-    return () => clearInterval(id);
-  }, [playing]);
-
   const current = index === 0 ? null : CONSTELLATIONS[index - 1];
 
   return h(
@@ -63,6 +50,9 @@ function App() {
       onIndexChange: setIndex,
       controllerRef,
       freeZoom: true,
+      autoplay: playing && 3800,
+      // Grabbing the sky (scroll/drag) quietly pauses the guided tour.
+      onInteract: () => setPlaying(false),
       padding: 0.12,
       duration: 1400,
       ariaLabel: "Interactive star atlas — a zoomable night sky",

@@ -1712,11 +1712,15 @@ Navigation respects `prefers-reduced-motion` (it jumps instead of animating).
 | `index` / `defaultIndex` / `onIndexChange` | Controlled/uncontrolled current frame |
 | `duration` / `easing` | Camera animation duration (ms) and easing function |
 | `padding` | Viewport-margin fraction (0–0.45) kept around each framed frame (default `0.06`; `0` fills the viewport) |
-| `controllerRef` | ref, set to `{ next, prev, goTo, index, frames }` every render |
-| `keyboardNav` | Arrow/Space step, Home/End jump to first/last (default `true`); ignores keys typed into inputs, `<select>` and contentEditable |
+| `controllerRef` | ref, set to `{ next, prev, goTo, reset, fitAll, index, frames }` every render |
+| `keyboardNav` | Arrow/Space step, Home/End jump to first/last (default `true`); with `freeZoom`, `+`/`-` zoom and `0`/`Esc` recenter; ignores keys typed into inputs, `<select>` and contentEditable |
 | `advanceOnClick` | Tap the stage background to advance (default `true`) — a drag/pan/swipe never counts as a tap |
 | `swipeNav` | Horizontal swipe steps frames on touch/pen (default `true`; a `freeZoom` drag pans instead) |
-| `freeZoom` | Wheel/pinch to zoom toward the cursor and drag to pan freely (default `false`) |
+| `freeZoom` | Wheel/pinch to zoom toward the cursor and drag to pan freely, with flick momentum (default `false`); double-click zooms toward the point when `advanceOnClick` is off |
+| `minZoom` / `maxZoom` | `freeZoom` scale bounds as multiples of the frame fit (defaults `0.2` / `12`) |
+| `autoplay` | Auto-advance the frames; a number sets the interval ms (default `4000`), looping back to the first |
+| `hashNav` | Sync the current frame id to `location.hash` for deep-linking (default `false`) |
+| `onInteract` | `() => void`, fired when the user first grabs the camera (wheel/pinch/drag) — e.g. to pause an `autoplay` tour |
 | `ariaLabel` | Accessible name for the whole stage |
 
 ```js
@@ -1732,13 +1736,18 @@ h(ZoomStage, {
 ```
 
 **Free exploration (`freeZoom`)** turns the stage into a roamable canvas:
-scroll or pinch zooms toward the cursor, drag pans, and zoom is clamped
-relative to the active frame's fit. What you explored survives a resize (it
-isn't snapped back to the frame), and navigating still eases smoothly from
-wherever the camera is to the next frame. While `freeZoom` is on a one-finger
-drag pans (so `swipeNav` steps only when it's off); a plain tap still advances.
-See [examples/star-atlas](../examples/star-atlas) — a zoomable night sky built
-on `freeZoom` with a guided tour flying between constellations.
+scroll or pinch zooms toward the cursor, drag pans (a fast flick glides on with
+momentum), and zoom is clamped between `minZoom`/`maxZoom` × the frame's fit.
+What you explored survives a resize (it isn't snapped back to the frame), and
+navigating still eases smoothly from wherever the camera is to the next frame.
+`controllerRef.reset()` (or the `0`/`Esc` keys) eases back to the current
+frame's fit, and `controllerRef.fitAll()` zooms out to an overview of every
+frame. While `freeZoom` is on a one-finger drag pans (so `swipeNav` steps only
+when it's off); a plain tap still advances. For a self-running deck, `autoplay`
+auto-advances and `onInteract` lets you pause it the moment the viewer grabs the
+canvas; `hashNav` deep-links each frame to the URL hash. See
+[examples/star-atlas](../examples/star-atlas) — a zoomable night sky built on
+`freeZoom` with a guided tour flying between constellations.
 
 **Frames can legitimately overlap in world space** — an "overview" frame
 that zooms out to show the whole canvas is, by definition, as big as every

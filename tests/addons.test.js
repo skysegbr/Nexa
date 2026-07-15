@@ -481,3 +481,75 @@ test("ZoomStage: announces the active frame to screen readers", async () => {
 // Note: two-finger pinch shares the same zoomBy() path the wheel test above
 // exercises; it isn't unit-tested here because dispatchEvent can't faithfully
 // simulate a synthetic two-pointer sequence in Chromium (it works in Firefox).
+
+test("ZoomStage: freeZoom fires onInteract once when the user grabs the camera", async () => {
+  const container = mountPoint();
+  let interacts = 0;
+  render(zoomApp({ freeZoom: true, padding: 0, onInteract: () => { interacts += 1; } }), container);
+  await flush();
+  const stage = container.querySelector(".m-zoom-stage");
+  stage.dispatchEvent(new WheelEvent("wheel", { deltaY: -100, clientX: 200, clientY: 150, bubbles: true, cancelable: true }));
+  stage.dispatchEvent(new WheelEvent("wheel", { deltaY: -100, clientX: 200, clientY: 150, bubbles: true, cancelable: true }));
+  await flush();
+  assertEqual(interacts, 1, "expected onInteract to fire once per exploration, not per wheel tick");
+});
+
+test("ZoomStage: freeZoom clamps zoom to the maxZoom bound", async () => {
+  const container = mountPoint();
+  render(zoomApp({ freeZoom: true, padding: 0, maxZoom: 2 }), container);
+  await flush();
+  const stage = container.querySelector(".m-zoom-stage");
+  const world = container.querySelector(".m-zoom-world");
+  for (let i = 0; i < 20; i += 1) {
+    stage.dispatchEvent(new WheelEvent("wheel", { deltaY: -100, clientX: 200, clientY: 150, bubbles: true, cancelable: true }));
+  }
+  await flush();
+  const scale = Number(/scale\(([\d.]+)\)/.exec(world.style.transform)?.[1]);
+  // intro fits at scale 1 (padding 0), so maxZoom 2 caps the scale at 2.
+  assert(scale > 1.9 && scale <= 2.0001, `expected scale clamped near maxZoom×fit=2, got ${scale}`);
+});
+
+test("ZoomStage: with freeZoom the +/- keys zoom the camera", async () => {
+  const container = mountPoint();
+  render(zoomApp({ freeZoom: true, padding: 0 }), container);
+  await flush();
+  const world = container.querySelector(".m-zoom-world");
+  key(document, "+");
+  await flush();
+  const zoomed = Number(/scale\(([\d.]+)\)/.exec(world.style.transform)?.[1]);
+  assert(zoomed > 1.0001, `expected + to zoom in, got ${zoomed}`);
+  key(document, "-");
+  key(document, "-");
+  await flush();
+  const out = Number(/scale\(([\d.]+)\)/.exec(world.style.transform)?.[1]);
+  assert(out < zoomed - 0.05, `expected - to zoom back out, got ${out}`);
+});
+
+test("ZoomStage: autoplay advances on an interval", async () => {
+  const container = mountPoint();
+  const controllerRef = { current: null };
+  render(zoomApp({ autoplay: 40, controllerRef }), container);
+  await flush();
+  assertEqual(controllerRef.current.index, 0);
+  await sleep(70);
+  await flush();
+  assert(controllerRef.current.index >= 1, `expected autoplay to advance, got index ${controllerRef.current.index}`);
+});
+
+test("ZoomStage: hashNav syncs the URL hash both ways", async () => {
+  location.hash = "";
+  const container = mountPoint();
+  const controllerRef = { current: null };
+  render(zoomApp({ hashNav: true, controllerRef }), container);
+  await flush();
+
+  controllerRef.current.goTo("detail", { animate: false });
+  await flush();
+  assertEqual(decodeURIComponent(location.hash), "#detail", "expected navigation to write the frame id to the hash");
+
+  location.hash = "#overview";
+  window.dispatchEvent(new Event("hashchange"));
+  await flush();
+  assertEqual(container.querySelector(".m-zoom-frame-active").textContent, "overview", "expected a hash change to navigate the stage");
+  location.hash = "";
+});
