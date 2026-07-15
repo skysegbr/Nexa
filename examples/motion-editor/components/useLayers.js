@@ -1,5 +1,8 @@
-// Editor-side layer selection and chrome. Folder collapse and the familiar
-// eye/lock/outline switches stay transient; hierarchy lives in the document.
+// Editor-side selection and layer chrome. Which layer ROW is lit and which
+// ACTOR is selected both live here — one source of truth, instead of the
+// actor half living as a second copy in app.js and being hand-synced. Folder
+// collapse and the eye/lock/outline switches stay transient; hierarchy lives
+// in the document.
 
 import { useEffect, useState } from "/dist/nexa.js";
 import { layerDescendantIds, layerForActor } from "./layerOps.js";
@@ -7,6 +10,7 @@ import { isPaintLayer } from "./layerTypes.js";
 
 export function useLayers(doc) {
   const [selectedId, setSelectedId] = useState(doc.layers[0]?.id || null);
+  const [actorId, setActorId] = useState(null); // selected actor id | null
   const [flags, setFlags] = useState({});
   const selected = doc.layers.find((layer) => layer.id === selectedId) || doc.layers[0] || null;
 
@@ -26,8 +30,18 @@ export function useLayers(doc) {
     : doc.layers.find((layer) => isPaintLayer(layer) && descendants.has(layer.id))
       || doc.layers.find(isPaintLayer);
 
-  const selectActor = (actorId) => {
-    const layer = layerForActor(doc, actorId);
+  // Select an actor — it and its layer row both light up.
+  const selectActor = (id) => {
+    const layer = layerForActor(doc, id);
+    setActorId(id);
+    if (layer) setSelectedId(layer.id);
+  };
+
+  // Light an actor's layer row WITHOUT selecting the actor — a keyframe or a
+  // drag is the real selection then, so the actor inspector must stay closed.
+  const selectActorRow = (id) => {
+    const layer = layerForActor(doc, id);
+    setActorId(null);
     if (layer) setSelectedId(layer.id);
   };
 
@@ -36,6 +50,7 @@ export function useLayers(doc) {
 
   const reset = () => {
     setSelectedId(null);
+    setActorId(null);
     setFlags({});
   };
 
@@ -48,9 +63,12 @@ export function useLayers(doc) {
   return {
     activeId: active?.id || null,
     selectedId: selected?.id || null,
+    actorId,
     flags,
     select: setSelectedId,
+    setActor: setActorId,
     selectActor,
+    selectActorRow,
     toggle,
     reset,
     drop,

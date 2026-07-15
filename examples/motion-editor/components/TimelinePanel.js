@@ -18,7 +18,7 @@ export function TimelinePanel({
   tl,
   doc,
   selected,
-  activeLayerId,
+  selectedLayerId,
   layerFlags,
   playheadRef,
   onDragStart,
@@ -133,7 +133,7 @@ export function TimelinePanel({
       "div",
       { className: "me-tracks" },
       // Fixed left column: Flash's layers panel.
-      h(LayerLabels, { doc, layers: shownLayers, activeLayerId, layerFlags, actions: layerActions }),
+      h(LayerLabels, { doc, layers: shownLayers, selectedLayerId, layerFlags, actions: layerActions }),
       // Scrollable right strip: ruler + lanes, zoomed together.
       h(
         "div",
@@ -177,7 +177,7 @@ export function TimelinePanel({
                 .filter(Boolean)
                 .map((actor) => ({ actor, keyframes: doc.tracks[actor.id] || [] })),
               selected,
-              active: activeLayerId === layer.id,
+              active: selectedLayerId === layer.id,
               pct,
               frameGrid,
               msFromPointer,

@@ -5,6 +5,7 @@
 // top→bottom paint front→back on the stage.
 
 import { h, useState } from "/dist/nexa.js";
+import { isLayerContainer } from "./layerTypes.js";
 import { OUTLINE_COLORS } from "../data.js";
 
 export function LayerCell({
@@ -70,7 +71,7 @@ export function LayerCell({
       },
       flags.locked ? "🔒" : "🔓",
     ),
-    layer.type === "folder" || layer.type === "mask"
+    isLayerContainer(layer)
       ? h(
           "button",
           {

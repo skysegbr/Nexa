@@ -31,8 +31,7 @@ function App() {
   const [drawing, setDrawing] = useState(null); // { track, index, points } | null
   const drawingTools = useDrawingTools();
   const { tool, setTool } = drawingTools;
-  const [actorSel, setActorSel] = useState(null); // actor id | null
-  const layers = useLayers(editor.doc);
+  const layers = useLayers(editor.doc); // owns layer-row + actor selection
 
   // Onion skin toggle + how many 100ms ghosts each side of the playhead.
   const [onion, setOnion] = useState({ on: false, count: 2 });
@@ -40,14 +39,17 @@ function App() {
   // Keyframe selection and actor selection are mutually exclusive — the
   // sidebar shows one inspector at a time.
   const selectActor = (id) => {
-    setActorSel(id);
-    if (id) layers.selectActor(id);
-    if (id) editor.clearSelection();
+    if (id) {
+      layers.selectActor(id);
+      editor.clearSelection();
+    } else {
+      layers.setActor(null);
+    }
   };
 
   const selectKeyframe = (entry, additive) => {
-    setActorSel(null);
-    layers.selectActor(entry.track);
+    // The keyframe is the selection; light its actor's row but not the actor.
+    layers.selectActorRow(entry.track);
     editor.select(entry, additive);
   };
 
@@ -58,7 +60,7 @@ function App() {
     const activeFlags = layers.activeId ? resolvedLayerFlags(editor.doc, layers.flags, layers.activeId) : {};
     if (activeFlags.locked || activeFlags.hidden) return;
     const id = editor.addActor(actor, layers.activeId);
-    setActorSel(id);
+    layers.setActor(id); // lands on the active layer, which is already lit
     editor.clearSelection();
     setTool("select"); // back to selection after placing, like Flash
   };
@@ -66,23 +68,22 @@ function App() {
   const duplicateSelectedActor = () => {
     if (!selectedActor) return;
     const copyId = editor.duplicateActor(selectedActor.id);
-    if (copyId) setActorSel(copyId);
+    if (copyId) layers.setActor(copyId);
   };
 
   const deleteActor = (id) => {
     editor.deleteActor(id);
-    setActorSel((current) => (current === id ? null : current));
+    if (layers.actorId === id) layers.setActor(null);
   };
 
-  const selectedActorSource = actorSel && editor.doc.actors.find((actor) => actor.id === actorSel);
+  const selectedActorSource = layers.actorId && editor.doc.actors.find((actor) => actor.id === layers.actorId);
   const library = libraryFor(editor, selectedActorSource, createActor);
   const selectedActor = library.selected;
-  const layerTimeline = layerTimelineBindings({ editor, layers, setActorSelection: setActorSel });
-  const sceneBar = sceneBarBindings({ editor, layers, setActorSelection: setActorSel, playheadRef });
-  const symbolContext = symbolContextBindings({ editor, layers, setActorSelection: setActorSel, playheadRef });
+  const layerTimeline = layerTimelineBindings({ editor, layers });
+  const sceneBar = sceneBarBindings({ editor, layers, playheadRef });
+  const symbolContext = symbolContextBindings({ editor, layers, playheadRef });
   const loadProject = (project) => {
     editor.load(project);
-    setActorSel(null);
     layers.reset();
   };
 
@@ -121,7 +122,7 @@ function App() {
     },
     onEscape: () => {
       setDrawing(null);
-      setActorSel(null);
+      layers.setActor(null);
     },
     onTool: setTool,
     onFrames: layerTimeline.frameActions,
@@ -151,7 +152,7 @@ function App() {
             doc: editor.doc,
             committedDoc: editor.committedDoc,
             selected: editor.selected,
-            actorSel,
+            actorSel: layers.actorId,
             drawing,
             ...drawingTools.stageProps,
             activeLayerId: layers.activeId,
@@ -173,8 +174,7 @@ function App() {
           ...layerTimeline,
           playheadRef,
           onDragStart: (entry, additive) => {
-            setActorSel(null);
-            layers.selectActor(entry.track);
+            layers.selectActorRow(entry.track);
             editor.dragStart(entry, additive);
           },
           onDragPreview: editor.dragPreview,
@@ -238,7 +238,7 @@ function App() {
           doc: editor.doc,
           onApply: (spec) => {
             editor.load(applySpecToDoc(editor.doc, spec));
-            setActorSel(null);
+            layers.setActor(null);
           },
         }),
       ),

@@ -53,9 +53,11 @@ export function normalizeMotionDocument(input, fallback = {}) {
   const base = isRecord(fallback) ? fallback : {};
   const scenes = normalizedScenes(source, base);
   const active = scenes.find((scene) => scene.id === source.activeSceneId) || scenes[0];
+  // Whitelist the root keys instead of spreading base/source wholesale: a
+  // legacy or typo'd key used to ride straight into the live document and back
+  // out through every serialize. The scene branch (SCENE_FIELDS) and
+  // activeSceneId are projected onto the root by applyScene.
   const shared = {
-    ...base,
-    ...source,
     schemaVersion: MOTION_DOCUMENT_VERSION,
     fps: Number.isFinite(source.fps) && source.fps >= 1 ? Math.min(120, Math.round(source.fps)) : base.fps || 24,
     stageColor: typeof source.stageColor === "string" ? source.stageColor : base.stageColor || "#ffffff",

@@ -2,7 +2,7 @@
 
 import { createResetAfter } from "./contextReset.js";
 
-export function symbolContextBindings({ editor, layers, setActorSelection, playheadRef }) {
-  const navigate = createResetAfter({ setActorSelection, layers, playheadRef });
+export function symbolContextBindings({ editor, layers, playheadRef }) {
+  const navigate = createResetAfter({ layers, playheadRef });
   return { enter: navigate(editor.enterSymbol), exit: navigate(editor.exitSymbol) };
 }

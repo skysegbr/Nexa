@@ -2,8 +2,8 @@
 
 import { createResetAfter } from "./contextReset.js";
 
-export function sceneBarBindings({ editor, layers, setActorSelection, playheadRef }) {
-  const activate = createResetAfter({ setActorSelection, layers, playheadRef });
+export function sceneBarBindings({ editor, layers, playheadRef }) {
+  const activate = createResetAfter({ layers, playheadRef });
   return {
     onSelect: activate(editor.selectScene),
     // Button handlers receive the click event — never forward it into the

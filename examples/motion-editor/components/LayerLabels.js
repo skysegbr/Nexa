@@ -10,7 +10,7 @@ import {
 } from "./layerOps.js";
 import { LayerCell } from "./LayerCell.js";
 
-export function LayerLabels({ doc, layers, activeLayerId, layerFlags, actions }) {
+export function LayerLabels({ doc, layers, selectedLayerId, layerFlags, actions }) {
   return h(
     "div",
     { className: "me-track-labels" },
@@ -33,7 +33,7 @@ export function LayerLabels({ doc, layers, activeLayerId, layerFlags, actions })
         actorCount: layerActorIds(doc, layer.id).length,
         canIndent: canIndentLayer(doc.layers, layer.id),
         flags: layerFlags[layer.id] || {},
-        active: activeLayerId === layer.id,
+        active: selectedLayerId === layer.id,
         ...actions,
       });
     }),

@@ -5,7 +5,8 @@ import { h, useEffect, useRef, useState } from "/dist/nexa.js";
 import { createTimeline } from "/dist/nexa-motion.js";
 import { ActorArtwork } from "./ActorArtwork.js";
 import { actorStyle } from "./actorGeometry.js";
-import { layerForActor, orderedActors } from "./layerOps.js";
+import { orderedActors } from "./layerOps.js";
+import { isPublishedActor } from "./layerTypes.js";
 import { resolveActor } from "./symbolOps.js";
 import { runtimeTracks } from "./frameOps.js";
 
@@ -60,10 +61,7 @@ function MovieClipArtwork({ doc, actor, symbol, parentTl, depth }) {
   }, [controller, parentTl, timeline.duration, timeline.loop]);
 
   const children = orderedActors(timeline)
-    .filter((child) => {
-      const layer = layerForActor(timeline, child.id);
-      return layer?.type !== "guide" && layer?.type !== "mask";
-    })
+    .filter((child) => isPublishedActor(timeline, child.id))
     .map((child) => resolveActor(doc, child));
   const width = Math.max(1, symbol.w || actor.w);
   const height = Math.max(1, symbol.h || actor.h);

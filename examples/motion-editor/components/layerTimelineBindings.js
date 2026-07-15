@@ -4,19 +4,19 @@
 import { layerActorIds, layerDescendantIds } from "./layerOps.js";
 import { isLayerContainer } from "./layerTypes.js";
 
-export function layerTimelineBindings({ editor, layers, setActorSelection }) {
+export function layerTimelineBindings({ editor, layers }) {
   const add = (type) => {
     const selected = editor.doc.layers.find((layer) => layer.id === layers.selectedId);
     const parentId = isLayerContainer(selected) ? selected.id : undefined;
     const id = editor.addLayer(undefined, type, parentId);
     if (parentId && layers.flags[parentId]?.collapsed) layers.toggle(parentId, "collapsed");
     layers.select(id);
-    setActorSelection(null);
+    layers.setActor(null);
     editor.clearSelection();
   };
 
   const runFrameAction = (action) => () => {
-    setActorSelection(null);
+    layers.setActor(null);
     editor[action](layers.activeId);
   };
   const frameActions = {
@@ -28,18 +28,18 @@ export function layerTimelineBindings({ editor, layers, setActorSelection }) {
   };
 
   return {
-    activeLayerId: layers.selectedId,
+    selectedLayerId: layers.selectedId,
     layerFlags: layers.flags,
     frameActions,
     onAddKeyframe: (id) => {
-      setActorSelection(null);
+      layers.setActor(null);
       layers.select(id);
       editor.insertLayerKeyframe(id);
     },
     onDeleteLayer: (id) => {
       const removedIds = layerDescendantIds(editor.doc.layers, id);
       const doomed = editor.doc.layers.filter((layer) => removedIds.has(layer.id)).flatMap((layer) => layer.actorIds);
-      setActorSelection((current) => (doomed.includes(current) ? null : current));
+      if (doomed.includes(layers.actorId)) layers.setActor(null);
       layers.drop(...removedIds);
       editor.deleteLayer(id);
     },
@@ -53,7 +53,7 @@ export function layerTimelineBindings({ editor, layers, setActorSelection }) {
     onSelectLayer: (id) => {
       const layer = editor.doc.layers.find((entry) => entry.id === id);
       layers.select(id);
-      setActorSelection(layer?.actorIds.length === 1 ? layer.actorIds[0] : null);
+      layers.setActor(layer?.actorIds.length === 1 ? layer.actorIds[0] : null);
       editor.clearSelection();
     },
     onRenameLayer: (id, name) => editor.updateLayer(id, { name }),
@@ -63,7 +63,7 @@ export function layerTimelineBindings({ editor, layers, setActorSelection }) {
     onAddMask: () => {
       const id = editor.addMaskLayer(layers.selectedId);
       layers.select(id);
-      setActorSelection(null);
+      layers.setActor(null);
       editor.clearSelection();
     },
   };
