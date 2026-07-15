@@ -17,7 +17,6 @@ export function createEditorFrameActions({ effective, setDoc, setSelected, playh
   };
 
   return {
-    addLayerKeyframe: (layerId) => insertKeyframe(layerId),
     insertLayerFrame: (layerId) => {
       const next = insertLayerFrameDoc(effective, layerId, at());
       if (next) setDoc(next);

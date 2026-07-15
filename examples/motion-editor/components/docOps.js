@@ -3,8 +3,22 @@
 // stays the single owner of history/selection while the array juggling
 // lives here.
 
-import { addLayerDoc, arrangeActorInLayerDoc, layerForActor } from "./layerOps.js";
+import { addLayerDoc, layerForActor } from "./layerOps.js";
 import { isPaintLayer } from "./layerTypes.js";
+
+// Merge `patch` onto `target`, dropping keys cleared to `undefined` so a
+// removed field can't survive as a literal `undefined` in saved JSON. Returns
+// the SAME reference when nothing changed (Object.is on every patched key), so
+// callers can guard history/no-op with `next === target`. Single source behind
+// updateActor/updateLayer, updateKeyframe and symbolOps.
+export function applyPatch(target, patch) {
+  if (Object.keys(patch).every((key) => Object.is(target[key], patch[key]))) return target;
+  const next = { ...target, ...patch };
+  for (const key of Object.keys(next)) {
+    if (next[key] === undefined) delete next[key];
+  }
+  return next;
+}
 
 // Every keyframe carries a session-unique `_id`: selection, drags and the
 // clipboard target keyframes BY ID, so undo/redo reordering an array never
@@ -92,12 +106,6 @@ export function duplicateActorDoc(doc, id) {
       }),
     },
   };
-}
-
-// Arrange an actor inside its current layer. Moving between layers is an
-// explicit operation in layerOps, matching Flash's separate concepts.
-export function moveActorLayerDoc(doc, id, delta) {
-  return arrangeActorInLayerDoc(doc, id, delta);
 }
 
 // Flash's auto-key: write `patch` into the keyframe sitting exactly at

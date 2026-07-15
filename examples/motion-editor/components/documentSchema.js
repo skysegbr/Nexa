@@ -1,9 +1,9 @@
 // Versioned motion-editor document boundary. The root projects the active
 // scene for existing editor domains; `scenes` is the canonical movie list.
 
-import { normalizeLayers } from "./layerOps.js";
 import { applyScene, syncActiveScene } from "./sceneOps.js";
-import { normalizeMovieClipTimeline, syncEditingSymbol } from "./symbolTimelineOps.js";
+import { normalizeMovieClipTimeline, normalizeTimelineBranch, syncEditingSymbol } from "./symbolTimelineOps.js";
+import { uniqueId } from "./idAlloc.js";
 
 export const MOTION_DOCUMENT_VERSION = 8;
 
@@ -12,10 +12,9 @@ const isRecord = (value) => Boolean(value) && typeof value === "object" && !Arra
 function normalizeLibrary(items) {
   if (!Array.isArray(items)) return [];
   const used = new Set();
-  let nextId = 1;
   return items.filter(isRecord).map((item, index) => {
     let id = typeof item.id === "string" && item.id.trim() ? item.id.trim() : "";
-    while (!id || used.has(id)) id = `symbol-${nextId++}`;
+    if (!id || used.has(id)) id = uniqueId(used, "symbol");
     used.add(id);
     return {
       ...item,
@@ -33,31 +32,15 @@ function normalizeScene(source, fallback, id, name) {
   const actors = Array.isArray(source.actors)
     ? source.actors.filter((actor) => isRecord(actor) && typeof actor.id === "string")
     : Array.isArray(fallback.actors) ? fallback.actors : [];
-  const sourceTracks = isRecord(source.tracks) ? source.tracks : {};
-  const tracks = {};
-  for (const actor of actors) {
-    const keyframes = sourceTracks[actor.id];
-    tracks[actor.id] = Array.isArray(keyframes) ? keyframes.filter(isRecord).map((keyframe) => ({ ...keyframe })) : [];
-  }
-  return {
-    id,
-    name,
-    duration: Number.isFinite(source.duration) && source.duration >= 100 ? source.duration : fallback.duration || 3000,
-    actors: actors.map((actor) => ({ ...actor })),
-    tracks,
-    layers: normalizeLayers(source.layers, actors),
-    labels: isRecord(source.labels) ? { ...source.labels } : undefined,
-    loop: source.loop || undefined,
-  };
+  return { id, name, ...normalizeTimelineBranch(source, actors, fallback.duration || 3000) };
 }
 
 function normalizedScenes(source, base) {
   const inputs = Array.isArray(source.scenes) && source.scenes.length ? source.scenes : [source];
   const used = new Set();
-  let nextId = 1;
   return inputs.filter(isRecord).map((scene, index) => {
     let id = typeof scene.id === "string" && scene.id.trim() ? scene.id.trim() : "";
-    while (!id || used.has(id)) id = `scene-${nextId++}`;
+    if (!id || used.has(id)) id = uniqueId(used, "scene");
     used.add(id);
     const fallback = inputs.length === 1 ? base : { duration: source.duration || base.duration || 3000, actors: [] };
     const name = typeof scene.name === "string" && scene.name.trim() ? scene.name.trim() : `Scene ${index + 1}`;

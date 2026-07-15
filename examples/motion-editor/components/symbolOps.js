@@ -5,27 +5,18 @@
 
 import { applyScene, syncActiveScene } from "./sceneOps.js";
 import { movieClipTimelineFromArtwork, syncEditingSymbol } from "./symbolTimelineOps.js";
+import { applyPatch } from "./docOps.js";
+import { uniqueId } from "./idAlloc.js";
 
 const CONTENT_FIELDS = ["kind", "fill", "text", "stroke", "strokeWidth", "path", "vectorW", "vectorH"];
 
-const contentOf = (actor) =>
+// The actor's reusable artwork fields (paint/text/geometry). Exported as the
+// single source symbolTimelineOps shares — a new paint prop added on only one
+// side would silently drop from symbols on the round-trip.
+export const contentOf = (actor) =>
   Object.fromEntries(CONTENT_FIELDS.filter((field) => actor[field] !== undefined).map((field) => [field, actor[field]]));
 
-function applyPatch(target, patch) {
-  if (Object.keys(patch).every((key) => Object.is(target[key], patch[key]))) return target;
-  const next = { ...target, ...patch };
-  for (const key of Object.keys(patch)) {
-    if (next[key] === undefined) delete next[key];
-  }
-  return next;
-}
-
-function nextSymbolId(library) {
-  const used = new Set(library.map((item) => item.id));
-  let index = 1;
-  while (used.has(`symbol-${index}`)) index += 1;
-  return `symbol-${index}`;
-}
+const nextSymbolId = (library) => uniqueId(new Set(library.map((item) => item.id)), "symbol");
 
 export const symbolsById = (doc) => new Map((doc.library || []).map((item) => [item.id, item]));
 

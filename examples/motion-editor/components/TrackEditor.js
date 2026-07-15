@@ -8,7 +8,7 @@
 
 import { h, useState } from "/dist/nexa.js";
 import { frameOf } from "./editorUtils.js";
-import { parseTrackCode } from "./codeParse.js";
+import { formatKeyframe, parseTrackCode } from "./codeParse.js";
 
 function summaryOf(keyframe) {
   const parts = Object.entries(keyframe)
@@ -20,10 +20,7 @@ function summaryOf(keyframe) {
 function trackSource(keyframes) {
   const lines = ["["];
   for (const keyframe of [...keyframes].sort((a, b) => a.at - b.at)) {
-    const parts = Object.entries(keyframe)
-      .filter(([key]) => !key.startsWith("_"))
-      .map(([key, value]) => `${key}: ${typeof value === "string" || typeof value === "object" ? JSON.stringify(value) : value}`);
-    lines.push(`  { ${parts.join(", ")} },`);
+    lines.push(formatKeyframe(keyframe, "  "));
   }
   lines.push("]");
   return lines.join("\n");

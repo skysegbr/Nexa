@@ -8,6 +8,17 @@ import { isPublishedActor } from "./layerTypes.js";
 import { normalizeLayers } from "./layerOps.js";
 import { authoringTrack } from "./frameOps.js";
 
+// One keyframe → its `{ key: value, … }` source line, shared by the full
+// export (CodePane) and the per-track behavior editor (TrackEditor) so their
+// formatting never drifts. `_`-prefixed keys (the editor's keyframe ids) never
+// reach code; strings and objects are JSON-encoded, everything else raw.
+export function formatKeyframe(keyframe, indent = "") {
+  const parts = Object.entries(keyframe)
+    .filter(([key]) => !key.startsWith("_"))
+    .map(([key, value]) => `${key}: ${typeof value === "string" || typeof value === "object" ? JSON.stringify(value) : value}`);
+  return `${indent}{ ${parts.join(", ")} },`;
+}
+
 export function parseTimelineCode(source) {
   const start = source.indexOf("useTimeline(");
   if (start === -1) {

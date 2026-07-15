@@ -2,17 +2,13 @@
 
 import { normalizeLayers } from "./layerOps.js";
 import { applyScene, SCENE_FIELDS, syncActiveScene } from "./sceneOps.js";
-
-const ART_FIELDS = ["kind", "fill", "text", "stroke", "strokeWidth", "path", "vectorW", "vectorH"];
-
-const artOf = (source) =>
-  Object.fromEntries(ART_FIELDS.filter((key) => source[key] !== undefined).map((key) => [key, source[key]]));
+import { contentOf } from "./symbolOps.js";
 
 export function movieClipTimelineFromArtwork(source) {
   const actor = {
     id: "artwork-1",
     label: `${source.name || source.label || "Symbol"} artwork`,
-    ...artOf(source),
+    ...contentOf(source),
     x: 0,
     y: 0,
     w: source.w || 48,
@@ -28,25 +24,35 @@ export function movieClipTimelineFromArtwork(source) {
   };
 }
 
-export function normalizeMovieClipTimeline(input, symbol) {
-  if (!input || typeof input !== "object" || Array.isArray(input)) return movieClipTimelineFromArtwork(symbol);
-  const actors = Array.isArray(input.actors)
-    ? input.actors.filter((actor) => actor && typeof actor === "object" && typeof actor.id === "string").map((actor) => ({ ...actor }))
-    : [];
+// The shared shape of a timeline "branch" — a scene (documentSchema) or a
+// MovieClip symbol timeline: copy each actor's tracks, normalize its layers,
+// floor the duration at 100ms. Callers resolve the actor list and add their
+// own wrapper keys (a scene's id/name, a movie clip's artwork fallback).
+export function normalizeTimelineBranch(source, actors, durationDefault) {
+  const isRecord = (value) => Boolean(value) && typeof value === "object" && !Array.isArray(value);
+  const sourceTracks = isRecord(source.tracks) ? source.tracks : {};
   const tracks = {};
   for (const actor of actors) {
-    tracks[actor.id] = Array.isArray(input.tracks?.[actor.id])
-      ? input.tracks[actor.id].filter((keyframe) => keyframe && typeof keyframe === "object").map((keyframe) => ({ ...keyframe }))
+    tracks[actor.id] = Array.isArray(sourceTracks[actor.id])
+      ? sourceTracks[actor.id].filter(isRecord).map((keyframe) => ({ ...keyframe }))
       : [];
   }
   return {
-    duration: Number.isFinite(input.duration) && input.duration >= 100 ? input.duration : 1000,
-    actors,
+    duration: Number.isFinite(source.duration) && source.duration >= 100 ? source.duration : durationDefault,
+    actors: actors.map((actor) => ({ ...actor })),
     tracks,
-    layers: normalizeLayers(input.layers, actors),
-    labels: input.labels && typeof input.labels === "object" ? { ...input.labels } : undefined,
-    loop: input.loop || undefined,
+    layers: normalizeLayers(source.layers, actors),
+    labels: isRecord(source.labels) ? { ...source.labels } : undefined,
+    loop: source.loop || undefined,
   };
+}
+
+export function normalizeMovieClipTimeline(input, symbol) {
+  if (!input || typeof input !== "object" || Array.isArray(input)) return movieClipTimelineFromArtwork(symbol);
+  const actors = Array.isArray(input.actors)
+    ? input.actors.filter((actor) => actor && typeof actor === "object" && typeof actor.id === "string")
+    : [];
+  return normalizeTimelineBranch(input, actors, 1000);
 }
 
 const timelineSnapshot = (doc) => Object.fromEntries(SCENE_FIELDS.map((key) => [key, doc[key]]));
@@ -66,7 +72,7 @@ export function syncEditingSymbol(doc) {
   if (!current) return doc;
   const timeline = timelineSnapshot(doc);
   const first = doc.actors[0];
-  const preview = first && !first.symbolId ? artOf(first) : {};
+  const preview = first && !first.symbolId ? contentOf(first) : {};
   return {
     ...doc,
     library: doc.library.map((symbol) =>

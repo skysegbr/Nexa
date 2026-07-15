@@ -4,12 +4,13 @@
 
 import {
   addActorDoc,
+  applyPatch,
   deleteActorDoc,
   duplicateActorDoc,
-  moveActorLayerDoc,
 } from "./docOps.js";
 import {
   addLayerDoc,
+  arrangeActorInLayerDoc,
   deleteLayerDoc,
   indentLayerDoc,
   layerActorIds,
@@ -20,23 +21,14 @@ import {
 import { addMaskLayerDoc } from "./layerSpecialOps.js";
 
 export function createActorActions({ effective, setDoc, setSelected }) {
-  // Merge + drop keys patched to `undefined` — like updateKeyframe and
-  // symbolOps.applyPatch, so a cleared field can't survive as a literal
-  // `undefined` property in saved JSON.
-  const merged = (target, patch) => {
-    const next = { ...target, ...patch };
-    for (const key of Object.keys(next)) {
-      if (next[key] === undefined) delete next[key];
-    }
-    return next;
-  };
-
   const updateActor = (id, patch) => {
     const current = effective.actors.find((actor) => actor.id === id);
-    if (!current || Object.keys(patch).every((key) => Object.is(current[key], patch[key]))) return;
+    if (!current) return;
+    const next = applyPatch(current, patch);
+    if (next === current) return;
     setDoc({
       ...effective,
-      actors: effective.actors.map((actor) => (actor.id === id ? merged(actor, patch) : actor)),
+      actors: effective.actors.map((actor) => (actor.id === id ? next : actor)),
     });
   };
 
@@ -56,7 +48,7 @@ export function createActorActions({ effective, setDoc, setSelected }) {
   };
 
   const arrangeActor = (id, delta) => {
-    const next = moveActorLayerDoc(effective, id, delta);
+    const next = arrangeActorInLayerDoc(effective, id, delta);
     if (next) setDoc(next);
   };
 
@@ -81,10 +73,12 @@ export function createActorActions({ effective, setDoc, setSelected }) {
 
   const updateLayer = (id, patch) => {
     const current = effective.layers.find((layer) => layer.id === id);
-    if (!current || Object.keys(patch).every((key) => Object.is(current[key], patch[key]))) return;
+    if (!current) return;
+    const next = applyPatch(current, patch);
+    if (next === current) return;
     setDoc({
       ...effective,
-      layers: effective.layers.map((layer) => (layer.id === id ? merged(layer, patch) : layer)),
+      layers: effective.layers.map((layer) => (layer.id === id ? next : layer)),
     });
   };
 

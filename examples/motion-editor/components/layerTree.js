@@ -1,11 +1,8 @@
 // Tree mechanics for the editor's front→back preorder layer array.
 
-export function nextLayerId(layers) {
-  const used = new Set(layers.map((layer) => layer.id));
-  let index = 1;
-  while (used.has(`layer-${index}`)) index += 1;
-  return `layer-${index}`;
-}
+import { uniqueId } from "./idAlloc.js";
+
+export const nextLayerId = (layers) => uniqueId(new Set(layers.map((layer) => layer.id)), "layer");
 
 export const parentKey = (layer) => layer.parentId || null;
 

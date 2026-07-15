@@ -1,15 +1,9 @@
 // App-level coordination when the active scene changes.
 
+import { createResetAfter } from "./contextReset.js";
+
 export function sceneBarBindings({ editor, layers, setActorSelection, playheadRef }) {
-  // The view only resets AFTER the action really navigated — a rejected or
-  // no-op action must not touch the playhead the user parked.
-  const activate = (action) => (...args) => {
-    const id = action(...args);
-    if (!id) return;
-    playheadRef.current = 0;
-    setActorSelection(null);
-    layers.reset();
-  };
+  const activate = createResetAfter({ setActorSelection, layers, playheadRef });
   return {
     onSelect: activate(editor.selectScene),
     // Button handlers receive the click event — never forward it into the

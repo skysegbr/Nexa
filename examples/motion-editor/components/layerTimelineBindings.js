@@ -34,7 +34,7 @@ export function layerTimelineBindings({ editor, layers, setActorSelection }) {
     onAddKeyframe: (id) => {
       setActorSelection(null);
       layers.select(id);
-      editor.addLayerKeyframe(id);
+      editor.insertLayerKeyframe(id);
     },
     onDeleteLayer: (id) => {
       const removedIds = layerDescendantIds(editor.doc.layers, id);

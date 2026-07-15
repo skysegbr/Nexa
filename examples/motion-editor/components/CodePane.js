@@ -4,21 +4,13 @@
 // parses the code back into the document (one undoable step).
 
 import { h, useMemo, useState } from "/dist/nexa.js";
-import { parseTimelineCode } from "./codeParse.js";
+import { formatKeyframe, parseTimelineCode } from "./codeParse.js";
 import { publishedTrackEntries } from "./layerTypes.js";
 import { runtimeTracks } from "./frameOps.js";
 
 // new RegExp(string) instead of a literal: the repo's lightweight syntax
 // validator balances brackets and would trip on the character class.
 const IDENTIFIER_RE = new RegExp("^[A-Za-z_$][A-Za-z0-9_$]*$");
-
-function formatKeyframe(keyframe) {
-  // `_`-prefixed keys (the editor's keyframe ids) never reach the export.
-  const parts = Object.entries(keyframe)
-    .filter(([key]) => !key.startsWith("_"))
-    .map(([key, value]) => `${key}: ${typeof value === "string" || typeof value === "object" ? JSON.stringify(value) : value}`);
-  return `      { ${parts.join(", ")} },`;
-}
 
 export function generateCode(doc) {
   const lines = [
@@ -34,7 +26,7 @@ export function generateCode(doc) {
     const key = IDENTIFIER_RE.test(name) ? name : JSON.stringify(name);
     lines.push(`    ${key}: [`);
     for (const keyframe of [...keyframes].sort((a, b) => a.at - b.at)) {
-      lines.push(formatKeyframe(keyframe));
+      lines.push(formatKeyframe(keyframe, "      "));
     }
     lines.push("    ],");
   }

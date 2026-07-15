@@ -1,14 +1,11 @@
 // Flash-style scene snapshots. Shared document properties (fps, stage color,
 // library) stay at the root; timeline/stage branches belong to each scene.
 
+import { uniqueId } from "./idAlloc.js";
+
 export const SCENE_FIELDS = ["duration", "actors", "tracks", "layers", "labels", "loop"];
 
-function nextSceneId(scenes) {
-  const used = new Set(scenes.map((scene) => scene.id));
-  let index = 1;
-  while (used.has(`scene-${index}`)) index += 1;
-  return `scene-${index}`;
-}
+const nextSceneId = (scenes) => uniqueId(new Set(scenes.map((scene) => scene.id)), "scene");
 
 export function sceneSnapshot(doc, identity = {}) {
   return Object.assign(

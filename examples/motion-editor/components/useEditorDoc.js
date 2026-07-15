@@ -8,6 +8,7 @@ import { snapToFrame } from "./editorUtils.js";
 import { normalizeMotionDocument } from "./documentSchema.js";
 import { syncActiveScene } from "./sceneOps.js";
 import {
+  applyPatch,
   writeKeyframeAtDoc,
   withKeyframeIds,
   freshKeyframeId,
@@ -48,18 +49,11 @@ export function useEditorDoc(initialDoc, playheadRef) {
     // missing entries (sparse imported docs) are no-ops too.
     const index = indexOfKeyframe(trackName, id);
     const current = index !== -1 && effective.tracks[trackName][index];
-    if (!current || Object.keys(patch).every((key) => Object.is(current[key], patch[key]))) {
-      return;
-    }
+    if (!current) return;
+    const nextKeyframe = applyPatch(current, patch);
+    if (nextKeyframe === current) return;
 
-    const nextTrack = effective.tracks[trackName].map((keyframe, i) =>
-      i === index ? { ...keyframe, ...patch } : keyframe,
-    );
-    for (const key of Object.keys(nextTrack[index])) {
-      if (nextTrack[index][key] === undefined) {
-        delete nextTrack[index][key];
-      }
-    }
+    const nextTrack = effective.tracks[trackName].map((keyframe, i) => (i === index ? nextKeyframe : keyframe));
     setDoc({ ...effective, tracks: { ...effective.tracks, [trackName]: nextTrack } });
   };
 
