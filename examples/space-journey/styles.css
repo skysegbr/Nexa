@@ -1,0 +1,129 @@
+@import url("./components/SpaceFrame.css");
+@import url("./components/SceneFX.css");
+@import url("./components/MissionHUD.css");
+
+:root {
+  color-scheme: dark;
+  --sj-bg: #02040b;
+  --sj-text: #f2f5ff;
+  --sj-muted: #9da9c4;
+  --sj-accent: #ffb04a;
+  --sj-accent-rgb: 255, 176, 74;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  width: 100%;
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  overflow: hidden;
+  background: var(--sj-bg);
+  color: var(--sj-text);
+  font-family: Inter, "Segoe UI", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+button,
+a {
+  font: inherit;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.sj-app {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 50% 50%, rgba(var(--sj-accent-rgb), 0.08), transparent 34rem),
+    #02040b;
+  transition: background 900ms ease;
+}
+
+.sj-tone-amber {
+  --sj-accent: #ffb04a;
+  --sj-accent-rgb: 255, 176, 74;
+}
+
+.sj-tone-cyan {
+  --sj-accent: #4fe6ff;
+  --sj-accent-rgb: 79, 230, 255;
+}
+
+.sj-tone-silver {
+  --sj-accent: #dce4ff;
+  --sj-accent-rgb: 220, 228, 255;
+}
+
+.sj-tone-rust {
+  --sj-accent: #ff7955;
+  --sj-accent-rgb: 255, 121, 85;
+}
+
+.sj-tone-violet {
+  --sj-accent: #b59cff;
+  --sj-accent-rgb: 181, 156, 255;
+}
+
+.sj-tone-nebula {
+  --sj-accent: #77e7d6;
+  --sj-accent-rgb: 119, 231, 214;
+}
+
+.sj-starfield {
+  position: absolute;
+  inset: 0;
+  opacity: 0.55;
+  background-image:
+    radial-gradient(circle at 8% 12%, white 0 1px, transparent 1.5px),
+    radial-gradient(circle at 22% 78%, white 0 1px, transparent 1.5px),
+    radial-gradient(circle at 37% 29%, #79cfff 0 1px, transparent 1.5px),
+    radial-gradient(circle at 53% 88%, white 0 1px, transparent 1.5px),
+    radial-gradient(circle at 66% 17%, white 0 1px, transparent 1.5px),
+    radial-gradient(circle at 81% 68%, #9fdfff 0 1px, transparent 1.5px),
+    radial-gradient(circle at 94% 24%, white 0 1px, transparent 1.5px);
+  background-size: 220px 220px, 310px 310px, 370px 370px, 260px 260px, 420px 420px, 290px 290px, 350px 350px;
+  pointer-events: none;
+}
+
+.sj-stage {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  cursor: default;
+}
+
+.sj-stage .m-zoom-frame {
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid rgba(177, 195, 235, 0.18);
+  border-radius: 26px;
+  background: #050710;
+  box-shadow: 0 50px 160px rgba(0, 0, 0, 0.72);
+}
+
+.sj-stage .m-zoom-frame-active {
+  border-color: rgba(var(--sj-accent-rgb), 0.62);
+  box-shadow: 0 50px 180px rgba(var(--sj-accent-rgb), 0.12);
+}
+
+@media (max-width: 700px) {
+  .sj-stage .m-zoom-frame {
+    border-radius: 18px;
+  }
+}

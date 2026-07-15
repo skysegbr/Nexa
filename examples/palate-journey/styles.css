@@ -1,0 +1,71 @@
+@import url("./components/DishFrame.css");
+@import url("./components/FlavorFX.css");
+@import url("./components/TastingHUD.css");
+
+:root {
+  color-scheme: dark;
+  --pj-ink: #17110e;
+  --pj-paper: #f0e9dc;
+  --pj-accent: #e68a2f;
+  --pj-accent-rgb: 230, 138, 47;
+}
+
+* { box-sizing: border-box; }
+html, body, #app { width: 100%; height: 100%; }
+body {
+  margin: 0;
+  overflow: hidden;
+  background: #120d0b;
+  color: #f7f0e5;
+  font-family: Inter, "Segoe UI", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+button, a { font: inherit; }
+a { color: inherit; text-decoration: none; }
+
+.pj-app {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: radial-gradient(circle at 50% 46%, rgba(var(--pj-accent-rgb), 0.13), transparent 34rem), #120d0b;
+  transition: background 900ms ease;
+}
+
+.pj-tone-amber { --pj-accent: #f2a23d; --pj-accent-rgb: 242, 162, 61; }
+.pj-tone-tomato { --pj-accent: #ec694f; --pj-accent-rgb: 236, 105, 79; }
+.pj-tone-wasabi { --pj-accent: #93b977; --pj-accent-rgb: 147, 185, 119; }
+.pj-tone-cream { --pj-accent: #e8c979; --pj-accent-rgb: 232, 201, 121; }
+.pj-tone-ember { --pj-accent: #e87842; --pj-accent-rgb: 232, 120, 66; }
+.pj-tone-wine { --pj-accent: #d55262; --pj-accent-rgb: 213, 82, 98; }
+.pj-tone-cheese { --pj-accent: #d6ad52; --pj-accent-rgb: 214, 173, 82; }
+.pj-tone-cacao { --pj-accent: #c78d6a; --pj-accent-rgb: 199, 141, 106; }
+.pj-tone-coffee { --pj-accent: #bb8456; --pj-accent-rgb: 187, 132, 86; }
+.pj-tone-night { --pj-accent: #ee7654; --pj-accent-rgb: 238, 118, 84; }
+
+.pj-table-texture {
+  position: absolute;
+  inset: 0;
+  opacity: 0.4;
+  background-image:
+    repeating-linear-gradient(88deg, transparent 0 93px, rgba(255,255,255,0.018) 94px 95px),
+    radial-gradient(circle at 12% 18%, rgba(255,255,255,0.45) 0 1px, transparent 1.4px),
+    radial-gradient(circle at 74% 67%, rgba(255,255,255,0.25) 0 1px, transparent 1.5px);
+  background-size: auto, 260px 260px, 330px 330px;
+  pointer-events: none;
+}
+
+.pj-stage { position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%; background: transparent; cursor: default; }
+.pj-stage .m-zoom-frame {
+  overflow: hidden;
+  padding: 0;
+  border: 1px solid rgba(var(--pj-accent-rgb), 0.24);
+  border-radius: 26px;
+  background: var(--pj-paper);
+  box-shadow: 0 55px 160px rgba(0, 0, 0, 0.58);
+}
+.pj-stage .m-zoom-frame-active { border-color: rgba(var(--pj-accent-rgb), 0.76); }
+
+@media (max-width: 700px) {
+  .pj-stage .m-zoom-frame { border-radius: 16px; }
+}

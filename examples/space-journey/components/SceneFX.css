@@ -1,0 +1,190 @@
+.sj-fx {
+  position: absolute;
+  z-index: 4;
+  pointer-events: none;
+}
+
+.sj-fx-departure {
+  top: 95px;
+  right: 31%;
+  bottom: 95px;
+  width: 60px;
+  border-left: 1px dashed rgba(var(--sj-accent-rgb), 0.52);
+}
+
+.sj-fx-departure i {
+  position: absolute;
+  bottom: 0;
+  left: -13px;
+  display: grid;
+  width: 26px;
+  height: 26px;
+  place-items: center;
+  border: 1px solid var(--sj-accent);
+  border-radius: 50%;
+  color: var(--sj-accent);
+  font-style: normal;
+}
+
+.sj-fx-departure span {
+  position: absolute;
+  top: -5px;
+  left: -5px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--sj-accent);
+  box-shadow: 0 0 24px var(--sj-accent);
+}
+
+.sj-fx-orbit {
+  top: 50%;
+  right: 16%;
+  width: 430px;
+  height: 430px;
+  transform: translateY(-50%);
+}
+
+.sj-fx-orbit span {
+  position: absolute;
+  inset: 0;
+  border: 1px dashed rgba(var(--sj-accent-rgb), 0.7);
+  border-radius: 48% 52% 50% 50%;
+}
+
+.sj-fx-orbit span::after {
+  position: absolute;
+  top: 28px;
+  left: 55px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--sj-accent);
+  box-shadow: 0 0 18px var(--sj-accent);
+  content: "";
+}
+
+.sj-fx-orbit i {
+  position: absolute;
+  inset: 32%;
+  border: 1px solid rgba(var(--sj-accent-rgb), 0.5);
+  border-radius: 50%;
+}
+
+.sj-fx-lunar {
+  top: 104px;
+  right: 120px;
+  width: 190px;
+  height: 190px;
+  border: 1px solid rgba(var(--sj-accent-rgb), 0.48);
+  border-radius: 50%;
+}
+
+.sj-fx-lunar::before,
+.sj-fx-lunar::after {
+  position: absolute;
+  background: rgba(var(--sj-accent-rgb), 0.6);
+  content: "";
+}
+
+.sj-fx-lunar::before {
+  top: 50%;
+  right: -22px;
+  left: -22px;
+  height: 1px;
+}
+
+.sj-fx-lunar::after {
+  top: -22px;
+  bottom: -22px;
+  left: 50%;
+  width: 1px;
+}
+
+.sj-fx-lunar span {
+  position: absolute;
+  inset: 38%;
+  border: 1px dashed var(--sj-accent);
+  border-radius: 50%;
+}
+
+.sj-fx-lunar i {
+  position: absolute;
+  top: -5px;
+  left: 50%;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--sj-accent);
+  box-shadow: 0 0 16px var(--sj-accent);
+}
+
+.sj-fx-mars {
+  top: 50%;
+  right: 8%;
+  width: 44%;
+  height: 400px;
+  transform: translateY(-50%);
+}
+
+.sj-fx-mars span {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  left: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--sj-accent), transparent);
+  box-shadow: 0 0 22px var(--sj-accent);
+}
+
+.sj-fx-mars i {
+  position: absolute;
+  top: 35%;
+  left: 48%;
+  width: 100px;
+  height: 100px;
+  border: 1px solid var(--sj-accent);
+  border-radius: 50%;
+}
+
+.sj-fx-saturn {
+  top: 50%;
+  right: 9%;
+  width: 480px;
+  height: 260px;
+  transform: translateY(-50%) rotate(-8deg);
+}
+
+.sj-fx-saturn span,
+.sj-fx-saturn i {
+  position: absolute;
+  inset: 0;
+  border: 1px solid rgba(var(--sj-accent-rgb), 0.6);
+  border-radius: 50%;
+}
+
+.sj-fx-saturn i {
+  inset: 26px 48px;
+  border-style: dashed;
+}
+
+.sj-fx-deep {
+  top: 50%;
+  right: 13%;
+  width: 240px;
+  height: 240px;
+  transform: translateY(-50%);
+}
+
+.sj-fx-deep span,
+.sj-fx-deep i {
+  position: absolute;
+  inset: 0;
+  border: 1px solid rgba(var(--sj-accent-rgb), 0.72);
+  border-radius: 50%;
+}
+
+.sj-fx-deep i {
+  inset: 30%;
+  border-style: dashed;
+}

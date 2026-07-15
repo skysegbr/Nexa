@@ -1,0 +1,183 @@
+.sj-frame-content {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: #03050b;
+  color: #f4f6ff;
+}
+
+.sj-frame-image,
+.sj-frame-vignette,
+.sj-frame-grid {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.sj-frame-image {
+  object-fit: cover;
+  transform-origin: center;
+}
+
+.sj-frame-vignette {
+  z-index: 1;
+  background:
+    linear-gradient(90deg, rgba(2, 4, 11, 0.92) 0%, rgba(2, 4, 11, 0.58) 42%, transparent 76%),
+    linear-gradient(0deg, rgba(2, 4, 11, 0.76), transparent 42%);
+}
+
+.sj-frame-grid {
+  z-index: 2;
+  opacity: 0.46;
+  background-image:
+    linear-gradient(rgba(217, 228, 255, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(217, 228, 255, 0.08) 1px, transparent 1px);
+  background-size: 80px 80px;
+  mask-image: linear-gradient(90deg, black, transparent 76%);
+  pointer-events: none;
+}
+
+.sj-frame-copy {
+  position: absolute;
+  bottom: 106px;
+  left: 74px;
+  z-index: 5;
+  max-width: 690px;
+}
+
+.sj-frame-chapter {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  margin: 0 0 24px;
+  color: var(--sj-accent);
+  font-size: 13px;
+  font-weight: 750;
+  letter-spacing: 0.18em;
+}
+
+.sj-frame-chapter::before {
+  width: 32px;
+  height: 1px;
+  background: currentColor;
+  content: "";
+}
+
+.sj-frame-copy h1 {
+  max-width: 760px;
+  margin: 0;
+  font-size: 76px;
+  font-weight: 520;
+  letter-spacing: -0.062em;
+  line-height: 0.93;
+}
+
+.sj-frame-body {
+  max-width: 610px;
+  margin: 24px 0 0;
+  color: #bcc5dc;
+  font-size: 18px;
+  line-height: 1.55;
+}
+
+.sj-frame-fact {
+  position: absolute;
+  top: 58px;
+  right: 58px;
+  z-index: 5;
+  display: grid;
+  min-width: 250px;
+  padding: 20px 22px;
+  border: 1px solid rgba(222, 231, 255, 0.24);
+  border-radius: 14px;
+  background: rgba(4, 7, 17, 0.68);
+  backdrop-filter: blur(16px);
+}
+
+.sj-frame-fact span,
+.sj-frame-fact small {
+  color: #8d9ab7;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+}
+
+.sj-frame-fact strong {
+  margin: 7px 0 5px;
+  color: var(--sj-accent);
+  font-size: 19px;
+  font-weight: 620;
+}
+
+.sj-frame-credit {
+  position: absolute;
+  right: 42px;
+  bottom: 30px;
+  z-index: 6;
+  display: flex;
+  gap: 15px;
+  align-items: center;
+  color: #aeb8d0;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+}
+
+.sj-frame-credit span:first-child {
+  color: var(--sj-accent);
+}
+
+.sj-frame-credit b {
+  display: grid;
+  width: 27px;
+  height: 27px;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+}
+
+.sj-corner {
+  position: absolute;
+  z-index: 5;
+  width: 44px;
+  height: 44px;
+  border-color: rgba(var(--sj-accent-rgb), 0.65);
+  border-style: solid;
+  pointer-events: none;
+}
+
+.sj-corner-tl {
+  top: 28px;
+  left: 28px;
+  border-width: 1px 0 0 1px;
+}
+
+.sj-corner-br {
+  right: 28px;
+  bottom: 28px;
+  border-width: 0 1px 1px 0;
+}
+
+.sj-frame-orbit .sj-frame-image {
+  object-position: 72% center;
+}
+
+.sj-frame-lunar .sj-frame-image {
+  object-position: 58% center;
+}
+
+.sj-frame-mars .sj-frame-image {
+  object-position: 62% center;
+  filter: saturate(1.2) contrast(1.06);
+}
+
+.sj-frame-saturn .sj-frame-image {
+  object-position: 68% center;
+}
+
+.sj-frame-deep-space .sj-frame-image {
+  object-position: center;
+}
+
+.sj-frame-deep-space .sj-frame-vignette {
+  background: linear-gradient(90deg, rgba(2, 4, 11, 0.9), rgba(2, 4, 11, 0.3) 52%, rgba(2, 4, 11, 0.08));
+}
