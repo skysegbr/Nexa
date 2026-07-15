@@ -79,13 +79,30 @@ export function TimelinePanel({
     return snapToFrame(ratio * doc.duration, fps);
   };
 
-  // Seeking writes playheadRef directly; TimelineCursor's clock (≤50ms)
-  // catches the line up. The onion brackets live in TimelineCursor too.
-  const scrub = (event) => {
+  // Scrubbing the ruler: press seeks and begins a drag, moving keeps seeking
+  // (the pointer is captured so the drag survives leaving the ruler), release
+  // ends it. Seeking writes playheadRef directly and TimelineCursor's rAF
+  // clock tracks tl.time, so the line follows the pointer smoothly. The onion
+  // brackets live in TimelineCursor too.
+  const scrubbingRef = useRef(false);
+  const seekToPointer = (event) => {
     const at = msFromPointer(event);
     tl.stop();
     tl.seek(at);
     playheadRef.current = at;
+  };
+  const scrubDown = (event) => {
+    scrubbingRef.current = true;
+    try {
+      rulerRef.current.setPointerCapture(event.pointerId);
+    } catch {}
+    seekToPointer(event);
+  };
+  const scrubMove = (event) => {
+    if (scrubbingRef.current) seekToPointer(event);
+  };
+  const scrubEnd = () => {
+    scrubbingRef.current = false;
   };
 
   const pct = (at) => `${(at / doc.duration) * 100}%`;
@@ -143,7 +160,15 @@ export function TimelinePanel({
           { className: "me-track-inner", style: { width: `${zoom * 100}%` } },
           h(
             "div",
-            { className: "me-ruler", ref: rulerRef, onPointerDown: scrub, style: frameGrid },
+            {
+              className: "me-ruler",
+              ref: rulerRef,
+              onPointerDown: scrubDown,
+              onPointerMove: scrubMove,
+              onPointerUp: scrubEnd,
+              onPointerCancel: scrubEnd,
+              style: frameGrid,
+            },
             frameMarks.map((f) =>
               h(
                 "span",

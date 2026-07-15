@@ -15,15 +15,20 @@ export function TimelineCursor({ tl, playheadRef, duration, fps, measureRef, oni
   const [playhead, setPlayhead] = useState(() => playheadRef.current || 0);
   const dragRef = useRef(null);
 
-  // The UI clock: follow the controller (and any programmatic jump) on the
-  // same 50ms cadence the onion ghosts use. This is the single writer of
-  // playheadRef, which the stage and ghosts read.
+  // The UI clock: follow the controller (and any programmatic jump — play,
+  // seek, a ruler drag) on requestAnimationFrame, so the line tracks the
+  // pointer smoothly while scrubbing instead of trailing a 50ms tick. Idle is
+  // free: setPlayhead bails on Object.is when the rounded time is unchanged.
+  // This is the single writer of playheadRef, which the stage and ghosts read.
   useEffect(() => {
-    const id = setInterval(() => {
+    let raf;
+    const follow = () => {
       playheadRef.current = tl.time;
       setPlayhead(Math.round(tl.time));
-    }, 50);
-    return () => clearInterval(id);
+      raf = requestAnimationFrame(follow);
+    };
+    raf = requestAnimationFrame(follow);
+    return () => cancelAnimationFrame(raf);
   }, [tl]);
 
   const frameMs = 1000 / (fps || DEFAULT_FPS);
