@@ -1,0 +1,95 @@
+.sa-controls {
+  position: fixed;
+  left: 50%;
+  bottom: clamp(20px, 4vh, 34px);
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.6rem;
+  border-radius: 999px;
+  background: rgba(12, 18, 40, 0.62);
+  border: 1px solid rgba(120, 150, 255, 0.18);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+}
+
+.sa-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  height: 40px;
+  padding: 0 0.9rem;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: #dce4ff;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.16s ease, color 0.16s ease;
+}
+
+.sa-btn:hover {
+  background: rgba(120, 150, 255, 0.14);
+}
+
+.sa-btn:focus-visible {
+  outline: 2px solid #6f8cff;
+  outline-offset: 2px;
+}
+
+.sa-btn i {
+  font-size: 1.1rem;
+}
+
+.sa-btn-tour {
+  background: linear-gradient(120deg, #4f7cff, #8b5cf6);
+  color: #fff;
+  box-shadow: 0 4px 18px rgba(79, 124, 255, 0.4);
+}
+
+.sa-btn-tour:hover {
+  background: linear-gradient(120deg, #5f88ff, #9d72f8);
+}
+
+.sa-btn-tour.sa-btn-on {
+  background: linear-gradient(120deg, #f97362, #f0a23a);
+  box-shadow: 0 4px 18px rgba(249, 115, 98, 0.4);
+}
+
+.sa-dots {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0 0.5rem 0 0.65rem;
+  margin-left: 0.2rem;
+  border-left: 1px solid rgba(120, 150, 255, 0.18);
+}
+
+.sa-dot {
+  width: 9px;
+  height: 9px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(160, 176, 224, 0.32);
+  cursor: pointer;
+  transition: background 0.16s ease, transform 0.16s ease;
+}
+
+.sa-dot:hover {
+  background: rgba(160, 176, 224, 0.6);
+}
+
+.sa-dot-on {
+  background: #8fa6ff;
+  transform: scale(1.35);
+  box-shadow: 0 0 10px rgba(143, 166, 255, 0.8);
+}
+
+.sa-dot:focus-visible {
+  outline: 2px solid #6f8cff;
+  outline-offset: 2px;
+}

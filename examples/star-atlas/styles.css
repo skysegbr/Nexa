@@ -1,0 +1,79 @@
+@import url("./components/Starfield.css");
+@import url("./components/Constellation.css");
+@import url("./components/InfoPanel.css");
+@import url("./components/Controls.css");
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+}
+
+body {
+  font-family: Inter, "Segoe UI", system-ui, sans-serif;
+  color: #e8ecff;
+  background: #04060d;
+  overflow: hidden;
+}
+
+#app,
+.sa-app {
+  position: fixed;
+  inset: 0;
+}
+
+.sa-app {
+  background:
+    radial-gradient(ellipse at 28% 18%, #0b1230 0%, transparent 55%),
+    radial-gradient(ellipse at 80% 90%, #170e2e 0%, transparent 55%),
+    #04060d;
+}
+
+.sa-stage {
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  cursor: grab;
+}
+
+.sa-stage:active {
+  cursor: grabbing;
+}
+
+/* Transparent frames: the sky shows through and the constellations float,
+   with their glows free to spill past the frame box. */
+.sa-stage .m-zoom-frame {
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 0;
+  overflow: visible;
+  transition: none;
+}
+
+.sa-stage .m-zoom-frame-active {
+  border: none;
+  box-shadow: none;
+}
+
+.sa-hint {
+  position: fixed;
+  top: 20px;
+  right: 24px;
+  margin: 0;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #6d7cb2;
+  pointer-events: none;
+}
+
+@media (max-width: 640px) {
+  .sa-hint { display: none; }
+}

@@ -1,0 +1,27 @@
+.sa-starfield {
+  position: absolute;
+  inset: 0;
+}
+
+.sa-nebula {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.sa-bgstar {
+  position: absolute;
+  border-radius: 50%;
+  background: #dfe8ff;
+  box-shadow: 0 0 3px rgba(210, 224, 255, 0.5);
+  pointer-events: none;
+}
+
+.sa-twinkle {
+  animation: sa-twinkle 4.5s ease-in-out infinite;
+}
+
+@keyframes sa-twinkle {
+  0%, 100% { opacity: 0.2; }
+  50% { opacity: 0.9; }
+}
