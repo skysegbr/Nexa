@@ -48,4 +48,11 @@ Key differences from React (common analysis mistakes):
 - `dist/nexa-editor.js|css`: FullCodeEditor add-on (CodeMirror 5 wrapper)
 - `dist/nexa-canvas.js|css`: PipelineCanvas add-on (node editor)
 - `dist/nexa-zoom.js|css`: ZoomStage add-on (pan/zoom presentations)
+- `dist/nexa-motion.js`: Flash-style timeline animation add-on (no CSS — it
+  tweens inline transform/opacity): `useTimeline`/`createTimeline` with
+  keyframe tracks, Penner easings, labels, frame scripts,
+  `play/stop/gotoAndPlay/gotoAndStop`, motion guides (SVG paths + orient),
+  color tweens, discrete `set` steps, `stagger()` cascades; elements bind
+  via `tl.track(name)` refs. A visual authoring IDE lives in
+  `examples/motion-editor`. Full reference: docs/AI_SPEC.md §10.
 - `tests/`: browser test suite (`python3 scripts/run_browser_tests.py`)
