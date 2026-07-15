@@ -138,7 +138,10 @@
 }
 
 /* Locked layer (timeline padlock): visible but deaf to stage gestures —
-   clicks fall through to the stage, selection happens in the layers panel. */
+   clicks fall through to the stage, selection happens in the layers panel.
+   The authoritative gate is the INLINE pointer-events set by
+   stageActorStyle (immune to selector-specificity fights); this rule is
+   the cursor/class marker. */
 .me-actor-locked {
   pointer-events: none;
 }

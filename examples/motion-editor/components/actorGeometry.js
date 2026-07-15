@@ -11,6 +11,10 @@ export const HANDLES = ["nw", "ne", "sw", "se"];
 export function stageActorStyle(live, flags, layerIndex) {
   const style = actorStyle(live);
   if (flags.hidden) style.visibility = "hidden";
+  // Inline, not CSS: the padlock must survive any future selector that
+  // raises actor specificity (the wrapper hit-testing rule already broke
+  // a class-based lock once).
+  if (flags.locked) style.pointerEvents = "none";
   if (flags.outline) {
     const color = OUTLINE_COLORS[layerIndex % OUTLINE_COLORS.length];
     if (live.kind === "text") style.color = color;

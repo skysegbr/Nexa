@@ -6,6 +6,7 @@
 import { useHistory, useRef, useState } from "/dist/nexa.js";
 import { snapToFrame } from "./editorUtils.js";
 import { normalizeMotionDocument } from "./documentSchema.js";
+import { syncActiveScene } from "./sceneOps.js";
 import {
   writeKeyframeAtDoc,
   withKeyframeIds,
@@ -166,7 +167,13 @@ export function useEditorDoc(initialDoc, playheadRef) {
   // inherit the starter cast, every actor gets a tracks entry, and
   // keyframe ids are regenerated (saved ids come from an older session).
   const load = (nextDoc) => {
-    setDoc(withKeyframeIds(normalizeMotionDocument(nextDoc, initialDoc)));
+    // A live v8 document's ROOT projection runs ahead of its scenes
+    // snapshot (ordinary edits touch only the root; scenes sync on scene/
+    // symbol ops). Sync before normalizing, or normalizedScenes rebuilds
+    // from the stale snapshot and silently reverts everything the caller
+    // just applied — the code-pane apply data-loss bug.
+    const synced = Array.isArray(nextDoc?.scenes) && nextDoc.scenes.length ? syncActiveScene(nextDoc) : nextDoc;
+    setDoc(withKeyframeIds(normalizeMotionDocument(synced, initialDoc)));
     setSelected([]);
   };
 

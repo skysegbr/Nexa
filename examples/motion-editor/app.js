@@ -1,10 +1,6 @@
-// Visual Flash-style timeline editor for nexa-motion: stage, timeline,
-// draggable keyframes, stage drawing, inspectors and live code export.
-//
-// The document lives in useEditorDoc (useHistory + selection + all
-// mutations). Every document change rebuilds the createTimeline()
-// controller and the stage rebinds through fresh track() refs: the preview
-// is always the real runtime, never an approximation.
+// Visual Flash-style timeline editor for nexa-motion. The document lives
+// in useEditorDoc; every committed change rebuilds the createTimeline()
+// controller, so the preview is always the real runtime.
 
 import { h, render, useRef, useState } from "/dist/nexa.js";
 import { INITIAL_DOC } from "./data.js";
@@ -24,6 +20,7 @@ import { useStageController } from "./components/useStageController.js";
 import { applySpecToDoc } from "./components/codeParse.js";
 import { useDrawingTools } from "./components/useDrawingTools.js";
 import { useLayers } from "./components/useLayers.js";
+import { resolvedLayerFlags } from "./components/layerOps.js";
 import { layerTimelineBindings } from "./components/layerTimelineBindings.js";
 import { EditorContextBar } from "./components/EditorContextBar.js";
 import { sceneBarBindings } from "./components/sceneBarBindings.js";
@@ -55,6 +52,11 @@ function App() {
   };
 
   const createActor = (actor) => {
+    // Creation targets the active layer — its padlock/eye applies to EVERY
+    // creation path (Library placement included), not just the stage
+    // tools, which Stage already disables.
+    const activeFlags = layers.activeId ? resolvedLayerFlags(editor.doc, layers.flags, layers.activeId) : {};
+    if (activeFlags.locked || activeFlags.hidden) return;
     const id = editor.addActor(actor, layers.activeId);
     setActorSel(id);
     editor.clearSelection();
@@ -88,11 +90,8 @@ function App() {
 
   // ── motion-guide drawing on the stage ──
 
-  const startDrawing = () => {
-    if (editor.selected.length === 1) {
-      setDrawing({ ...editor.selected[0], points: [] });
-    }
-  };
+  const startDrawing = () =>
+    editor.selected.length === 1 && setDrawing({ ...editor.selected[0], points: [] });
 
   const addDrawingPoint = (point) => {
     setDrawing((current) => current && { ...current, points: [...current.points, point] });

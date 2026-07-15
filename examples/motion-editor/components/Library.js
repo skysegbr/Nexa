@@ -25,7 +25,9 @@ export function Library({ items, usage, blockedSymbolIds = [], onPlace, onEdit, 
     items.map((item) =>
       h(
         "div",
-        { key: item.name, className: "me-library-item" },
+        // Keyed by the schema's unique symbol id — names can repeat
+        // ("Rect 1" converted in two different scenes).
+        { key: item.id || item.name, className: "me-library-item" },
         h(
           "span",
           { className: `me-library-swatch me-library-${item.kind}`, style: swatchStyle(item), ariaHidden: "true" },

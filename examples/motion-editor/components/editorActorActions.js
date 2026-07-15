@@ -20,12 +20,23 @@ import {
 import { addMaskLayerDoc } from "./layerSpecialOps.js";
 
 export function createActorActions({ effective, setDoc, setSelected }) {
+  // Merge + drop keys patched to `undefined` — like updateKeyframe and
+  // symbolOps.applyPatch, so a cleared field can't survive as a literal
+  // `undefined` property in saved JSON.
+  const merged = (target, patch) => {
+    const next = { ...target, ...patch };
+    for (const key of Object.keys(next)) {
+      if (next[key] === undefined) delete next[key];
+    }
+    return next;
+  };
+
   const updateActor = (id, patch) => {
     const current = effective.actors.find((actor) => actor.id === id);
     if (!current || Object.keys(patch).every((key) => Object.is(current[key], patch[key]))) return;
     setDoc({
       ...effective,
-      actors: effective.actors.map((actor) => (actor.id === id ? { ...actor, ...patch } : actor)),
+      actors: effective.actors.map((actor) => (actor.id === id ? merged(actor, patch) : actor)),
     });
   };
 
@@ -73,7 +84,7 @@ export function createActorActions({ effective, setDoc, setSelected }) {
     if (!current || Object.keys(patch).every((key) => Object.is(current[key], patch[key]))) return;
     setDoc({
       ...effective,
-      layers: effective.layers.map((layer) => (layer.id === id ? { ...layer, ...patch } : layer)),
+      layers: effective.layers.map((layer) => (layer.id === id ? merged(layer, patch) : layer)),
     });
   };
 

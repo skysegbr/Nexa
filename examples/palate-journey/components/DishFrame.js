@@ -31,7 +31,9 @@ export function DishFrame({ course, active, courseIndex }) {
   return h(
     "article",
     { className: `pj-dish pj-dish-${course.id} pj-copy-${course.side}${active ? " pj-dish-live" : ""}` },
-    h("div", { className: "pj-photo-wrap" }, h("img", { className: "pj-photo", src: course.image, alt: course.alt, ref: tl.track("photo") })),
+    // Ten multi-megabyte photos mount at once on the zoom canvas — let the
+    // browser defer offscreen ones instead of racing all of them on load.
+    h("div", { className: "pj-photo-wrap" }, h("img", { className: "pj-photo", src: course.image, alt: course.alt, loading: "lazy", decoding: "async", ref: tl.track("photo") })),
     h("section", { className: "pj-paper", ref: tl.track("paper") },
       h("div", { className: "pj-course", ref: tl.track("course") }, h("span"), course.course),
       h("h1", { ref: tl.track("title") }, course.title),

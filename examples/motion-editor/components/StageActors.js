@@ -109,11 +109,14 @@ function MaskEditorOverlay({ doc, layer, actorsById, actorSel, layerFlags, onAct
     layer.actorIds.map((actorId, index) => {
       const actor = actorsById[actorId];
       if (!actor) return null;
+      // The padlock covers mask artwork too — a locked mask must reject
+      // stage gestures exactly like a locked normal layer.
       return h("use", {
         key: actor.id,
         href: `#${maskDomId(layer.id)}-actor-${index}`,
         className: `me-mask-use me-actor-${actor.id}${actorSel === actor.id ? " me-actor-selected" : ""}`,
-        onPointerDown: (event) => onActorPointerDown(event, actor),
+        style: flags.locked ? { pointerEvents: "none" } : undefined,
+        onPointerDown: flags.locked ? undefined : (event) => onActorPointerDown(event, actor),
       });
     }),
   );

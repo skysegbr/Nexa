@@ -6,8 +6,12 @@ import { freshKeyframeId } from "./docOps.js";
 import { layerActorIds } from "./layerOps.js";
 import { snapToFrame } from "./editorUtils.js";
 
+// The POSE a keyframe holds — never its segment-specific travel: copying
+// `path`/`orient` into an F6 keyframe would make the actor re-travel the
+// whole motion guide a second time between the two keys.
+const POSE_EXCLUDED = new Set(["at", "_id", "blank", "path", "orient", "ease"]);
 const keyframeContent = (keyframe) => Object.fromEntries(
-  Object.entries(keyframe).filter(([key]) => key !== "at" && key !== "_id" && key !== "blank"),
+  Object.entries(keyframe).filter(([key]) => !POSE_EXCLUDED.has(key)),
 );
 
 const contentExposureAt = (keyframes, at) => [...keyframes]
@@ -61,8 +65,10 @@ export function insertLayerKeyframeDoc(doc, layerId, at, blank = false) {
   };
 }
 
-// F5 inserts one frame into the active layer: keys at/after the playhead
-// move right, and the movie grows by one frame so nothing is clipped.
+// F5 inserts one frame into the active layer: keys strictly AFTER the
+// playhead move right (the key under the playhead keeps its exposure,
+// which is exactly how you extend it — Flash's F5), and the movie grows
+// by one frame so nothing is clipped.
 export function insertLayerFrameDoc(doc, layerId, at) {
   const actorIds = layerActorIds(doc, layerId);
   if (!actorIds.length) return null;
@@ -70,7 +76,7 @@ export function insertLayerFrameDoc(doc, layerId, at) {
   const tracks = { ...doc.tracks };
   for (const track of actorIds) {
     tracks[track] = (tracks[track] || []).map((keyframe) =>
-      keyframe.at >= at ? { ...keyframe, at: shift(keyframe.at) } : keyframe,
+      keyframe.at > at ? { ...keyframe, at: shift(keyframe.at) } : keyframe,
     );
   }
   return { ...doc, duration: shift(doc.duration), tracks };

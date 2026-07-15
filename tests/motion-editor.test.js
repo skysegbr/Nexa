@@ -277,14 +277,16 @@ test("motion editor: F6 ends a blank exposure with copied content", async () => 
   assertEqual(runtimeTrack(doc.tracks.box).find((keyframe) => keyframe.at === 800).set.visibility, "visible");
 });
 
-test("motion editor: F5 shifts later layer keys and extends the movie by one frame", async () => {
+test("motion editor: F5 extends the exposure under the playhead and shifts only later keys", async () => {
   const doc = normalizeMotionDocument({
     ...legacyDoc(),
     fps: 10,
     tracks: { box: [{ at: 0 }, { at: 500 }, { at: 1000 }] },
   });
   const next = insertLayerFrameDoc(doc, doc.layers[0].id, 500);
-  assertEqual(next.tracks.box.map((keyframe) => keyframe.at).join(","), "0,600,1100");
+  // Flash's F5: the key under the playhead KEEPS its frame (that is how an
+  // exposure is extended); keys strictly after it slide one frame right.
+  assertEqual(next.tracks.box.map((keyframe) => keyframe.at).join(","), "0,500,1100");
   assertEqual(next.duration, 1100);
 });
 

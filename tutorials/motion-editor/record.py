@@ -103,7 +103,7 @@ def main():
         # 3 — last frame + Free Transform: rotate, keyed at the playhead
         step(3, 0.8)
         scrub(1.0)
-        editor.get_by_title("Free Transform (rotate/scale)").click()
+        editor.get_by_title("Free Transform (Q)").click()
         editor.locator(".me-actor-rect-1").click(force=True)
         editor.locator(".me-rotate-handle").wait_for(state="visible")
         time.sleep(0.5)
@@ -117,7 +117,7 @@ def main():
 
         # 4 — loop on, rewind, play the movie
         step(4, 0.5)
-        editor.get_by_title("Select", exact=True).click()
+        editor.get_by_title("Select (V)").click()
         editor.locator(".me-btn", has_text="loop").click()
         editor.locator(".me-btn", has_text="start").click()
         editor.locator(".me-btn", has_text="play").click()
@@ -126,7 +126,7 @@ def main():
         # 5 — Behavior panel, then scroll the sidebar to the live export
         step(5, 0.4)
         editor.locator(".me-btn", has_text="stop").click()
-        editor.locator(".me-row-name", has_text="Rect 1").click()
+        editor.locator(".me-row-name", has_text="Layer 1").click()
         time.sleep(2.6)
         editor.locator(".me-code").scroll_into_view_if_needed()
         time.sleep(2.6)

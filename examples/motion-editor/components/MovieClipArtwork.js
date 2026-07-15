@@ -1,7 +1,7 @@
 // Nested MovieClip playback inside a symbol instance. Each instance owns a
 // small controller slaved to its parent timeline's playhead.
 
-import { h, useEffect, useState } from "/dist/nexa.js";
+import { h, useEffect, useRef, useState } from "/dist/nexa.js";
 import { createTimeline } from "/dist/nexa-motion.js";
 import { ActorArtwork } from "./ActorArtwork.js";
 import { actorStyle } from "./actorGeometry.js";
@@ -23,24 +23,41 @@ function MovieClipArtwork({ doc, actor, symbol, parentTl, depth }) {
   const timeline = symbol.timeline;
   const [controller, setController] = useState(() => buildController(timeline));
 
+  // Rebuild only on REPLACEMENT (same pattern as useStageController) — the
+  // old effect also ran on first mount, building a second controller and
+  // destroying the initializer's for nothing, per instance, per commit.
+  const lastTimelineRef = useRef(timeline);
   useEffect(() => {
+    if (lastTimelineRef.current === timeline) return;
+    lastTimelineRef.current = timeline;
     const fresh = buildController(timeline);
     setController((current) => {
       current.destroy();
       return fresh;
     });
-    return () => fresh.destroy();
-  }, [timeline]);
+  });
+
+  const controllerRef = useRef(controller);
+  controllerRef.current = controller;
+  useEffect(() => () => controllerRef.current.destroy(), []);
 
   useEffect(() => {
+    let lastParentTime = null;
     const sync = () => {
+      const parentTime = parentTl.time || 0;
+      // The parent is parked most of the time in an editor — skip the
+      // full seek/style pass when nothing moved.
+      if (parentTime === lastParentTime) return;
+      lastParentTime = parentTime;
       const duration = Math.max(1, timeline.duration);
-      controller.seek((parentTl.time || 0) % duration);
+      // Looping clips wrap with the parent clock; a non-looping MovieClip
+      // parks on its final pose instead of rewinding every cycle.
+      controller.seek(timeline.loop ? parentTime % duration : Math.min(parentTime, duration));
     };
     sync();
     const id = setInterval(sync, 50);
     return () => clearInterval(id);
-  }, [controller, parentTl, timeline.duration]);
+  }, [controller, parentTl, timeline.duration, timeline.loop]);
 
   const children = orderedActors(timeline)
     .filter((child) => {

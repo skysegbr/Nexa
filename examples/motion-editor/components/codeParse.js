@@ -5,6 +5,7 @@
 // same trust level as pasting it into their app.
 
 import { isPublishedActor } from "./layerTypes.js";
+import { normalizeLayers } from "./layerOps.js";
 
 export function parseTimelineCode(source) {
   const start = source.indexOf("useTimeline(");
@@ -113,6 +114,10 @@ export function applySpecToDoc(doc, spec) {
     duration: spec.duration,
     tracks,
     actors,
+    // Starter actors spawned for unknown tracks must land on a LAYER too —
+    // the stage and the timeline paint exclusively from layer.actorIds, so
+    // a layerless actor would be invisible and unselectable.
+    layers: normalizeLayers(doc.layers, actors),
     labels: spec.labels,
     loop: spec.loop || undefined,
   };
