@@ -1,0 +1,129 @@
+.ml-features {
+  padding: clamp(7rem, 11vw, 11rem) 0;
+  border-top: 1px solid var(--ml-line);
+  background:
+    radial-gradient(circle at 90% 20%, rgba(255, 116, 94, 0.1), transparent 28rem),
+    rgba(4, 6, 16, 0.42);
+}
+
+.ml-features-inner {
+  width: min(var(--ml-max), calc(100% - 40px));
+  margin: 0 auto;
+}
+
+.ml-features-head {
+  display: grid;
+  grid-template-columns: 1.4fr 0.6fr;
+  gap: 4rem;
+  align-items: end;
+}
+
+.ml-features-head > p {
+  max-width: 430px;
+  margin: 0 0 0.5rem;
+  color: var(--ml-muted);
+  line-height: 1.75;
+}
+
+.ml-feature-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  margin-top: 5rem;
+}
+
+.ml-feature-card {
+  position: relative;
+  display: flex;
+  min-height: 420px;
+  flex-direction: column;
+  padding: 1.5rem;
+  overflow: hidden;
+  border: 1px solid var(--ml-line);
+  border-radius: 22px;
+  background: linear-gradient(150deg, rgba(18, 25, 52, 0.82), rgba(7, 10, 23, 0.88));
+  transition: border-color 220ms ease, background 220ms ease;
+}
+
+.ml-feature-card:hover {
+  border-color: rgba(82, 231, 255, 0.45);
+  background: linear-gradient(150deg, rgba(23, 34, 70, 0.9), rgba(8, 12, 27, 0.92));
+}
+
+.ml-feature-number {
+  color: var(--ml-muted);
+  font-size: 0.64rem;
+  letter-spacing: 0.12em;
+}
+
+.ml-feature-icon {
+  position: relative;
+  display: grid;
+  width: 106px;
+  height: 106px;
+  margin: 3rem 0 auto;
+  place-items: center;
+}
+
+.ml-feature-icon i {
+  position: absolute;
+  inset: 0;
+  border: 1px dashed rgba(82, 231, 255, 0.46);
+  border-radius: 46% 54% 62% 38%;
+}
+
+.ml-feature-icon i::before {
+  position: absolute;
+  top: -4px;
+  left: 48%;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--ml-coral);
+  box-shadow: 0 0 14px var(--ml-coral);
+  content: "";
+}
+
+.ml-feature-icon b {
+  color: var(--ml-cyan);
+  font-family: Georgia, serif;
+  font-size: 2.3rem;
+  font-weight: 400;
+}
+
+.ml-feature-card h3 {
+  margin: 2.5rem 0 0.9rem;
+  font-size: 1.45rem;
+  font-weight: 560;
+  letter-spacing: -0.03em;
+}
+
+.ml-feature-card > p {
+  margin: 0;
+  color: var(--ml-muted);
+  font-size: 0.9rem;
+  line-height: 1.7;
+}
+
+.ml-feature-card footer {
+  margin-top: 1.8rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--ml-line);
+  color: #727fae;
+  font: 0.66rem "SFMono-Regular", Consolas, monospace;
+}
+
+@media (max-width: 900px) {
+  .ml-features-head {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .ml-feature-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ml-feature-card {
+    min-height: 360px;
+  }
+}

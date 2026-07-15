@@ -1,0 +1,128 @@
+@import url("./components/Header.css");
+@import url("./components/Hero.css");
+@import url("./components/SignalStrip.css");
+@import url("./components/MotionLab.css");
+@import url("./components/FeatureGrid.css");
+@import url("./components/ClosingCta.css");
+
+:root {
+  color-scheme: dark;
+  --ml-bg: #050713;
+  --ml-surface: #0b1022;
+  --ml-line: rgba(157, 180, 255, 0.17);
+  --ml-text: #f3f5ff;
+  --ml-muted: #929cc2;
+  --ml-blue: #4f7cff;
+  --ml-cyan: #52e7ff;
+  --ml-coral: #ff745e;
+  --ml-lavender: #ad8cff;
+  --ml-max: 1240px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  overflow-x: hidden;
+  background: var(--ml-bg);
+  color: var(--ml-text);
+  font-family: Inter, "Segoe UI", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+button,
+a {
+  font: inherit;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  color: inherit;
+}
+
+.ml-page {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 18% 6%, rgba(79, 124, 255, 0.16), transparent 28rem),
+    linear-gradient(180deg, #070a18 0%, var(--ml-bg) 32%, #070816 100%);
+}
+
+.ml-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin: 0 0 1.2rem;
+  color: var(--ml-cyan);
+  font-size: 0.72rem;
+  font-weight: 750;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.ml-kicker::before {
+  width: 26px;
+  height: 1px;
+  background: currentColor;
+  content: "";
+}
+
+.ml-section-title {
+  max-width: 850px;
+  margin: 0;
+  font-size: clamp(2.5rem, 6vw, 5.8rem);
+  font-weight: 520;
+  letter-spacing: -0.065em;
+  line-height: 0.95;
+}
+
+.ml-section-title em {
+  color: var(--ml-coral);
+  font-family: Georgia, serif;
+  font-weight: 400;
+}
+
+.ml-footer {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 2rem;
+  align-items: center;
+  width: min(var(--ml-max), calc(100% - 40px));
+  margin: 0 auto;
+  padding: 2rem 0 2.5rem;
+  border-top: 1px solid var(--ml-line);
+  color: var(--ml-muted);
+  font-size: 0.74rem;
+}
+
+.ml-footer p {
+  margin: 0;
+}
+
+.ml-footer-brand {
+  color: var(--ml-text);
+  font-weight: 800;
+  letter-spacing: 0.12em;
+}
+
+@media (max-width: 720px) {
+  .ml-footer {
+    grid-template-columns: 1fr;
+    gap: 0.7rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}

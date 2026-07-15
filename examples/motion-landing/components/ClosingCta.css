@@ -1,0 +1,117 @@
+.ml-closing {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  min-height: 760px;
+  align-content: center;
+  padding: 7rem 1.25rem;
+  overflow: hidden;
+  text-align: center;
+}
+
+.ml-closing::before {
+  position: absolute;
+  width: 58rem;
+  height: 58rem;
+  border: 1px solid rgba(79, 124, 255, 0.12);
+  border-radius: 50%;
+  box-shadow: inset 0 0 180px rgba(79, 124, 255, 0.08);
+  content: "";
+  pointer-events: none;
+}
+
+.ml-kinetic-mark {
+  position: relative;
+  width: 150px;
+  height: 150px;
+  margin-bottom: 3.5rem;
+}
+
+.ml-kinetic-outer,
+.ml-kinetic-inner,
+.ml-kinetic-core {
+  position: absolute;
+  border-radius: 50%;
+}
+
+.ml-kinetic-outer {
+  inset: 0;
+  border: 1px dashed rgba(82, 231, 255, 0.55);
+}
+
+.ml-kinetic-outer::after {
+  position: absolute;
+  top: 8px;
+  left: 20px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--ml-cyan);
+  box-shadow: 0 0 22px var(--ml-cyan);
+  content: "";
+}
+
+.ml-kinetic-inner {
+  inset: 27px;
+  border: 2px solid rgba(173, 140, 255, 0.5);
+  border-right-color: transparent;
+  border-left-color: transparent;
+}
+
+.ml-kinetic-core {
+  inset: 55px;
+  background: var(--ml-coral);
+  box-shadow: 0 0 42px rgba(255, 116, 94, 0.72);
+}
+
+.ml-closing-copy {
+  position: relative;
+  z-index: 2;
+}
+
+.ml-closing-copy .ml-kicker {
+  justify-content: center;
+}
+
+.ml-closing-copy h2 {
+  margin: 0;
+  font-size: clamp(3.5rem, 9vw, 8.5rem);
+  font-weight: 520;
+  letter-spacing: -0.075em;
+  line-height: 0.9;
+}
+
+.ml-closing-copy > p:last-child {
+  margin: 1.8rem 0 0;
+  color: var(--ml-muted);
+  font-size: 1.05rem;
+}
+
+.ml-closing-action {
+  position: relative;
+  z-index: 2;
+  display: inline-flex;
+  gap: 2rem;
+  align-items: center;
+  margin-top: 2.6rem;
+  padding: 0.65rem 0.7rem 0.65rem 1.3rem;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: 999px;
+  font-size: 0.76rem;
+  transition: border-color 180ms ease, background 180ms ease;
+}
+
+.ml-closing-action:hover {
+  border-color: var(--ml-cyan);
+  background: rgba(82, 231, 255, 0.08);
+}
+
+.ml-closing-action b {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--ml-text);
+  color: #070916;
+}

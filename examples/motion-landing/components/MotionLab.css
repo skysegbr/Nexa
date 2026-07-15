@@ -1,0 +1,228 @@
+.ml-motion-lab {
+  position: relative;
+  padding: clamp(7rem, 12vw, 12rem) 0;
+}
+
+.ml-motion-lab::before {
+  position: absolute;
+  top: 12%;
+  left: -12rem;
+  width: 32rem;
+  height: 32rem;
+  border-radius: 50%;
+  background: rgba(173, 140, 255, 0.1);
+  filter: blur(100px);
+  content: "";
+}
+
+.ml-motion-lab-inner {
+  position: relative;
+  display: grid;
+  grid-template-columns: 0.75fr 1.2fr 0.72fr;
+  gap: 1.2rem;
+  width: min(var(--ml-max), calc(100% - 40px));
+  margin: 0 auto;
+}
+
+.ml-motion-intro {
+  align-self: center;
+  padding-right: 1.5rem;
+}
+
+.ml-motion-intro .ml-section-title {
+  font-size: clamp(2.8rem, 5vw, 5.3rem);
+}
+
+.ml-motion-intro > p:last-child {
+  max-width: 390px;
+  margin: 2rem 0 0;
+  color: var(--ml-muted);
+  font-size: 0.95rem;
+  line-height: 1.75;
+}
+
+.ml-lab-card,
+.ml-code-card {
+  overflow: hidden;
+  border: 1px solid var(--ml-line);
+  border-radius: 24px;
+  background: linear-gradient(145deg, rgba(15, 23, 50, 0.9), rgba(7, 10, 24, 0.9));
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.22);
+}
+
+.ml-lab-card {
+  min-height: 470px;
+}
+
+.ml-lab-head,
+.ml-code-head {
+  display: flex;
+  justify-content: space-between;
+  padding: 1.1rem 1.3rem;
+  border-bottom: 1px solid var(--ml-line);
+  color: var(--ml-muted);
+  font-size: 0.62rem;
+  letter-spacing: 0.12em;
+}
+
+.ml-guide-stage {
+  position: relative;
+  display: flex;
+  height: 330px;
+  align-items: center;
+  padding: 0 2.3rem;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 50% 50%, rgba(79, 124, 255, 0.14), transparent 45%),
+    linear-gradient(rgba(157, 180, 255, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(157, 180, 255, 0.06) 1px, transparent 1px);
+  background-size: auto, 26px 26px, 26px 26px;
+}
+
+.ml-guide-stage svg {
+  position: absolute;
+  right: 2.3rem;
+  left: 2.3rem;
+  width: calc(100% - 4.6rem);
+  overflow: visible;
+}
+
+.ml-guide-stage path {
+  fill: none;
+  stroke: rgba(82, 231, 255, 0.48);
+  stroke-dasharray: 5 8;
+  stroke-width: 1.5;
+}
+
+.ml-guide-dot,
+.ml-guide-halo {
+  position: absolute;
+  top: 50%;
+  left: 2.3rem;
+  width: 18px;
+  height: 18px;
+  margin-top: -9px;
+  border-radius: 50%;
+  background: var(--ml-coral);
+  box-shadow: 0 0 25px var(--ml-coral);
+  transform-origin: center;
+}
+
+.ml-guide-halo {
+  border: 1px solid rgba(255, 116, 94, 0.9);
+  background: transparent;
+  box-shadow: none;
+}
+
+.ml-mini-timeline {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  height: 64px;
+  align-items: end;
+  border-top: 1px solid var(--ml-line);
+  background: #080c1d;
+}
+
+.ml-mini-timeline i {
+  height: 100%;
+  border-right: 1px solid rgba(157, 180, 255, 0.1);
+}
+
+.ml-mini-timeline b {
+  position: absolute;
+  bottom: 15px;
+  width: 8px;
+  height: 8px;
+  border: 1px solid #dfe5ff;
+  border-radius: 50%;
+  background: var(--ml-blue);
+}
+
+.ml-mini-playhead {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 54%;
+  z-index: 2;
+  width: 1px;
+  background: var(--ml-coral);
+  box-shadow: 0 0 12px var(--ml-coral);
+}
+
+.ml-code-card {
+  align-self: end;
+  transform: translateY(3rem);
+}
+
+.ml-code-card pre {
+  display: flex;
+  flex-direction: column;
+  min-height: 300px;
+  margin: 0;
+  padding: 1.5rem 1.35rem;
+  overflow: hidden;
+  font: 0.76rem/1.7 "SFMono-Regular", Consolas, monospace;
+}
+
+.ml-code-card code {
+  white-space: pre;
+}
+
+.ml-code-dim {
+  color: #6f7ca8;
+}
+
+.ml-code-const {
+  color: var(--ml-lavender);
+}
+
+.ml-code-accent {
+  color: var(--ml-cyan);
+}
+
+.ml-code-bright {
+  color: #dce2fb;
+}
+
+.ml-code-card > p {
+  margin: 0;
+  padding: 1rem 1.35rem;
+  border-top: 1px solid var(--ml-line);
+  color: var(--ml-muted);
+  font-size: 0.68rem;
+}
+
+.ml-code-card > p span {
+  margin-right: 0.5rem;
+  color: #5df29a;
+}
+
+@media (max-width: 1050px) {
+  .ml-motion-lab-inner {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .ml-motion-intro {
+    grid-column: 1 / -1;
+    margin-bottom: 2rem;
+  }
+
+  .ml-code-card {
+    transform: none;
+  }
+}
+
+@media (max-width: 720px) {
+  .ml-motion-lab-inner {
+    grid-template-columns: 1fr;
+  }
+
+  .ml-guide-stage {
+    height: 280px;
+  }
+
+  .ml-code-card {
+    display: none;
+  }
+}

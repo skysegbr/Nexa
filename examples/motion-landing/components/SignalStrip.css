@@ -1,0 +1,37 @@
+.ml-signal-strip {
+  position: relative;
+  z-index: 5;
+  overflow: hidden;
+  border-top: 1px solid var(--ml-line);
+  border-bottom: 1px solid var(--ml-line);
+  background: rgba(7, 10, 24, 0.8);
+}
+
+.ml-signal-track {
+  display: flex;
+  gap: 3.5rem;
+  align-items: center;
+  width: max-content;
+  min-height: 76px;
+  padding: 0 2rem;
+  will-change: transform;
+}
+
+.ml-signal-track span {
+  display: inline-flex;
+  gap: 3.5rem;
+  align-items: center;
+  color: #c7cee8;
+  font-size: 0.68rem;
+  font-weight: 760;
+  letter-spacing: 0.18em;
+  white-space: nowrap;
+}
+
+.ml-signal-track i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--ml-coral);
+  box-shadow: 0 0 16px var(--ml-coral);
+}
