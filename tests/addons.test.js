@@ -553,3 +553,22 @@ test("ZoomStage: hashNav syncs the URL hash both ways", async () => {
   assertEqual(container.querySelector(".m-zoom-frame-active").textContent, "overview", "expected a hash change to navigate the stage");
   location.hash = "";
 });
+
+test("ZoomStage: controllerRef zoomIn/zoomOut zoom the camera", async () => {
+  const container = mountPoint();
+  const controllerRef = { current: null };
+  render(zoomApp({ freeZoom: true, padding: 0, controllerRef }), container);
+  await flush();
+  const world = container.querySelector(".m-zoom-world");
+
+  controllerRef.current.zoomIn();
+  await flush();
+  const inScale = Number(/scale\(([\d.]+)\)/.exec(world.style.transform)?.[1]);
+  assert(inScale > 1.0001, `expected zoomIn to raise the scale, got ${inScale}`);
+
+  controllerRef.current.zoomOut();
+  controllerRef.current.zoomOut();
+  await flush();
+  const outScale = Number(/scale\(([\d.]+)\)/.exec(world.style.transform)?.[1]);
+  assert(outScale < inScale, `expected zoomOut to lower the scale, got ${outScale}`);
+});

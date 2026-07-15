@@ -43,6 +43,9 @@ export interface ZoomController {
   reset(): void;
   /** Zoom out to frame every frame at once (a whole-canvas overview). */
   fitAll(): void;
+  /** Zoom the camera toward the viewport centre (for toolbar buttons). */
+  zoomIn(): void;
+  zoomOut(): void;
   /** Current step index into the (possibly path-reordered) sequence. */
   readonly index: number;
   /** The active navigation sequence (frames in `path` order). */

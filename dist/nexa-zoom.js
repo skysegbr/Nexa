@@ -638,6 +638,8 @@ export function ZoomStage({
       goTo,
       reset: () => ctrlRef.current?.reset(),
       fitAll: () => ctrlRef.current?.fitAll(seq),
+      zoomIn: () => ctrlRef.current?.zoomCenter(1.3),
+      zoomOut: () => ctrlRef.current?.zoomCenter(1 / 1.3),
       index: curIndex,
       frames: seq,
     };

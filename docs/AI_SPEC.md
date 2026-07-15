@@ -1712,7 +1712,7 @@ Navigation respects `prefers-reduced-motion` (it jumps instead of animating).
 | `index` / `defaultIndex` / `onIndexChange` | Controlled/uncontrolled current frame |
 | `duration` / `easing` | Camera animation duration (ms) and easing function |
 | `padding` | Viewport-margin fraction (0–0.45) kept around each framed frame (default `0.06`; `0` fills the viewport) |
-| `controllerRef` | ref, set to `{ next, prev, goTo, reset, fitAll, index, frames }` every render |
+| `controllerRef` | ref, set to `{ next, prev, goTo, reset, fitAll, zoomIn, zoomOut, index, frames }` every render |
 | `keyboardNav` | Arrow/Space step, Home/End jump to first/last (default `true`); with `freeZoom`, `+`/`-` zoom and `0`/`Esc` recenter; ignores keys typed into inputs, `<select>` and contentEditable |
 | `advanceOnClick` | Tap the stage background to advance (default `true`) — a drag/pan/swipe never counts as a tap |
 | `swipeNav` | Horizontal swipe steps frames on touch/pen (default `true`; a `freeZoom` drag pans instead) |
