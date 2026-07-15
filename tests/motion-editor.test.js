@@ -265,6 +265,32 @@ test("motion editor: F7 persists a blank exposure and compiles runtime visibilit
   assertEqual(spec.tracks.box.some((keyframe) => keyframe.blank), false);
 });
 
+test("motion editor: blank keyframes survive the code-pane export → apply round-trip", async () => {
+  let doc = normalizeMotionDocument({
+    ...legacyDoc(),
+    tracks: { box: [{ at: 0, x: 10 }, { at: 1000, x: 40 }] },
+  });
+  doc = insertLayerKeyframeDoc(doc, doc.layers[0].id, 500, true).doc;
+
+  // The export is runtime-faithful: blank compiles to discrete visibility.
+  const spec = parseTimelineCode(generateCode(doc));
+  assertEqual(spec.tracks.box.some((keyframe) => keyframe.blank), false);
+
+  // Applying that same code back must rebuild the blank marker, not persist
+  // the compiled visibility set (the pre-fix bug: F7 → export → apply erased
+  // every blank keyframe, so the lanes and the blank toggle stopped seeing it).
+  const applied = applySpecToDoc(doc, spec);
+  const at500 = applied.tracks.box.find((keyframe) => keyframe.at === 500);
+  assertEqual(at500.blank, true);
+  assert(!at500.set, "restored blank keyframe sheds the compiled visibility set");
+
+  // Visible keyframes shed the injected visibility set and keep their pose.
+  const at1000 = applied.tracks.box.find((keyframe) => keyframe.at === 1000);
+  assertEqual(at1000.blank, undefined);
+  assert(!at1000.set, "visible keyframes shed the compiled visibility set");
+  assertEqual(at1000.x, 40);
+});
+
 test("motion editor: F6 ends a blank exposure with copied content", async () => {
   let doc = normalizeMotionDocument({
     ...legacyDoc(),

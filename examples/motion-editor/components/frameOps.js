@@ -121,3 +121,21 @@ export function runtimeTrack(keyframes) {
 export const runtimeTracks = (tracks) => Object.fromEntries(
   Object.entries(tracks || {}).map(([name, keyframes]) => [name, runtimeTrack(keyframes)]),
 );
+
+// The inverse of runtimeTrack: a track whose EVERY keyframe carries a discrete
+// `set.visibility` is one runtimeTrack compiled from `blank` markers — rebuild
+// those markers so the code pane's export → apply round-trip doesn't flatten
+// blank keyframes into visibility sets the editor can no longer author or show
+// as blank spans. Anything not fully visibility-compiled is returned untouched.
+export function authoringTrack(keyframes) {
+  if (!keyframes.length || !keyframes.every((keyframe) => keyframe.set && "visibility" in keyframe.set)) {
+    return keyframes;
+  }
+  return keyframes.map((keyframe) => {
+    const { set, ...pose } = keyframe;
+    const { visibility, ...heldSet } = set;
+    // A blank keyframe holds no pose — drop the set (and the visibility carry).
+    if (visibility === "hidden") return { at: keyframe.at, blank: true };
+    return Object.keys(heldSet).length > 0 ? { ...pose, set: heldSet } : pose;
+  });
+}

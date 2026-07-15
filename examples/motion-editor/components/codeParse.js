@@ -6,6 +6,7 @@
 
 import { isPublishedActor } from "./layerTypes.js";
 import { normalizeLayers } from "./layerOps.js";
+import { authoringTrack } from "./frameOps.js";
 
 export function parseTimelineCode(source) {
   const start = source.indexOf("useTimeline(");
@@ -106,7 +107,10 @@ export function applySpecToDoc(doc, spec) {
   }
   const tracks = {};
   for (const actor of actors) {
-    const source = isPublishedActor(doc, actor.id) ? spec.tracks[actor.id] || [] : doc.tracks[actor.id] || [];
+    // Published tracks come back COMPILED (blank → visibility sets); decompile
+    // them so blank keyframes survive the round-trip. Guide/mask tracks keep
+    // their editor-only authoring form straight from the document.
+    const source = isPublishedActor(doc, actor.id) ? authoringTrack(spec.tracks[actor.id] || []) : doc.tracks[actor.id] || [];
     tracks[actor.id] = source.map((keyframe) => ({ ...keyframe }));
   }
   return {
