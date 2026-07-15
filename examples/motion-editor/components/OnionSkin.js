@@ -15,6 +15,7 @@ import { DEFAULT_FPS } from "./editorUtils.js";
 import { resolveActor } from "./symbolOps.js";
 import { ActorArtwork } from "./ActorArtwork.js";
 import { isVectorKind } from "./vectorGeometry.js";
+import { isPublishedActor } from "./layerTypes.js";
 import { layerForActor, orderedActors, resolvedLayerFlags } from "./layerOps.js";
 import { runtimeTracks } from "./frameOps.js";
 
@@ -105,8 +106,12 @@ export function OnionSkin({ doc, playheadRef, count, layerFlags }) {
         },
         orderedActors(doc)
           .filter((actor) => {
+            // The stage and the published code both drop mask AND guide
+            // layers; the canonical predicate keeps the ghosts in step so
+            // guide artwork never bleeds into the onion frames.
+            if (!isPublishedActor(doc, actor.id)) return false;
             const layer = layerForActor(doc, actor.id);
-            return !layer || (layer.type !== "mask" && !resolvedLayerFlags(doc, layerFlags, layer.id).hidden);
+            return !layer || !resolvedLayerFlags(doc, layerFlags, layer.id).hidden;
           })
           .map((actor) => resolveActor(doc, actor))
           .map((actor) =>
