@@ -1,0 +1,78 @@
+.sy-panel {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+}
+
+.sy-base {
+  fill: #141a30;
+  stroke: #26304f;
+  stroke-width: 2;
+}
+
+.sy-brand {
+  fill: #eef2ff;
+  font-size: 40px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+}
+
+.sy-model {
+  fill: #6b78a8;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.3em;
+}
+
+.sy-module {
+  fill: #1b2340;
+  stroke: #2b365a;
+  stroke-width: 1.5;
+}
+
+.sy-module-name {
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+}
+
+.sy-label {
+  fill: #8b98c8;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-anchor: middle;
+}
+
+.sy-label-lg { font-size: 22px; }
+.sy-label-left { text-anchor: start; }
+
+/* knobs */
+.sy-knob-ring { fill: none; stroke: #2f3b60; stroke-width: 3; }
+.sy-knob-body { fill: #2a3352; stroke: #3d4a72; stroke-width: 2; }
+.sy-knob-ind { stroke: #cdd8ff; stroke-width: 4; stroke-linecap: round; }
+
+/* sliders */
+.sy-slider-track { fill: #10162b; }
+.sy-slider-fill { fill: #4f7cff; opacity: 0.7; }
+.sy-slider-handle { fill: #dfe6ff; stroke: #9fb0e8; stroke-width: 1.5; }
+
+/* little screens */
+.sy-screen { fill: #0a1120; stroke: #223; stroke-width: 2; }
+.sy-trace { fill: none; stroke: #4ee6c4; stroke-width: 3; stroke-linejoin: round; filter: drop-shadow(0 0 5px rgba(78, 230, 196, 0.6)); }
+
+/* sequencer steps */
+.sy-step { fill: #222c49; stroke: #34406a; stroke-width: 1.5; }
+.sy-step-on { fill: #c084fc; stroke: #d8b4fe; filter: drop-shadow(0 0 8px rgba(192, 132, 252, 0.7)); }
+
+/* VU meter */
+.sy-vu { fill: #33c98a; opacity: 0.85; }
+.sy-vu-hot { fill: #ff6d6d; }
+
+/* patch bay */
+.sy-jack-ring { fill: #0d1428; stroke: #2c3860; stroke-width: 3; }
+.sy-jack { fill: #4a567e; stroke: #6b78a8; stroke-width: 2; }
+
+/* LEDs */
+.sy-led { fill: #33405f; }
+.sy-led-on { fill: #7bf0a0; filter: drop-shadow(0 0 8px rgba(123, 240, 160, 0.9)); }

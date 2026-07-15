@@ -1,0 +1,78 @@
+@import url("./components/Probe.css");
+@import url("./components/Controls.css");
+@import url("./components/InfoCard.css");
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+}
+
+body {
+  font-family: Inter, "Segoe UI", system-ui, sans-serif;
+  color: #e8ecff;
+  background: #070a14;
+  overflow: hidden;
+}
+
+#app,
+.sc-app {
+  position: fixed;
+  inset: 0;
+}
+
+.sc-app {
+  background:
+    radial-gradient(ellipse at 28% 12%, #0e1430 0%, transparent 55%),
+    radial-gradient(ellipse at 85% 95%, #160f2a 0%, transparent 55%),
+    #070a14;
+}
+
+.sc-stage {
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  cursor: grab;
+}
+
+.sc-stage:active {
+  cursor: grabbing;
+}
+
+/* transparent frames: the panel art shows through; regions are camera targets */
+.sc-stage .m-zoom-frame {
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 0;
+  overflow: visible;
+  transition: none;
+}
+
+.sc-stage .m-zoom-frame-active {
+  border: none;
+  box-shadow: none;
+}
+
+.sc-hint {
+  position: fixed;
+  top: 20px;
+  right: 24px;
+  margin: 0;
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #6d7cb2;
+  text-align: right;
+  pointer-events: none;
+}
+
+@media (max-width: 720px) {
+  .sc-hint { display: none; }
+}

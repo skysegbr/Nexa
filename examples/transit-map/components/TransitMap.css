@@ -1,0 +1,63 @@
+.tx-map {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+}
+
+.tx-base {
+  fill: #0e1424;
+  stroke: #202a45;
+  stroke-width: 2;
+}
+
+.tx-brand {
+  fill: #eef2ff;
+  font-size: 44px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+}
+
+.tx-tagline {
+  fill: #6b78a8;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.28em;
+}
+
+.tx-line {
+  fill: none;
+  stroke-width: 16;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  opacity: 0.92;
+}
+
+.tx-stop-ring {
+  fill: #0e1424;
+  stroke-width: 6;
+}
+
+.tx-stop {
+  fill: #eef2ff;
+}
+
+.tx-inter-ring {
+  fill: #0e1424;
+  stroke: #cdd8ff;
+  stroke-width: 6;
+}
+
+.tx-inter {
+  fill: #ffffff;
+}
+
+.tx-name {
+  fill: #c3cdf0;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-anchor: middle;
+  paint-order: stroke;
+  stroke: rgba(8, 12, 24, 0.85);
+  stroke-width: 4px;
+}

@@ -1,0 +1,53 @@
+.sc-probe {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+}
+
+.sc-base { fill: #0a0f1e; stroke: #1b2540; stroke-width: 2; }
+.sc-brand { fill: #eef2ff; font-size: 44px; font-weight: 800; letter-spacing: 0.08em; }
+.sc-desig { fill: #6b78a8; font-size: 15px; font-weight: 700; letter-spacing: 0.26em; }
+
+/* solar arrays */
+.sc-spar { stroke: #4a5878; stroke-width: 10; stroke-linecap: round; }
+.sc-panel { fill: #22314f; stroke: #f0a23a; stroke-width: 2.5; }
+.sc-cell { stroke: rgba(240, 162, 58, 0.34); stroke-width: 1.5; }
+
+/* antenna */
+.sc-mast { stroke: #5a6a8c; stroke-width: 8; stroke-linecap: round; }
+.sc-dish { fill: #293654; stroke: #6b7ba0; stroke-width: 3; }
+.sc-dish-inner { fill: #1b2540; }
+.sc-strut { stroke: #6b7ba0; stroke-width: 3; }
+.sc-feed { fill: #9aacce; }
+
+/* instrument bus */
+.sc-bus { fill: #2b3a5a; }
+.sc-bus-edge { fill: none; stroke: #22c9a8; stroke-width: 3; }
+.sc-bus-panel { fill: #1f2c48; stroke: #35456a; stroke-width: 2; }
+.sc-box { fill: #38486e; stroke: #55689a; stroke-width: 2; }
+.sc-tracker { fill: #0f1830; stroke: #6b7ba0; stroke-width: 3; }
+.sc-boom { stroke: #46567a; stroke-width: 6; stroke-linecap: round; }
+.sc-sensor { fill: #9aacce; }
+
+/* propulsion */
+.sc-tank { fill: #33405f; stroke: #ff6d6d; stroke-width: 2.5; }
+.sc-nozzle { fill: #3a2a30; stroke: #ff6d6d; stroke-width: 2.5; }
+.sc-nozzle-rim { fill: none; stroke: #ff9a8a; stroke-width: 4; }
+.sc-thruster { fill: #2a3652; stroke: #ff6d6d; stroke-width: 2; }
+
+/* RTG */
+.sc-rtg { fill: #2e2440; stroke: #c084fc; stroke-width: 2.5; }
+.sc-fin { stroke: #c084fc; stroke-width: 3; opacity: 0.6; }
+
+/* labels */
+.sc-leader { stroke: rgba(180, 196, 236, 0.4); stroke-width: 1.5; stroke-dasharray: 4 5; }
+.sc-leader-dot { fill: #b4c4ec; }
+.sc-tag {
+  fill: #c3cdf0;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  paint-order: stroke;
+  stroke: rgba(8, 12, 24, 0.85);
+  stroke-width: 4px;
+}
