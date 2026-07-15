@@ -7,11 +7,12 @@
 
 import { useEffect, useRef, useState } from "/dist/nexa.js";
 import { createTimeline } from "/dist/nexa-motion.js";
+import { runtimeTracks } from "./frameOps.js";
 
 function buildController(doc) {
   return createTimeline({
     duration: doc.duration,
-    tracks: doc.tracks,
+    tracks: runtimeTracks(doc.tracks),
     labels: doc.labels,
     loop: doc.loop,
     autoplay: false,

@@ -31,6 +31,7 @@ An actor selection and a keyframe selection are mutually exclusive — the inspe
 Frames at the document's fps (default 24, editable in the transport — the readout shows `f41 · 24 fps · 1.7s`). Dots are keyframes; shaded spans with arrows are tweens (gold when the span ends on a motion guide). Everything snaps to the frame grid.
 
 - **Layers column**: `+ layer` creates an empty layer · `+ folder` creates a Flash-style folder · `+ mask` places an animated mask above the selected row and nests that row beneath it · `+ guide` creates editor-only reference artwork · ▾/▸ expands or collapses a folder/mask · →/← moves a row into/out of the container · 👁 hide · 🔒 lock · colored square = outline mode · double-click renames · ↑↓ changes sibling paint order (top paints in front) · `+` keys every actor in a layer or container · ✕ removes the row and its subtree. Container visibility, locking and outline mode propagate to descendants.
+- **Frame commands**: `F5` inserts a frame and shifts later keys · `F6` inserts a content keyframe by copying the current exposure · `F7` starts a blank exposure · `Shift+F6` clears a keyframe into the preceding exposure. The toolbar below the transport exposes the same commands.
 - **Transport**: play/stop/rewind · ◉ onion skin (ghosts per frame; drag the ❲ ❳ brackets on the ruler to widen) · ∞ loop (exported) · spd (preview only) · zoom · 🏷 label at the playhead (exported for `gotoAndPlay`; double-click a marker removes it).
 
 ## Scenes
@@ -39,7 +40,7 @@ The scene strip above the stage switches, renames, reorders, creates, duplicates
 
 ## Keyboard
 
-`Ctrl+Z / Ctrl+Shift+Z / Ctrl+Y` undo/redo · `Ctrl+C / Ctrl+V` copy/paste keyframes to the playhead · `Ctrl+D` duplicate actor · `Del` delete selection · `Esc` cancel guide drawing · `V/Q/N/Y/R/O/T` select Transform/Line/Pencil/Rectangle/Oval/Text tools.
+`Ctrl+Z / Ctrl+Shift+Z / Ctrl+Y` undo/redo · `Ctrl+C / Ctrl+V` copy/paste keyframes to the playhead · `Ctrl+D` duplicate actor · `F5/F6/F7/Shift+F6` frame/keyframe/blank/clear · `Del` delete selection · `Esc` cancel guide drawing · `V/Q/N/Y/R/O/T` select Transform/Line/Pencil/Rectangle/Oval/Text tools.
 
 ## More
 
@@ -53,4 +54,4 @@ Project files carry a versioned editor schema. Legacy JSON is normalized on impo
 
 ## Road to the Flash authoring model
 
-The runtime stays browser-native and small; Flash-like authoring belongs here in the editor. Schema v7 now has independent multi-actor layers, nested folders, animated masks, editor-only guides, multi-scene movies and nested MovieClip editing. The next structural milestone is explicit frame/keyframe/blank-keyframe operations. That separation avoids baking authoring complexity into `nexa-motion.js`.
+The runtime stays browser-native and small; Flash-like authoring belongs here in the editor. Schema v8 now adds explicit frame, content-keyframe and blank-keyframe operations to independent layers, nested folders, animated masks, guides, scenes and MovieClips. Blank exposures compile to ordinary discrete visibility steps only at preview/export time, so authoring complexity stays out of `nexa-motion.js`.

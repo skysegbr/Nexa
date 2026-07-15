@@ -1,7 +1,7 @@
 // Layer-domain callbacks consumed by TimelinePanel. app.js composes this
 // adapter but does not own hierarchy or selection transactions.
 
-import { layerDescendantIds } from "./layerOps.js";
+import { layerActorIds, layerDescendantIds } from "./layerOps.js";
 import { isLayerContainer } from "./layerTypes.js";
 
 export function layerTimelineBindings({ editor, layers, setActorSelection }) {
@@ -15,9 +15,22 @@ export function layerTimelineBindings({ editor, layers, setActorSelection }) {
     editor.clearSelection();
   };
 
+  const runFrameAction = (action) => () => {
+    setActorSelection(null);
+    editor[action](layers.activeId);
+  };
+  const frameActions = {
+    disabled: !layers.activeId || layerActorIds(editor.doc, layers.activeId).length === 0,
+    insertFrame: runFrameAction("insertLayerFrame"),
+    insertKeyframe: runFrameAction("insertLayerKeyframe"),
+    insertBlankKeyframe: runFrameAction("insertLayerBlankKeyframe"),
+    clearKeyframe: runFrameAction("clearLayerKeyframe"),
+  };
+
   return {
     activeLayerId: layers.selectedId,
     layerFlags: layers.flags,
+    frameActions,
     onAddKeyframe: (id) => {
       setActorSelection(null);
       layers.select(id);

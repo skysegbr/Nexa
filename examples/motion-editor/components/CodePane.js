@@ -6,6 +6,7 @@
 import { h, useMemo, useState } from "/dist/nexa.js";
 import { parseTimelineCode } from "./codeParse.js";
 import { publishedTrackEntries } from "./layerTypes.js";
+import { runtimeTracks } from "./frameOps.js";
 
 // new RegExp(string) instead of a literal: the repo's lightweight syntax
 // validator balances brackets and would trip on the character class.
@@ -15,9 +16,7 @@ function formatKeyframe(keyframe) {
   // `_`-prefixed keys (the editor's keyframe ids) never reach the export.
   const parts = Object.entries(keyframe)
     .filter(([key]) => !key.startsWith("_"))
-    .map(([key, value]) =>
-      typeof value === "string" ? `${key}: ${JSON.stringify(value)}` : `${key}: ${value}`,
-    );
+    .map(([key, value]) => `${key}: ${typeof value === "string" || typeof value === "object" ? JSON.stringify(value) : value}`);
   return `      { ${parts.join(", ")} },`;
 }
 
@@ -28,7 +27,7 @@ export function generateCode(doc) {
     "  tracks: {",
   ];
 
-  for (const [name, keyframes] of publishedTrackEntries(doc)) {
+  for (const [name, keyframes] of publishedTrackEntries({ ...doc, tracks: runtimeTracks(doc.tracks) })) {
     // Editor-generated track names (rect-1, text-2) are not valid JS
     // identifiers — quote them or the "ready-to-paste" code is a
     // SyntaxError.

@@ -7,7 +7,7 @@
 
 import { useEffect } from "/dist/nexa.js";
 
-export function useEditorShortcuts({ undo, redo, onCopy, onPaste, onDuplicate, onDelete, onEscape, onTool }) {
+export function useEditorShortcuts({ undo, redo, onCopy, onPaste, onDuplicate, onDelete, onEscape, onTool, onFrames }) {
   useEffect(() => {
     const onKeyDown = (event) => {
       if (event.target.matches?.("input, select, textarea")) return;
@@ -37,6 +37,16 @@ export function useEditorShortcuts({ undo, redo, onCopy, onPaste, onDuplicate, o
         onDelete();
       } else if (event.key === "Escape") {
         onEscape();
+      } else if (event.key === "F5") {
+        event.preventDefault();
+        onFrames.insertFrame();
+      } else if (event.key === "F6") {
+        event.preventDefault();
+        if (event.shiftKey) onFrames.clearKeyframe();
+        else onFrames.insertKeyframe();
+      } else if (event.key === "F7") {
+        event.preventDefault();
+        onFrames.insertBlankKeyframe();
       } else if (!event.ctrlKey && !event.metaKey && !event.altKey && toolKeys[event.key.toLowerCase()]) {
         event.preventDefault();
         onTool(toolKeys[event.key.toLowerCase()]);

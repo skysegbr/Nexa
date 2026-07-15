@@ -13,7 +13,7 @@ import { parseTrackCode } from "./codeParse.js";
 function summaryOf(keyframe) {
   const parts = Object.entries(keyframe)
     .filter(([key]) => !key.startsWith("_") && key !== "at")
-    .map(([key, value]) => (key === "path" ? "path✎" : `${key}:${value}`));
+    .map(([key, value]) => (key === "path" ? "path✎" : key === "blank" ? "blank frame" : `${key}:${value}`));
   return parts.join("  ") || "(pose only)";
 }
 
@@ -22,7 +22,7 @@ function trackSource(keyframes) {
   for (const keyframe of [...keyframes].sort((a, b) => a.at - b.at)) {
     const parts = Object.entries(keyframe)
       .filter(([key]) => !key.startsWith("_"))
-      .map(([key, value]) => (typeof value === "string" ? `${key}: ${JSON.stringify(value)}` : `${key}: ${value}`));
+      .map(([key, value]) => `${key}: ${typeof value === "string" || typeof value === "object" ? JSON.stringify(value) : value}`);
     lines.push(`  { ${parts.join(", ")} },`);
   }
   lines.push("]");

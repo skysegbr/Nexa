@@ -29,7 +29,7 @@ import {
 } from "../examples/motion-editor/components/layerOps.js";
 import { addActorDoc } from "../examples/motion-editor/components/docOps.js";
 import { generateCode } from "../examples/motion-editor/components/CodePane.js";
-import { applySpecToDoc } from "../examples/motion-editor/components/codeParse.js";
+import { applySpecToDoc, parseTimelineCode } from "../examples/motion-editor/components/codeParse.js";
 import { addMaskLayerDoc } from "../examples/motion-editor/components/layerSpecialOps.js";
 import { maskForLayer } from "../examples/motion-editor/components/layerTypes.js";
 import { enterSymbolDoc, exitSymbolDoc } from "../examples/motion-editor/components/symbolTimelineOps.js";
@@ -40,6 +40,12 @@ import {
   moveSceneDoc,
   selectSceneDoc,
 } from "../examples/motion-editor/components/sceneOps.js";
+import {
+  clearLayerKeyframeDoc,
+  insertLayerFrameDoc,
+  insertLayerKeyframeDoc,
+  runtimeTrack,
+} from "../examples/motion-editor/components/frameOps.js";
 
 const legacyDoc = () => ({
   duration: 1000,
@@ -228,6 +234,69 @@ test("motion editor: serialization removes session keyframe ids", async () => {
   assertEqual(saved.tracks.box[0]._id, undefined);
   assertEqual(saved.scenes[0].tracks.box[0]._id, undefined);
   assertEqual(saved.tracks.box[0].x, 0);
+});
+
+test("motion editor: F6 copies the current layer exposure atomically", async () => {
+  const doc = normalizeMotionDocument({
+    ...legacyDoc(),
+    tracks: { box: [{ at: 0, x: 12, opacity: 0.5 }, { at: 1000, x: 200 }] },
+  });
+  const result = insertLayerKeyframeDoc(doc, doc.layers[0].id, 500);
+  const inserted = result.doc.tracks.box.find((keyframe) => keyframe.at === 500);
+  assertEqual(inserted.x, 12);
+  assertEqual(inserted.opacity, 0.5);
+  assert(inserted._id, "inserted keyframe should receive a session id");
+  assertEqual(result.selected[0].id, inserted._id);
+});
+
+test("motion editor: F7 persists a blank exposure and compiles runtime visibility", async () => {
+  let doc = normalizeMotionDocument({
+    ...legacyDoc(),
+    tracks: { box: [{ at: 0, x: 10 }, { at: 1000, x: 40 }] },
+  });
+  doc = insertLayerKeyframeDoc(doc, doc.layers[0].id, 500, true).doc;
+  const compiled = runtimeTrack(doc.tracks.box);
+  assertEqual(compiled.find((keyframe) => keyframe.at === 500).set.visibility, "hidden");
+  assertEqual(compiled.find((keyframe) => keyframe.at === 1000).set.visibility, "visible");
+  const saved = serializeMotionDocument(doc);
+  assertEqual(saved.tracks.box.find((keyframe) => keyframe.at === 500).blank, true);
+  const spec = parseTimelineCode(generateCode(doc));
+  assertEqual(spec.tracks.box.find((keyframe) => keyframe.at === 500).set.visibility, "hidden");
+  assertEqual(spec.tracks.box.some((keyframe) => keyframe.blank), false);
+});
+
+test("motion editor: F6 ends a blank exposure with copied content", async () => {
+  let doc = normalizeMotionDocument({
+    ...legacyDoc(),
+    tracks: { box: [{ at: 0, x: 10 }, { at: 500, blank: true }] },
+  });
+  doc = insertLayerKeyframeDoc(doc, doc.layers[0].id, 800).doc;
+  const content = doc.tracks.box.find((keyframe) => keyframe.at === 800);
+  assertEqual(content.blank, undefined);
+  assertEqual(content.x, 10);
+  assertEqual(runtimeTrack(doc.tracks.box).find((keyframe) => keyframe.at === 800).set.visibility, "visible");
+});
+
+test("motion editor: F5 shifts later layer keys and extends the movie by one frame", async () => {
+  const doc = normalizeMotionDocument({
+    ...legacyDoc(),
+    fps: 10,
+    tracks: { box: [{ at: 0 }, { at: 500 }, { at: 1000 }] },
+  });
+  const next = insertLayerFrameDoc(doc, doc.layers[0].id, 500);
+  assertEqual(next.tracks.box.map((keyframe) => keyframe.at).join(","), "0,600,1100");
+  assertEqual(next.duration, 1100);
+});
+
+test("motion editor: Shift+F6 clears into the previous exposure", async () => {
+  let doc = normalizeMotionDocument({
+    ...legacyDoc(),
+    tracks: { box: [{ at: 0, x: 0 }, { at: 500, x: 50 }] },
+  });
+  doc = clearLayerKeyframeDoc(doc, doc.layers[0].id, 500);
+  assertEqual(doc.tracks.box.length, 1);
+  doc = clearLayerKeyframeDoc(doc, doc.layers[0].id, 0);
+  assertEqual(doc.tracks.box[0].blank, true, "clearing the first content frame should leave a blank exposure");
 });
 
 test("motion editor: switching scenes preserves each scene snapshot", async () => {

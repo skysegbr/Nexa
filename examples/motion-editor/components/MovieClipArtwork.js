@@ -7,11 +7,12 @@ import { ActorArtwork } from "./ActorArtwork.js";
 import { actorStyle } from "./actorGeometry.js";
 import { layerForActor, orderedActors } from "./layerOps.js";
 import { resolveActor } from "./symbolOps.js";
+import { runtimeTracks } from "./frameOps.js";
 
 function buildController(timeline) {
   return createTimeline({
     duration: timeline.duration,
-    tracks: timeline.tracks,
+    tracks: runtimeTracks(timeline.tracks),
     labels: timeline.labels,
     loop: timeline.loop,
     autoplay: false,

@@ -18,7 +18,7 @@ import {
 import { createActorActions } from "./editorActorActions.js";
 import { createSceneActions } from "./sceneEditorActions.js";
 import { createSymbolContextActions } from "./symbolContextActions.js";
-import { layerActorIds } from "./layerOps.js";
+import { createEditorFrameActions } from "./editorFrameActions.js";
 
 export function useEditorDoc(initialDoc, playheadRef) {
   const [initial] = useState(() => withKeyframeIds(normalizeMotionDocument(initialDoc, initialDoc)));
@@ -60,37 +60,6 @@ export function useEditorDoc(initialDoc, playheadRef) {
       }
     }
     setDoc({ ...effective, tracks: { ...effective.tracks, [trackName]: nextTrack } });
-  };
-
-  const addKeyframe = (trackName) => {
-    const keyframe = { at: snap(playheadRef.current), _id: freshKeyframeId() };
-    // Imported documents may list an actor without a tracks entry.
-    const nextTrack = [...(effective.tracks[trackName] || []), keyframe];
-    setDoc({ ...effective, tracks: { ...effective.tracks, [trackName]: nextTrack } });
-    setSelected([{ track: trackName, id: keyframe._id }]);
-  };
-
-  // Flash keys the whole layer: one atomic history step, one keyframe per
-  // member actor, while preserving the runtime's independent tracks.
-  const addLayerKeyframe = (layerId) => {
-    const layer = effective.layers.find((entry) => entry.id === layerId);
-    const actorIds = layer && layerActorIds(effective, layerId);
-    if (!actorIds?.length) return;
-    const at = snap(playheadRef.current);
-    const tracks = { ...effective.tracks };
-    const nextSelection = [];
-    let changed = false;
-    for (const track of actorIds) {
-      const existing = (tracks[track] || []).find((keyframe) => keyframe.at === at);
-      const keyframe = existing || { at, _id: freshKeyframeId() };
-      if (!existing) {
-        tracks[track] = [...(tracks[track] || []), keyframe];
-        changed = true;
-      }
-      nextSelection.push({ track, id: keyframe._id });
-    }
-    if (changed) setDoc({ ...effective, tracks });
-    setSelected(nextSelection);
   };
 
   // Flash's auto-key: dragging an actor on the stage records its position
@@ -191,6 +160,7 @@ export function useEditorDoc(initialDoc, playheadRef) {
   const actorActions = createActorActions({ effective, setDoc, setSelected });
   const sceneActions = createSceneActions({ effective, setDoc, setSelected });
   const symbolContextActions = createSymbolContextActions({ effective, setDoc, setSelected });
+  const frameActions = createEditorFrameActions({ effective, setDoc, setSelected, playheadRef, snap });
 
   // Loading a project is a normal (undoable) history step. Old saves
   // inherit the starter cast, every actor gets a tracks entry, and
@@ -207,6 +177,7 @@ export function useEditorDoc(initialDoc, playheadRef) {
     ...actorActions,
     ...sceneActions,
     ...symbolContextActions,
+    ...frameActions,
     clearSelection,
     doc: effective,
     // The committed document (no in-flight drag draft): rebuild triggers key
@@ -218,8 +189,6 @@ export function useEditorDoc(initialDoc, playheadRef) {
     canUndo,
     canRedo,
     updateKeyframe,
-    addKeyframe,
-    addLayerKeyframe,
     keyAtPlayhead,
     deleteSelected,
     setDocProp,

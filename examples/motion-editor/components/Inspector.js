@@ -67,6 +67,16 @@ export function Inspector({ doc, selected, drawing, onEdit, onDelete, onStartDra
   const { track, id } = selected[0];
   const keyframe = doc.tracks[track].find((entry) => entry._id === id);
 
+  if (keyframe.blank) {
+    return h(
+      "section",
+      { className: "me-inspector" },
+      h("h2", { className: "me-panel-title" }, `Inspector — ${track} @ ${keyframe.at}ms`),
+      h("p", { className: "me-empty" }, "Blank keyframe — the actor is hidden until the next content keyframe."),
+      h("button", { type: "button", className: "me-btn me-btn-danger", onClick: onDelete }, "delete blank keyframe"),
+    );
+  }
+
   const numberField = (name, value, onValue, { step = 1, min } = {}) =>
     h(
       "label",

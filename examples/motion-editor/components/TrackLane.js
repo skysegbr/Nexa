@@ -47,7 +47,13 @@ export function TrackLane({
     const sorted = [...track.keyframes].sort((a, b) => a.at - b.at);
     for (let i = 1; i < sorted.length; i += 1) {
       if (sorted[i].at > sorted[i - 1].at) {
-        spans.push({ key: `${track.actor.id}-${sorted[i]._id}`, from: sorted[i - 1].at, to: sorted[i].at, guide: Boolean(sorted[i].path) });
+        spans.push({
+          key: `${track.actor.id}-${sorted[i]._id}`,
+          from: sorted[i - 1].at,
+          to: sorted[i].at,
+          guide: Boolean(sorted[i].path),
+          blank: Boolean(sorted[i - 1].blank),
+        });
       }
     }
   }
@@ -62,7 +68,7 @@ export function TrackLane({
     spans.map((span) =>
       h("div", {
         key: span.key,
-        className: `me-span${span.guide ? " me-span-guide" : ""}`,
+        className: `me-span${span.guide ? " me-span-guide" : ""}${span.blank ? " me-span-blank" : ""}`,
         style: {
           left: pct(span.from),
           width: `calc(${pct(span.to)} - ${pct(span.from)})`,
@@ -76,9 +82,10 @@ export function TrackLane({
         className:
           "me-key" +
           (selected.some((entry) => entry.id === keyframe._id) ? " me-key-selected" : "") +
+          (keyframe.blank ? " me-key-blank" : "") +
           (keyframe.path ? " me-key-guide" : ""),
         style: { left: pct(keyframe.at), top: `${((trackIndex + 1) / (tracks.length + 1)) * 100}%` },
-        title: `${actor.label} @ ${keyframe.at}ms${keyframe.path ? " (motion guide)" : ""}`,
+        title: `${actor.label} @ ${keyframe.at}ms${keyframe.blank ? " (blank keyframe)" : keyframe.path ? " (motion guide)" : ""}`,
         onPointerDown: (e) => startDrag(e, track, keyframe._id),
         onPointerMove: moveDrag,
         onPointerUp: endDrag,

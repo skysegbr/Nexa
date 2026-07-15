@@ -11,6 +11,7 @@ import { LayerLabels } from "./LayerLabels.js";
 import { visibleLayers } from "./layerOps.js";
 import { TrackLane } from "./TrackLane.js";
 import { TransportBar } from "./TransportBar.js";
+import { FrameControls } from "./FrameControls.js";
 
 export function TimelinePanel({
   tl,
@@ -42,6 +43,7 @@ export function TimelinePanel({
   onAddLabel,
   onRemoveLabel,
   onToggleLoop,
+  frameActions,
   onion,
   onOnionToggle,
   onOnionCount,
@@ -172,6 +174,7 @@ export function TimelinePanel({
       onSpeed: setSpeed,
       onAddLabel,
     }),
+    h(FrameControls, { actions: frameActions }),
     h(
       "div",
       { className: "me-tracks" },

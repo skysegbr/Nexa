@@ -5,7 +5,7 @@ import { normalizeLayers } from "./layerOps.js";
 import { applyScene, syncActiveScene } from "./sceneOps.js";
 import { normalizeMovieClipTimeline, syncEditingSymbol } from "./symbolTimelineOps.js";
 
-export const MOTION_DOCUMENT_VERSION = 7;
+export const MOTION_DOCUMENT_VERSION = 8;
 
 const isRecord = (value) => Boolean(value) && typeof value === "object" && !Array.isArray(value);
 

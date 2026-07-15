@@ -16,6 +16,30 @@
   margin-bottom: 0.3rem;
 }
 
+.me-frame-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 28px;
+  padding: 0.25rem 0.4rem;
+  border: 1px solid #1d2440;
+  border-radius: 7px;
+  background: #0a0f22;
+}
+
+.me-frame-controls-label {
+  margin-right: 0.15rem;
+  color: #7f8fd9;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.me-frame-command {
+  padding: 0.18rem 0.5rem;
+  font-size: 0.72rem;
+}
+
 .me-clock {
   font-variant-numeric: tabular-nums;
   font-size: 0.82rem;
@@ -424,6 +448,16 @@
   border-left-color: rgba(255, 209, 102, 0.8);
 }
 
+.me-span-blank {
+  background: repeating-linear-gradient(135deg, rgba(127, 143, 217, 0.12) 0 4px, transparent 4px 8px);
+  border-bottom-style: dotted;
+  border-bottom-color: rgba(127, 143, 217, 0.45);
+}
+
+.me-span-blank::after {
+  display: none;
+}
+
 .me-playhead-lane {
   opacity: 0.5;
   box-shadow: none;
@@ -454,6 +488,16 @@
   background: #35e0c2;
   border-color: #b6fff0;
   box-shadow: 0 0 10px rgba(53, 224, 194, 0.9);
+}
+
+.me-key-blank {
+  background: #0a0f22;
+  border-color: #d8dfff;
+}
+
+.me-key-blank.me-key-selected {
+  background: #0a0f22;
+  border-color: #35e0c2;
 }
 
 /* keyframes carrying a motion guide get the Flash guide-layer accent */

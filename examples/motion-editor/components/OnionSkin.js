@@ -16,6 +16,7 @@ import { resolveActor } from "./symbolOps.js";
 import { ActorArtwork } from "./ActorArtwork.js";
 import { isVectorKind } from "./vectorGeometry.js";
 import { layerForActor, orderedActors, resolvedLayerFlags } from "./layerOps.js";
+import { runtimeTracks } from "./frameOps.js";
 
 function buildGhosts(doc, count) {
   const ghosts = [];
@@ -23,7 +24,7 @@ function buildGhosts(doc, count) {
     if (offset === 0) continue;
     ghosts.push({
       offset,
-      ctrl: createTimeline({ duration: doc.duration, tracks: doc.tracks, autoplay: false }),
+      ctrl: createTimeline({ duration: doc.duration, tracks: runtimeTracks(doc.tracks), autoplay: false }),
     });
   }
   return ghosts;

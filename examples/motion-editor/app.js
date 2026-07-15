@@ -125,8 +125,8 @@ function App() {
       setActorSel(null);
     },
     onTool: setTool,
+    onFrames: layerTimeline.frameActions,
   });
-
   return h(
     "div",
     { className: "me-app" },
