@@ -26,7 +26,9 @@ Four optional add-ons build on top of that core:
 - `dist/nexa-canvas.js` + `dist/nexa-canvas.css` — `PipelineCanvas`, an
   SVG node editor with drag, pan, zoom, mini-map, and undo/redo.
 - `dist/nexa-zoom.js` + `dist/nexa-zoom.css` — `ZoomStage`, a pan/zoom
-  presentation canvas with animated camera pan/zoom/rotate between frames.
+  presentation canvas with animated camera pan/zoom/rotate between frames,
+  optional free zoom/pan exploration (`freeZoom`), swipe/keyboard nav, and
+  screen-reader announcements.
 - `dist/nexa-editor.js` + `dist/nexa-editor.css` (+ `dist/nexa-editor-snippets.js`)
   — `FullCodeEditor`, a [CodeMirror](https://codemirror.net/5/) wrapper with a
   toolbar, snippet browser, and autocomplete. Requires the local CodeMirror

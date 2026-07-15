@@ -1698,21 +1698,26 @@ h(PipelineCanvas, {
 
 ### `ZoomStage`
 
-`dist/nexa-zoom.js` + `dist/nexa-zoom.css`. A pan/zoom presentation, in the
-style of non-linear zooming presentation tools: every frame's `content` is
-normal Nexa vdom, positioned with plain CSS on one large shared canvas (all
-frames are mounted at once) — only the *camera* is imperative, easing
-pan/zoom/rotate between frames via `requestAnimationFrame`.
+`dist/nexa-zoom.js` + `dist/nexa-zoom.css` (types in `dist/nexa-zoom.d.ts`). A
+pan/zoom presentation, in the style of non-linear zooming presentation tools:
+every frame's `content` is normal Nexa vdom, positioned with plain CSS on one
+large shared canvas (all frames are mounted at once) — only the *camera* is
+imperative, easing pan/zoom/rotate between frames via `requestAnimationFrame`.
+Navigation respects `prefers-reduced-motion` (it jumps instead of animating).
 
 | Prop | Description |
 |---|---|
-| `frames` | Array of `{ id, x, y, w, h, rotate?, content }` — world-px geometry plus vdom content |
+| `frames` | Array of `{ id, x, y, w, h, rotate?, label?, content }` — world-px geometry plus vdom content; `label` is announced to screen readers on navigation |
 | `path` | Array of frame ids for navigation order — defaults to `frames` order |
 | `index` / `defaultIndex` / `onIndexChange` | Controlled/uncontrolled current frame |
 | `duration` / `easing` | Camera animation duration (ms) and easing function |
+| `padding` | Viewport-margin fraction (0–0.45) kept around each framed frame (default `0.06`; `0` fills the viewport) |
 | `controllerRef` | ref, set to `{ next, prev, goTo, index, frames }` every render |
-| `keyboardNav` | Arrow keys / Space navigate (default `true`) |
-| `advanceOnClick` | Click the stage background to advance (default `true`) |
+| `keyboardNav` | Arrow/Space step, Home/End jump to first/last (default `true`); ignores keys typed into inputs, `<select>` and contentEditable |
+| `advanceOnClick` | Tap the stage background to advance (default `true`) — a drag/pan/swipe never counts as a tap |
+| `swipeNav` | Horizontal swipe steps frames on touch/pen (default `true`; a `freeZoom` drag pans instead) |
+| `freeZoom` | Wheel/pinch to zoom toward the cursor and drag to pan freely (default `false`) |
+| `ariaLabel` | Accessible name for the whole stage |
 
 ```js
 import { ZoomStage } from "/dist/nexa-zoom.js";
@@ -1722,8 +1727,18 @@ h(ZoomStage, {
   index,
   onIndexChange: setIndex,
   controllerRef,
+  freeZoom: true, // scroll/pinch to zoom, drag to roam
 })
 ```
+
+**Free exploration (`freeZoom`)** turns the stage into a roamable canvas:
+scroll or pinch zooms toward the cursor, drag pans, and zoom is clamped
+relative to the active frame's fit. What you explored survives a resize (it
+isn't snapped back to the frame), and navigating still eases smoothly from
+wherever the camera is to the next frame. While `freeZoom` is on a one-finger
+drag pans (so `swipeNav` steps only when it's off); a plain tap still advances.
+See [examples/star-atlas](../examples/star-atlas) — a zoomable night sky built
+on `freeZoom` with a guided tour flying between constellations.
 
 **Frames can legitimately overlap in world space** — an "overview" frame
 that zooms out to show the whole canvas is, by definition, as big as every
