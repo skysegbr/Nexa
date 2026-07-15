@@ -3,15 +3,13 @@
 // the document duration.
 
 import { h, useState } from "/dist/nexa.js";
+import { TransportReadout } from "./TransportReadout.js";
 
 const ZOOMS = [1, 2, 3, 4, 6, 8];
 const SPEEDS = [0.25, 0.5, 1, 2, 4];
 
 export function TransportBar({
   tl,
-  playing,
-  playhead,
-  frame,
   fps,
   duration,
   onSetDuration,
@@ -39,11 +37,11 @@ export function TransportBar({
   return h(
     "div",
     { className: "me-transport" },
-    h("button", { type: "button", className: "me-btn", onClick: () => tl.play() }, playing ? "▶ …" : "▶ play"),
+    h("button", { type: "button", className: "me-btn", onClick: () => tl.play() }, "▶ play"),
     h("button", { type: "button", className: "me-btn", onClick: () => tl.stop() }, "■ stop"),
     h("button", { type: "button", className: "me-btn", onClick: onRewind }, "⏮ start"),
-    // Flash's readout: current frame · frame rate · elapsed time.
-    h("span", { className: "me-clock" }, `f${frame} · ${fps} fps · ${(playhead / 1000).toFixed(2)}s`),
+    // Flash's readout: current frame · frame rate · elapsed time (self-clocked).
+    h(TransportReadout, { tl, fps }),
 
     h(
       "button",

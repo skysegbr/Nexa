@@ -6,11 +6,12 @@
 // is the zoom factor.
 
 import { h, useEffect, useRef, useState } from "/dist/nexa.js";
-import { snapToFrame, frameOf, capturePointer, DEFAULT_FPS } from "./editorUtils.js";
+import { snapToFrame, DEFAULT_FPS } from "./editorUtils.js";
 import { LayerLabels } from "./LayerLabels.js";
 import { visibleLayers } from "./layerOps.js";
 import { TrackLane } from "./TrackLane.js";
 import { TransportBar } from "./TransportBar.js";
+import { TimelineCursor } from "./TimelineCursor.js";
 import { FrameControls } from "./FrameControls.js";
 
 export function TimelinePanel({
@@ -48,12 +49,9 @@ export function TimelinePanel({
   onOnionToggle,
   onOnionCount,
 }) {
-  const [playhead, setPlayhead] = useState(0);
-  const [playing, setPlaying] = useState(false);
   const [zoom, setZoom] = useState(1);
   const [speed, setSpeed] = useState(1);
   const rulerRef = useRef(null);
-  const onionDragRef = useRef(null);
 
   const fps = doc.fps || DEFAULT_FPS;
   const frameMs = 1000 / fps;
@@ -66,16 +64,9 @@ export function TimelinePanel({
     onRenameLayer, onAddKeyframe, onDeleteLayer, onAddLayer, onAddFolder, onAddMask, onAddGuide,
   };
 
-  // UI clock: follow the real playhead while the movie runs (or after any
-  // programmatic jump). State lives here, so only the panel re-renders.
-  useEffect(() => {
-    const id = setInterval(() => {
-      playheadRef.current = tl.time;
-      setPlayhead(Math.round(tl.time));
-      setPlaying(tl.isPlaying);
-    }, 50);
-    return () => clearInterval(id);
-  }, [tl]);
+  // The playhead clock now lives in TimelineCursor (the line) and
+  // TransportReadout (the clock text) — small self-clocked children, so a
+  // playing movie no longer re-renders this panel and its lanes at 20Hz.
 
   // Preview speed survives controller rebuilds (every commit replaces tl).
   useEffect(() => {
@@ -88,30 +79,13 @@ export function TimelinePanel({
     return snapToFrame(ratio * doc.duration, fps);
   };
 
+  // Seeking writes playheadRef directly; TimelineCursor's clock (≤50ms)
+  // catches the line up. The onion brackets live in TimelineCursor too.
   const scrub = (event) => {
     const at = msFromPointer(event);
     tl.stop();
     tl.seek(at);
     playheadRef.current = at;
-    setPlayhead(at);
-  };
-
-  // Flash's onion markers: the brackets around the playhead drag to widen
-  // or narrow the ghosted range (in frames).
-  const onionMarkerDown = (event) => {
-    event.stopPropagation();
-    onionDragRef.current = true;
-    capturePointer(event);
-  };
-
-  const onionMarkerMove = (event) => {
-    if (!onionDragRef.current) return;
-    const frames = Math.abs(msFromPointer(event) - playhead) / frameMs;
-    onOnionCount(Math.max(1, Math.min(12, Math.round(frames))));
-  };
-
-  const onionMarkerUp = () => {
-    onionDragRef.current = null;
   };
 
   const pct = (at) => `${(at / doc.duration) * 100}%`;
@@ -130,30 +104,11 @@ export function TimelinePanel({
     backgroundSize: `${500 / totalFrames}% 100%, ${100 / totalFrames}% 100%`,
   };
 
-  const onionMarker = (side) => {
-    const at = side === "left" ? playhead - onion.count * frameMs : playhead + onion.count * frameMs;
-    return h(
-      "div",
-      {
-        className: `me-onion-marker me-onion-marker-${side}`,
-        title: "Onion range — drag to widen/narrow (frames)",
-        style: { left: pct(Math.max(0, Math.min(doc.duration, at))) },
-        onPointerDown: onionMarkerDown,
-        onPointerMove: onionMarkerMove,
-        onPointerUp: onionMarkerUp,
-      },
-      side === "left" ? "❲" : "❳",
-    );
-  };
-
   return h(
     "section",
     { className: "me-timeline", ariaLabel: "Timeline" },
     h(TransportBar, {
       tl,
-      playing,
-      playhead,
-      frame: frameOf(playhead, fps),
       fps,
       duration: doc.duration,
       onSetDuration,
@@ -161,7 +116,6 @@ export function TimelinePanel({
       onRewind: () => {
         tl.gotoAndStop(0);
         playheadRef.current = 0;
-        setPlayhead(0);
       },
       onion,
       onOnionToggle,
@@ -190,7 +144,6 @@ export function TimelinePanel({
           h(
             "div",
             { className: "me-ruler", ref: rulerRef, onPointerDown: scrub, style: frameGrid },
-            h("div", { className: "me-playhead", style: { left: pct(playhead) } }),
             frameMarks.map((f) =>
               h(
                 "span",
@@ -198,8 +151,6 @@ export function TimelinePanel({
                 String(f),
               ),
             ),
-            onion.on && onionMarker("left"),
-            onion.on && onionMarker("right"),
             Object.entries(doc.labels || {}).map(([name, ms]) =>
               h(
                 "span",
@@ -227,7 +178,6 @@ export function TimelinePanel({
                 .map((actor) => ({ actor, keyframes: doc.tracks[actor.id] || [] })),
               selected,
               active: activeLayerId === layer.id,
-              playheadPct: pct(playhead),
               pct,
               frameGrid,
               msFromPointer,
@@ -236,6 +186,17 @@ export function TimelinePanel({
               onDragCommit,
             }),
           ),
+          // One full-height playhead line + onion brackets over the whole
+          // strip. Self-clocked, so playback repaints only this overlay.
+          h(TimelineCursor, {
+            tl,
+            playheadRef,
+            duration: doc.duration,
+            fps,
+            measureRef: rulerRef,
+            onion,
+            onOnionCount,
+          }),
         ),
       ),
     ),

@@ -91,3 +91,27 @@ export function resolvedLayerFlags(doc, flags, id) {
   }
   return resolved;
 }
+
+// Resolve hidden/locked/outline for EVERY layer in a single memoized pass —
+// a child ORs in its parent's ALREADY-resolved flags, so the ancestor chain
+// is walked once per layer instead of rebuilt per lookup. Returns a flat
+// { [layerId]: flags } map; equivalent to resolvedLayerFlags for each id but
+// O(layers) instead of O(layers²) when the caller needs them all.
+export function resolveAllLayerFlags(doc, flags) {
+  const byId = new Map((doc.layers || []).map((layer) => [layer.id, layer]));
+  const cache = {};
+  const resolve = (id) => {
+    if (id in cache) return cache[id];
+    const layer = byId.get(id);
+    const own = flags[id] || {};
+    const parent = layer?.parentId ? resolve(layer.parentId) : null;
+    return (cache[id] = {
+      ...own,
+      hidden: Boolean(own.hidden) || Boolean(parent?.hidden),
+      locked: Boolean(own.locked) || Boolean(parent?.locked),
+      outline: Boolean(own.outline) || Boolean(parent?.outline),
+    });
+  };
+  for (const layer of doc.layers || []) resolve(layer.id);
+  return cache;
+}

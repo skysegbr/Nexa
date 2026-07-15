@@ -9,14 +9,14 @@
 // the controller owns element.style.opacity for tracks that tween it, and
 // the two must compose instead of fighting.
 
-import { h, useEffect, useRef, useState } from "/dist/nexa.js";
+import { h, useEffect, useMemo, useRef, useState } from "/dist/nexa.js";
 import { createTimeline } from "/dist/nexa-motion.js";
 import { DEFAULT_FPS } from "./editorUtils.js";
-import { resolveActor } from "./symbolOps.js";
 import { ActorArtwork } from "./ActorArtwork.js";
 import { isVectorKind } from "./vectorGeometry.js";
 import { isPublishedActor } from "./layerTypes.js";
-import { layerForActor, orderedActors, resolvedLayerFlags } from "./layerOps.js";
+import { layerForActor } from "./layerOps.js";
+import { useResolvedDoc } from "./docResolve.js";
 import { runtimeTracks } from "./frameOps.js";
 
 function buildGhosts(doc, count) {
@@ -78,6 +78,21 @@ export function OnionSkin({ doc, playheadRef, count, layerFlags }) {
     [],
   );
 
+  // The published, non-hidden actor list is IDENTICAL for every ghost —
+  // resolve it ONCE (not per ghost, which was count×2 the work at count=12).
+  // Both the resolve and the filter are memoized, so a drag's Stage
+  // re-renders don't rebuild the list.
+  const { resolvedActors, flagsByLayer } = useResolvedDoc(doc, layerFlags);
+  const visibleActors = useMemo(
+    () =>
+      resolvedActors.filter((actor) => {
+        if (!isPublishedActor(doc, actor.id)) return false;
+        const layer = layerForActor(doc, actor.id);
+        return !layer || !flagsByLayer[layer.id]?.hidden;
+      }),
+    [resolvedActors, flagsByLayer, doc],
+  );
+
   // Follow the playhead on the same 50ms clock the timeline panel uses —
   // one ghost per FRAME of the document's fps, like Flash. seek() clamps
   // to [0, duration] itself, so edge offsets pile up at the movie's ends.
@@ -104,28 +119,18 @@ export function OnionSkin({ doc, playheadRef, count, layerFlags }) {
           className: "me-onion-layer",
           style: { opacity: 0.45 - 0.09 * (Math.abs(offset) - 1) },
         },
-        orderedActors(doc)
-          .filter((actor) => {
-            // The stage and the published code both drop mask AND guide
-            // layers; the canonical predicate keeps the ghosts in step so
-            // guide artwork never bleeds into the onion frames.
-            if (!isPublishedActor(doc, actor.id)) return false;
-            const layer = layerForActor(doc, actor.id);
-            return !layer || !resolvedLayerFlags(doc, layerFlags, layer.id).hidden;
-          })
-          .map((actor) => resolveActor(doc, actor))
-          .map((actor) =>
-            h(
-              "div",
-              {
-                key: actor.id,
-                className: `me-ghost me-ghost-${actor.kind}`,
-                style: ghostStyle(actor, offset),
-                ref: ctrl.track(actor.id),
-              },
-              h(ActorArtwork, { actor, outlineColor: ghostColor(offset) }),
-            ),
+        visibleActors.map((actor) =>
+          h(
+            "div",
+            {
+              key: actor.id,
+              className: `me-ghost me-ghost-${actor.kind}`,
+              style: ghostStyle(actor, offset),
+              ref: ctrl.track(actor.id),
+            },
+            h(ActorArtwork, { actor, outlineColor: ghostColor(offset) }),
           ),
+        ),
       ),
     ),
   );

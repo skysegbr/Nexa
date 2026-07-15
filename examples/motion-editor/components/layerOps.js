@@ -14,6 +14,7 @@ export {
   layerDescendantIds,
   layerHasAncestorType,
   layerSiblingPosition,
+  resolveAllLayerFlags,
   resolvedLayerFlags,
   visibleLayers,
 } from "./layerTree.js";

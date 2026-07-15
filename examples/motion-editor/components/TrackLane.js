@@ -11,7 +11,6 @@ export function TrackLane({
   tracks,
   selected,
   active,
-  playheadPct,
   pct,
   frameGrid,
   msFromPointer,
@@ -64,7 +63,6 @@ export function TrackLane({
   return h(
     "div",
     { className: `me-row-lane me-lane-${kind}${active ? " me-lane-active" : ""}`, style: frameGrid },
-    h("div", { className: "me-playhead me-playhead-lane", style: { left: playheadPct } }),
     spans.map((span) =>
       h("div", {
         key: span.key,

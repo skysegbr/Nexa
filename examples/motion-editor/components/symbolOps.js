@@ -27,9 +27,14 @@ function nextSymbolId(library) {
   return `symbol-${index}`;
 }
 
-export function resolveActor(doc, actor) {
+export const symbolsById = (doc) => new Map((doc.library || []).map((item) => [item.id, item]));
+
+// Callers resolving MANY actors in one pass (the stage, the onion ghosts)
+// build the symbol Map once and pass it in — otherwise every actor does its
+// own O(library) find, which is O(actors × library) per render.
+export function resolveActor(doc, actor, symbols) {
   if (!actor?.symbolId) return actor;
-  const symbol = (doc.library || []).find((item) => item.id === actor.symbolId);
+  const symbol = symbols ? symbols.get(actor.symbolId) : (doc.library || []).find((item) => item.id === actor.symbolId);
   if (!symbol) return actor;
   return { ...actor, ...contentOf(symbol), symbolId: symbol.id };
 }

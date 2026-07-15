@@ -16,8 +16,8 @@ import { guidesFor } from "./stageGuides.js";
 import { SelectionBox } from "./SelectionBox.js";
 import { useMeasuredBox } from "./useMeasuredBox.js";
 import { baseOf } from "./actorGeometry.js";
-import { resolveActor } from "./symbolOps.js";
-import { layerForActor, orderedActors, resolvedLayerFlags } from "./layerOps.js";
+import { layerForActor } from "./layerOps.js";
+import { useResolvedDoc } from "./docResolve.js";
 import { StageActors } from "./StageActors.js";
 export function Stage({
   tl,
@@ -49,7 +49,10 @@ export function Stage({
     return { x: event.clientX - rect.left, y: event.clientY - rect.top };
   };
 
-  const activeFlags = activeLayerId ? resolvedLayerFlags(doc, layerFlags, activeLayerId) : {};
+  // Symbols + inherited layer flags resolved once, memoized (see docResolve)
+  // so a move/resize drag doesn't re-walk them on every pointermove.
+  const { resolvedActors, flagsByLayer } = useResolvedDoc(doc, layerFlags);
+  const activeFlags = (activeLayerId && flagsByLayer[activeLayerId]) || {};
   const create = useStageCreate({ tool, fill, stroke, strokeWidth, disabled: activeFlags.locked || activeFlags.hidden, onCreate: onCreateActor, stagePoint });
 
   // Flash's auto-key: a MOVE gesture records the drop as a position
@@ -72,7 +75,6 @@ export function Stage({
     const box = actorBox.boxOf(actor.id);
     return box ? { ...actor, ...box } : actor;
   };
-  const resolvedActors = orderedActors(doc).map((actor) => resolveActor(doc, actor));
   const actorsById = Object.fromEntries(resolvedActors.map((actor) => [actor.id, liveActor(actor)]));
   const selectedActor = actorSel ? actorsById[actorSel] : null;
   const editingSymbol = doc.editingSymbolId && doc.library.find((symbol) => symbol.id === doc.editingSymbolId);
@@ -95,7 +97,7 @@ export function Stage({
   // track() binding so the controller stays warm; visibility:hidden also
   // makes them unclickable for free.
   const selectedLayer = actorSel ? layerForActor(doc, actorSel) : null;
-  const selectedFlags = selectedLayer ? resolvedLayerFlags(doc, layerFlags, selectedLayer.id) : {};
+  const selectedFlags = (selectedLayer && flagsByLayer[selectedLayer.id]) || {};
 
   // Selection chrome lives on the MEASURED visual box (see SelectionBox).
   const selMeasured = useMeasuredBox(stageRef, tool === "select" && !drawing ? actorSel : null);
@@ -205,7 +207,7 @@ export function Stage({
       actorsById,
       activeLayerId,
       actorSel,
-      layerFlags,
+      flagsByLayer,
       tl,
       onActorPointerDown: actorPointerDown,
     }),

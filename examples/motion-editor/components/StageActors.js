@@ -4,7 +4,6 @@
 import { h } from "/dist/nexa.js";
 import { ActorContent } from "./MovieClipArtwork.js";
 import { stageActorStyle } from "./actorGeometry.js";
-import { resolvedLayerFlags } from "./layerOps.js";
 import { isPaintLayer, maskForLayer } from "./layerTypes.js";
 import { isVectorKind } from "./vectorGeometry.js";
 import { OUTLINE_COLORS } from "../data.js";
@@ -99,9 +98,9 @@ function PaintedActor({ doc, actor, layer, layerIndex, flags, tl, actorSel, onAc
   );
 }
 
-function MaskEditorOverlay({ doc, layer, actorsById, actorSel, layerFlags, onActorPointerDown }) {
+function MaskEditorOverlay({ layer, actorsById, actorSel, flagsByLayer, onActorPointerDown }) {
   if (!layer) return null;
-  const flags = resolvedLayerFlags(doc, layerFlags, layer.id);
+  const flags = flagsByLayer[layer.id] || {};
   if (flags.hidden) return null;
   return h(
     "svg",
@@ -122,7 +121,7 @@ function MaskEditorOverlay({ doc, layer, actorsById, actorSel, layerFlags, onAct
   );
 }
 
-export function StageActors({ doc, actorsById, activeLayerId, actorSel, layerFlags, tl, onActorPointerDown }) {
+export function StageActors({ doc, actorsById, activeLayerId, actorSel, flagsByLayer, tl, onActorPointerDown }) {
   const masks = doc.layers.filter((layer) => layer.type === "mask");
   const activeMask = masks.find((layer) => layer.id === activeLayerId);
   return h(
@@ -132,7 +131,7 @@ export function StageActors({ doc, actorsById, activeLayerId, actorSel, layerFla
     [...doc.layers].reverse().map((layer) => {
       if (!isPaintLayer(layer) || layer.type === "mask") return null;
       const layerIndex = doc.layers.indexOf(layer);
-      const flags = resolvedLayerFlags(doc, layerFlags, layer.id);
+      const flags = flagsByLayer[layer.id] || {};
       const mask = maskForLayer(doc, layer.id);
       return h(
         "div",
@@ -154,6 +153,6 @@ export function StageActors({ doc, actorsById, activeLayerId, actorSel, layerFla
         })),
       );
     }),
-    h(MaskEditorOverlay, { doc, layer: activeMask, actorsById, actorSel, layerFlags, onActorPointerDown }),
+    h(MaskEditorOverlay, { layer: activeMask, actorsById, actorSel, flagsByLayer, onActorPointerDown }),
   );
 }

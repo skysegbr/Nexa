@@ -246,10 +246,28 @@
 
 /* the zoomed strip: ruler + lanes scale together */
 .me-track-inner {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 0.45rem;
   min-width: 100%;
+}
+
+/* full-height playhead + onion brackets, floated over ruler and lanes so
+   playback repaints only this overlay (see TimelineCursor) */
+.me-cursor-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 5;
+}
+
+/* the brackets stay ruler-height at the top of the overlay and stay grabbable
+   even though the overlay itself lets clicks fall through to ruler/lanes */
+.me-cursor-overlay .me-onion-marker {
+  bottom: auto;
+  height: 26px;
+  pointer-events: auto;
 }
 
 .me-row-label {
@@ -456,11 +474,6 @@
 
 .me-span-blank::after {
   display: none;
-}
-
-.me-playhead-lane {
-  opacity: 0.5;
-  box-shadow: none;
 }
 
 /* keyframe dots, Flash 8 style */
