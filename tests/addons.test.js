@@ -14,6 +14,14 @@ function mouse(type, target, opts = {}) {
   target.dispatchEvent(new MouseEvent(type, { bubbles: true, cancelable: true, button: 0, ...opts }));
 }
 
+function pointer(type, target, opts = {}) {
+  target.dispatchEvent(new PointerEvent(type, { bubbles: true, cancelable: true, pointerId: 1, button: 0, ...opts }));
+}
+
+function key(target, k) {
+  target.dispatchEvent(new KeyboardEvent("keydown", { key: k, bubbles: true, cancelable: true }));
+}
+
 const CANVAS_SIZE = "width:400px;height:300px";
 
 const PIPELINE_NODES = [
@@ -351,3 +359,125 @@ test("ZoomStage: the path prop reorders and filters the navigation sequence", as
   await flush();
   assertEqual(container.querySelector(".m-zoom-frame-active").textContent, "intro");
 });
+
+test("ZoomStage: Home and End jump to the first and last frame", async () => {
+  const container = mountPoint();
+  render(zoomApp(), container);
+  await flush();
+
+  key(document, "End");
+  await flush();
+  assertEqual(container.querySelector(".m-zoom-frame-active").textContent, "overview", "End jumps to the last frame");
+
+  key(document, "Home");
+  await flush();
+  assertEqual(container.querySelector(".m-zoom-frame-active").textContent, "intro", "Home jumps to the first frame");
+});
+
+test("ZoomStage: keyboard nav ignores SELECT and contentEditable, not just inputs", async () => {
+  const container = mountPoint();
+  render(zoomApp(), container);
+  await flush();
+
+  const select = document.createElement("select");
+  container.appendChild(select);
+  key(select, "ArrowRight");
+  await flush();
+  assertEqual(container.querySelector(".m-zoom-frame-active").textContent, "intro", "an arrow inside a <select> must not advance the stage");
+
+  const editable = document.createElement("div");
+  editable.contentEditable = "true";
+  container.appendChild(editable);
+  key(editable, "ArrowRight");
+  await flush();
+  assertEqual(container.querySelector(".m-zoom-frame-active").textContent, "intro", "an arrow inside contentEditable must not advance the stage");
+
+  select.remove();
+  editable.remove();
+});
+
+test("ZoomStage: changing the padding prop re-fits the current frame immediately", async () => {
+  const container = mountPoint();
+  let setPad;
+  const App = () => {
+    const [pad, sp] = useState(0.3);
+    setPad = sp;
+    return h(ZoomStage, { frames: ZOOM_FRAMES, padding: pad, style: CANVAS_SIZE });
+  };
+  render(App, container);
+  await flush();
+
+  const world = container.querySelector(".m-zoom-world");
+  // 400x300 frame in a 400x300 viewport: padding 0.3 → scale 0.4.
+  assert(/scale\(0\.4\)/.test(world.style.transform), `expected padding to shrink the fit, got ${world.style.transform}`);
+
+  setPad(0);
+  await flush();
+  assert(/scale\(1\)/.test(world.style.transform), `expected the padding change to re-fit immediately (scale 1 at padding 0), got ${world.style.transform}`);
+});
+
+test("ZoomStage: a horizontal swipe steps through the sequence", async () => {
+  const container = mountPoint();
+  render(zoomApp(), container);
+  await flush();
+  const stage = container.querySelector(".m-zoom-stage");
+
+  pointer("pointerdown", stage, { clientX: 300, clientY: 100 });
+  pointer("pointerup", stage, { clientX: 200, clientY: 100 });
+  await flush();
+  assertEqual(container.querySelector(".m-zoom-frame-active").textContent, "detail", "a leftward swipe advances");
+
+  pointer("pointerdown", stage, { clientX: 200, clientY: 100 });
+  pointer("pointerup", stage, { clientX: 320, clientY: 100 });
+  await flush();
+  assertEqual(container.querySelector(".m-zoom-frame-active").textContent, "intro", "a rightward swipe retreats");
+});
+
+test("ZoomStage: freeZoom wheels to zoom and drags to pan the camera", async () => {
+  const container = mountPoint();
+  render(zoomApp({ freeZoom: true, padding: 0 }), container);
+  await flush();
+  const stage = container.querySelector(".m-zoom-stage");
+  const world = container.querySelector(".m-zoom-world");
+
+  // intro fits at scale 1; a scroll-up over the centre zooms in around it.
+  stage.dispatchEvent(new WheelEvent("wheel", { deltaY: -100, clientX: 200, clientY: 150, bubbles: true, cancelable: true }));
+  await flush();
+  const scale = Number(/scale\(([\d.]+)\)/.exec(world.style.transform)?.[1]);
+  assert(scale > 1.0001, `expected wheel-up to zoom in, got scale ${scale}`);
+
+  // Reset by jumping back, then drag right 50px → camera centre shifts left.
+  const container2 = mountPoint();
+  render(zoomApp({ freeZoom: true, padding: 0 }), container2);
+  await flush();
+  const stage2 = container2.querySelector(".m-zoom-stage");
+  const world2 = container2.querySelector(".m-zoom-world");
+  pointer("pointerdown", stage2, { clientX: 200, clientY: 150 });
+  pointer("pointermove", stage2, { clientX: 250, clientY: 150 });
+  pointer("pointerup", stage2, { clientX: 250, clientY: 150 });
+  await flush();
+  assert(/translate\(-150px, -150px\)$/.test(world2.style.transform), `expected the drag to pan the camera, got ${world2.style.transform}`);
+});
+
+test("ZoomStage: announces the active frame to screen readers", async () => {
+  const container = mountPoint();
+  const controllerRef = { current: null };
+  const FRAMES = [
+    { id: "a", x: 0, y: 0, w: 400, h: 300, label: "Welcome", content: h("p", null, "a") },
+    { id: "b", x: 500, y: 0, w: 200, h: 150, content: h("p", null, "b") },
+  ];
+  render(() => h(ZoomStage, { frames: FRAMES, controllerRef, style: CANVAS_SIZE }), container);
+  await flush();
+
+  const live = container.querySelector(".m-zoom-live");
+  assertEqual(live.getAttribute("aria-live"), "polite");
+  assertEqual(live.textContent, "Welcome", "expected the frame's label to be announced");
+
+  controllerRef.current.next();
+  await flush();
+  assertEqual(live.textContent, "Frame 2 of 2", "expected a labelless frame to fall back to its position");
+});
+
+// Note: two-finger pinch shares the same zoomBy() path the wheel test above
+// exercises; it isn't unit-tested here because dispatchEvent can't faithfully
+// simulate a synthetic two-pointer sequence in Chromium (it works in Firefox).
