@@ -1,0 +1,200 @@
+{
+  "generated": "2026-07-16 14:37:40",
+  "runs": 3,
+  "results": {
+    "build/basic-py": {
+      "js": {
+        "count": 1,
+        "bytes": 70223
+      },
+      "css": {
+        "count": 1,
+        "bytes": 171521
+      },
+      "all": {
+        "count": 4,
+        "bytes": 568607
+      },
+      "components_js": {
+        "count": 0,
+        "bytes": 0
+      },
+      "timing": {
+        "domContentLoaded": 22.8,
+        "load": 41.9
+      },
+      "errors": [],
+      "js_files": []
+    },
+    "build/form-py": {
+      "js": {
+        "count": 1,
+        "bytes": 116244
+      },
+      "css": {
+        "count": 1,
+        "bytes": 172375
+      },
+      "all": {
+        "count": 4,
+        "bytes": 615481
+      },
+      "components_js": {
+        "count": 0,
+        "bytes": 0
+      },
+      "timing": {
+        "domContentLoaded": 24.4,
+        "load": 50
+      },
+      "errors": [],
+      "js_files": []
+    },
+    "build/complete-page-py": {
+      "js": {
+        "count": 1,
+        "bytes": 141938
+      },
+      "css": {
+        "count": 1,
+        "bytes": 171996
+      },
+      "all": {
+        "count": 4,
+        "bytes": 640805
+      },
+      "components_js": {
+        "count": 0,
+        "bytes": 0
+      },
+      "timing": {
+        "domContentLoaded": 28.2,
+        "load": 56.5
+      },
+      "errors": [],
+      "js_files": []
+    },
+    "build/mobile-py": {
+      "js": {
+        "count": 1,
+        "bytes": 105213
+      },
+      "css": {
+        "count": 1,
+        "bytes": 85469
+      },
+      "all": {
+        "count": 3,
+        "bytes": 191105
+      },
+      "components_js": {
+        "count": 0,
+        "bytes": 0
+      },
+      "timing": {
+        "domContentLoaded": 23.9,
+        "load": 25.3
+      },
+      "errors": [],
+      "js_files": []
+    },
+    "build/task-manager-py": {
+      "js": {
+        "count": 1,
+        "bytes": 140499
+      },
+      "css": {
+        "count": 1,
+        "bytes": 88649
+      },
+      "all": {
+        "count": 3,
+        "bytes": 229612
+      },
+      "components_js": {
+        "count": 0,
+        "bytes": 0
+      },
+      "timing": {
+        "domContentLoaded": 30.8,
+        "load": 37.2
+      },
+      "errors": [
+        "Failed to fetch"
+      ],
+      "js_files": []
+    },
+    "build/storefront-py": {
+      "js": {
+        "count": 1,
+        "bytes": 121965
+      },
+      "css": {
+        "count": 1,
+        "bytes": 173394
+      },
+      "all": {
+        "count": 4,
+        "bytes": 426212
+      },
+      "components_js": {
+        "count": 0,
+        "bytes": 0
+      },
+      "timing": {
+        "domContentLoaded": 25.9,
+        "load": 49.1
+      },
+      "errors": [],
+      "js_files": []
+    },
+    "build/burger-shop-py": {
+      "js": {
+        "count": 1,
+        "bytes": 139460
+      },
+      "css": {
+        "count": 1,
+        "bytes": 88793
+      },
+      "all": {
+        "count": 3,
+        "bytes": 228744
+      },
+      "components_js": {
+        "count": 0,
+        "bytes": 0
+      },
+      "timing": {
+        "domContentLoaded": 23.7,
+        "load": 24.4
+      },
+      "errors": [],
+      "js_files": []
+    },
+    "build/drug-recalls-py": {
+      "js": {
+        "count": 1,
+        "bytes": 137250
+      },
+      "css": {
+        "count": 1,
+        "bytes": 174281
+      },
+      "all": {
+        "count": 4,
+        "bytes": 442395
+      },
+      "components_js": {
+        "count": 0,
+        "bytes": 0
+      },
+      "timing": {
+        "domContentLoaded": 25.1,
+        "load": 50.2
+      },
+      "errors": [],
+      "js_files": []
+    }
+  }
+}

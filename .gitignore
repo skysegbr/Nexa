@@ -8,3 +8,7 @@ __pycache__/
 examples/burger-shop/uploads/*
 !examples/burger-shop/uploads/.gitkeep
 
+
+# Build outputs (scripts/bundle.py) and locally-built tools (never committed)
+build/
+tools/

@@ -36,6 +36,12 @@ Consequences you must respect when writing code, tooling, or reviews:
 - All maintenance tooling (dev server, test runner, validators) is
   **Python**. Never propose adding Node-based tools (webpack, Vite, ESLint,
   Prettier, Jest, etc.) — propose Python or browser-native alternatives.
+- **Production bundling is an optional deploy step, never part of dev**:
+  `python3 scripts/bundle.py <app-dir> -o <out>` collapses an app into a
+  standalone folder (one JS, one CSS, rewritten index.html). Engines:
+  pure-Python, or an esbuild binary built from source with Go
+  (`--setup-esbuild`) — still zero Node/npm. Development remains F5 + plain
+  ESM; never tell users they must build to use Nexa.
 - Needed third-party code (e.g. CodeMirror) is **vendored** under `assets/`,
   never installed from a registry.
 
@@ -2230,7 +2236,7 @@ Each domain's own components consume their own context directly:
 ```js
 // components/cart/CartButton.js
 import { h, useContext } from '/dist/nexa.js';
-import { Badge, IconButton } from '/dist/nexa-components.js';
+import { Badge, IconButton } from '/dist/nexa-components-core.js';
 import { CartContext } from './CartContext.js';
 
 export function CartButton({ onClick }) {
@@ -2529,9 +2535,9 @@ A working counter with a Navbar, Tabs, and form:
 ```js
 // app.js
 import { h, render, useState } from '/dist/nexa.js';
-import {
-  Navbar, Tabs, TabPanel, Card, Button, TextField, Alert,
-} from '/dist/nexa-components.js';
+import { Card, Button, Alert } from '/dist/nexa-components-core.js';
+import { TextField } from '/dist/nexa-components-forms.js';
+import { Navbar, Tabs, TabPanel } from '/dist/nexa-components-nav.js';
 
 function CounterTab() {
   const [count, setCount] = useState(0);

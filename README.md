@@ -266,6 +266,37 @@ import {
 } from "./dist/nexa-components.js";
 ```
 
+## Production Bundling (Optional)
+
+Development stays 100% no-build — F5, plain ES modules, `python server.py`.
+For **deploys**, `scripts/bundle.py` can optionally collapse an app into a
+standalone folder: one JS file, one CSS file (CSS `@import` chains inlined,
+`url()` assets copied), a rewritten `index.html` and the app's other assets.
+No import waterfall, no `/dist` dependency — copy the folder anywhere:
+
+```bash
+python3 scripts/bundle.py examples/task-manager -o build/task-manager --smoke
+```
+
+`--smoke` serves the output and loads it headlessly (playwright) to prove it
+still renders. Two engines, picked automatically:
+
+- **python** (zero dependencies): module-level bundling — only modules
+  reachable from the entry are included — plus `scripts/minify.py`.
+  Measured on the example apps: single request, JS −40% vs unbundled.
+- **esbuild** (a standalone Go binary — still no Node/npm anywhere): real
+  tree-shaking and identifier mangling. Measured: single request, **JS −85%**
+  (e.g. task-manager 228 KB in 15 requests → 39 KB in 1). Build it once from
+  source with the Go toolchain:
+
+```bash
+python3 scripts/bundle.py --setup-esbuild   # go install → tools/bin/esbuild
+```
+
+Numbers and methodology live in [docs/benchmarks](./docs/benchmarks).
+Limits: top-level import/export only, no circular imports, and dynamic
+`import()` targets are not bundled (a warning is printed).
+
 ## Documentation
 
 - [Nexa tutorial](./docs/TUTORIAL.md)

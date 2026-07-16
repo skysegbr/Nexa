@@ -104,7 +104,9 @@ def bench_page(browser, url: str) -> dict:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("examples", nargs="*",
-                        help="example names (default: all with index.html)")
+                        help="example names, or repo-relative paths containing '/' "
+                             "(e.g. build/task-manager) (default: all examples/*/ "
+                             "with index.html)")
     parser.add_argument("-o", "--output", required=True, help="output JSON path")
     args = parser.parse_args()
 
@@ -120,7 +122,8 @@ def main() -> int:
         with sync_playwright() as p:
             browser = p.chromium.launch()
             for name in names:
-                url = f"http://127.0.0.1:{port}/examples/{name}/"
+                path = name if "/" in name else f"examples/{name}"
+                url = f"http://127.0.0.1:{port}/{path}/"
                 runs = []
                 for _ in range(RUNS):
                     try:

@@ -58,3 +58,6 @@ Key differences from React (common analysis mistakes):
   via `tl.track(name)` refs. A visual authoring IDE lives in
   `examples/motion-editor`. Full reference: docs/AI_SPEC.md §10.
 - `tests/`: browser test suite (`python3 scripts/run_browser_tests.py`)
+- `scripts/bundle.py`: OPTIONAL production bundler (dev is always no-build) —
+  one JS + one CSS standalone folder; pure-Python engine or esbuild built
+  from source with Go (`--setup-esbuild`); still zero Node/npm
