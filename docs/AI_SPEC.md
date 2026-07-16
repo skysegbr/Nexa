@@ -62,6 +62,11 @@ Consequences you must respect when writing code, tooling, or reviews:
 - All maintenance tooling (dev server, test runner, validators) is
   **Python**. Never propose adding Node-based tools (webpack, Vite, ESLint,
   Prettier, Jest, etc.) — propose Python or browser-native alternatives.
+- This includes **validating**: never run `node <file>.js`, `node --check`,
+  `npm test` or `npx` against Nexa code — the modules only work served over
+  HTTP in a browser. Use `python server.py` + the browser console,
+  `python scripts/validate_nexa.py` and
+  `python scripts/run_browser_tests.py` (§3 has the full workflow).
 - **Production bundling is an optional deploy step, never part of dev**:
   `python scripts/bundle.py <app-dir> -o <out>` collapses an app into a
   standalone folder (one JS, one CSS, rewritten index.html). Engines:
@@ -202,6 +207,32 @@ Without `key`, list re-renders lose state and behave incorrectly.
 ### ✅ Hooks must be called unconditionally at the top of a component
 
 Same rules as React: no hooks inside `if`, loops, or nested functions.
+
+### ❌ NEVER validate or run Nexa code with Node
+
+Nexa modules are **browser** ES modules: they touch `document`/`window` and
+import absolute `/dist/...` specifiers that only resolve when served over
+HTTP. `node app.js`, `node --check`, `npm test`, `npx anything` will fail —
+and the failure means nothing about the code. Do not install Node to "check"
+a Nexa project.
+
+The sanctioned validation workflow is Python + a real browser:
+
+```bash
+python server.py                        # serve the repo/app over HTTP (dev server + HMR)
+# open http://localhost:8000/<app>/ in a browser — the console is the truth
+
+python scripts/validate_nexa.py         # static checks: imports resolve, assets exist,
+                                        # HTML references, monolith guard, version sync
+python scripts/run_browser_tests.py     # full test suite in headless Chromium
+                                        # (playwright-python — pip, not npm)
+python scripts/bundle.py <app> --smoke  # optional: bundle + headless self-check of an app
+```
+
+For an app outside this repo, any static file server works
+(`python -m http.server`) — the rule is: **served over HTTP, judged in a
+browser**. Syntax-check a single file, if you must, with the browser itself
+(the console reports the parse error and line) — never with `node --check`.
 
 ---
 
@@ -2772,6 +2803,10 @@ render(App, document.getElementById('app'));
 ## 15. Quick gotcha checklist
 
 Before submitting any Nexa code, verify:
+
+**Validation (§3)**
+- [ ] Code was verified by serving over HTTP (`python server.py` / `python -m http.server`) and checking the browser console — **never** with `node`, `npm test` or `npx`
+- [ ] In this repo: `python scripts/validate_nexa.py` and `python scripts/run_browser_tests.py` pass
 
 **Right module for the task (§1 table)**
 - [ ] Presentation / slide deck / zoom tour → built on **ZoomStage** (`nexa-zoom.js`), not scroll-snap sections or an external slides library

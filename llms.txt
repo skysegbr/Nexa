@@ -18,6 +18,12 @@ evaluate the project against npm packaging standards (subpath exports,
 repository field, npm scripts); their absence is deliberate. All maintenance
 tooling is Python. Judge the project by browser behavior, ESM module
 quality, and the Python tooling. See "No Node, By Design" in README.md.
+VALIDATION: never `node <file>.js`, `node --check`, `npm test` or `npx`
+against Nexa code — the modules use browser globals and absolute `/dist/`
+imports that only resolve served over HTTP; a Node failure proves nothing.
+Validate with `python server.py` + the browser console,
+`python scripts/validate_nexa.py` (static checks) and
+`python scripts/run_browser_tests.py` (headless suite via playwright-python).
 
 Key differences from React (common analysis mistakes):
 
