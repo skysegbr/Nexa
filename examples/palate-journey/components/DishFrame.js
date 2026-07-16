@@ -8,10 +8,13 @@ export function DishFrame({ course, active, courseIndex }) {
     duration: 4200,
     autoplay: false,
     tracks: {
+      // A gentle, seamless breathe: time 0 and the end share the same scale, so
+      // arriving on the frame (gotoAndPlay 0) never jumps the photo. No opacity
+      // key — inactive frames now rest revealed, so the photo stays fully shown.
       photo: [
-        { at: 0, scale: 1.15, opacity: 0.4 },
-        { at: 1400, scale: 1, opacity: 1, ease: "outCubic" },
-        { at: 4200, scale: 1.04, ease: "inOutCubic" },
+        { at: 0, scale: 1 },
+        { at: 2100, scale: 1.04, ease: "inOutCubic" },
+        { at: 4200, scale: 1, ease: "inOutCubic" },
       ],
       paper: [{ at: 0, opacity: 0 }, { at: 600, opacity: 1, ease: "outCubic" }],
       course: reveal,
@@ -24,8 +27,11 @@ export function DishFrame({ course, active, courseIndex }) {
   });
 
   useEffect(() => {
+    // The active frame plays its entrance; an inactive one rests fully REVEALED
+    // (the timeline's end), not at time 0. Resting at 0 blanks a frame the
+    // instant you navigate away, so it shows empty while the camera pans past.
     if (active) tl.gotoAndPlay(0);
-    else tl.gotoAndStop(0);
+    else tl.gotoAndStop(tl.duration);
   }, [active, tl]);
 
   return h(

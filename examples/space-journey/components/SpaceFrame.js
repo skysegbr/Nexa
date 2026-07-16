@@ -11,10 +11,13 @@ export function SpaceFrame({ scene, active, sceneIndex }) {
     duration: 4400,
     autoplay: false,
     tracks: {
+      // Seamless breathe: same scale at time 0 and the end, so arriving on the
+      // frame (gotoAndPlay 0) never jumps the image. No opacity key — inactive
+      // frames rest revealed, so the image stays fully shown.
       image: [
-        { at: 0, scale: 1.16, opacity: 0.25 },
-        { at: 1500, scale: 1, opacity: 1, ease: "outCubic" },
-        { at: 4400, scale: 1.035, ease: "inOutCubic" },
+        { at: 0, scale: 1 },
+        { at: 2200, scale: 1.035, ease: "inOutCubic" },
+        { at: 4400, scale: 1, ease: "inOutCubic" },
       ],
       grid: [{ at: 0, opacity: 0 }, { at: 900, opacity: 0.55, ease: "outCubic" }],
       chapter: rise,
@@ -26,8 +29,11 @@ export function SpaceFrame({ scene, active, sceneIndex }) {
   });
 
   useEffect(() => {
+    // The active frame plays its entrance; an inactive one rests fully REVEALED
+    // (the timeline's end), not at time 0. Resting at 0 blanks a frame the
+    // instant you navigate away, so it shows empty while the camera pans past.
     if (active) tl.gotoAndPlay(0);
-    else tl.gotoAndStop(0);
+    else tl.gotoAndStop(tl.duration);
   }, [active, tl]);
 
   return h(
