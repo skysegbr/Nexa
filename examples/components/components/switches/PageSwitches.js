@@ -1,5 +1,7 @@
 import { h, useLocalStorage, useState } from "/dist/nexa.js";
-import { Switch, Collapse, Button, Badge, Table } from "/dist/nexa-components.js";
+import { Button, Badge } from "/dist/nexa-components-core.js";
+import { Switch } from "/dist/nexa-components-forms.js";
+import { Collapse, Table } from "/dist/nexa-components-data.js";
 import { RUNS } from "../../data.js";
 
 function StatusBadge({ status }) {

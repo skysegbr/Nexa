@@ -21,6 +21,7 @@ These mirror AI_SPEC §3 "CRITICAL RULES — READ FIRST", the most common mistak
 ## Workflow
 
 - Before generating Nexa code: open `docs/AI_SPEC.md` (this repo) and check the relevant section — §6 hooks, §9 components, §10 canvas/editor add-ons, §11 CSS tokens, §12 patterns, §14 multi-file structure.
+- **Component imports**: `nexa-components.js` is a barrel over six category modules — prefer importing the category directly so the page loads only what it uses: `nexa-components-core.js` (Button, Card, FormField, Badge, Avatar, …), `-forms.js` (TextField, Select, DatePicker, Combobox, …), `-overlay.js` (Dialog, Drawer, Menu, Popover, Toast, …), `-data.js` (Table, DataTable, TreeView, Accordion, …), `-nav.js` (Tabs, Navbar, AppBar, Stepper, FAB, …), `-theme.js` (ThemeToggle, PaletteSwitcher, DesignSwitcher). Same export names either way (AI_SPEC §9 has the full table). `nexa-components-util.js` is internal — never import it from app code.
 - When reviewing Nexa code: check it against the 6 rules above first; they catch the most common breakages.
 - If asked to scaffold a new app, default to the domain-componentized structure (§12/§14), not the single-file demo (§13).
 - **Routing**: `useRouter()` gives `{ path, params, navigate }` (hash or history mode). For multi-level UIs use `useRoutes(routes, { mode, notFound })` + `matchPath()` — nested routes with `:param`/`*` segments, merged params, a parent `outlet` prop, and `lazy: () => import(...)` per route (AI_SPEC §6). List specific routes before catch-alls; first matching sibling wins.

@@ -1,5 +1,5 @@
 import { h } from "/dist/nexa.js";
-import { Badge } from "/dist/nexa-components.js";
+import { Badge } from "/dist/nexa-components-core.js";
 
 // The two "how it actually works" frames — h()/render() and the context
 // strait. Both are diagram-shaped (steps or a wrong/right split) rather

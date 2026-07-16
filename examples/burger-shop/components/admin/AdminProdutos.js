@@ -1,9 +1,9 @@
 import {
   h, useState, useContext, useForm, useFetch,
 } from "/dist/nexa.js";
-import {
-  Button, TextField, Textarea, Select, Dialog, Alert, Spinner,
-} from "/dist/nexa-components.js";
+import { Button, Alert, Spinner } from "/dist/nexa-components-core.js";
+import { TextField, Textarea, Select } from "/dist/nexa-components-forms.js";
+import { Dialog } from "/dist/nexa-components-overlay.js";
 import { ToastCtx } from "../ToastCtx.js";
 import { api } from "../../api.js";
 import { CAT_OPTIONS, EMPTY_PRODUTO } from "../../data.js";

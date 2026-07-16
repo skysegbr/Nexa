@@ -1,0 +1,108 @@
+/*!
+ * Nexa — UI component library, internal shared helpers.
+ * Not part of the public API — import components from the category
+ * modules (nexa-components-core.js, -forms.js, ...) or ./nexa-components.js.
+ */
+export function joinClasses(...classes) {
+  return classes.filter(Boolean).join(" ");
+}
+
+export function hasChildren(children) {
+  return Array.isArray(children) ? children.length > 0 : children !== undefined;
+}
+
+export function finiteNumber(value, fallback) {
+  const number = Number(value);
+  return Number.isFinite(number) ? number : fallback;
+}
+
+// Open-path variant: used when an overlay OPENS. If focus is already inside
+// (e.g. the user is typing in an input within the dialog and the opening
+// effect re-ran), stealing it to the first focusable would interrupt them.
+// Close-path refocusing (Escape → focus the trigger inside the wrap) must NOT
+// use this: there, focus being inside the wrap is exactly the situation the
+// call exists to fix.
+export function focusFirstElementIfOutside(container) {
+  if (!container || container.contains(document.activeElement)) {
+    return;
+  }
+  focusFirstElement(container);
+}
+
+export function focusFirstElement(container) {
+  if (!container) {
+    return;
+  }
+
+  const focusable = getFocusableElements(container);
+  const target = focusable[0] || container;
+
+  if (typeof target.focus === "function") {
+    target.focus();
+  }
+}
+
+export function trapFocus(event, container) {
+  const focusable = getFocusableElements(container);
+
+  if (focusable.length === 0) {
+    event.preventDefault();
+    container?.focus();
+    return;
+  }
+
+  const first = focusable[0];
+  const last = focusable[focusable.length - 1];
+
+  if (event.shiftKey && document.activeElement === first) {
+    event.preventDefault();
+    last.focus();
+  } else if (!event.shiftKey && document.activeElement === last) {
+    event.preventDefault();
+    first.focus();
+  }
+}
+
+export function moveMenuFocus(event, container) {
+  const items = getFocusableElements(container);
+
+  if (items.length === 0) {
+    return;
+  }
+
+  event.preventDefault();
+
+  if (event.key === "Home") {
+    items[0].focus();
+    return;
+  }
+
+  if (event.key === "End") {
+    items[items.length - 1].focus();
+    return;
+  }
+
+  const currentIndex = Math.max(0, items.indexOf(document.activeElement));
+  const direction = event.key === "ArrowUp" ? -1 : 1;
+  const nextIndex = (currentIndex + direction + items.length) % items.length;
+  items[nextIndex].focus();
+}
+
+export function getFocusableElements(container) {
+  if (!container) {
+    return [];
+  }
+
+  return Array.from(
+    container.querySelectorAll(
+      [
+        "a[href]",
+        "button:not([disabled])",
+        "input:not([disabled])",
+        "select:not([disabled])",
+        "textarea:not([disabled])",
+        "[tabindex]:not([tabindex='-1'])",
+      ].join(","),
+    ),
+  );
+}

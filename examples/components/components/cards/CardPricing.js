@@ -1,5 +1,5 @@
 import { h } from "/dist/nexa.js";
-import { Card, Button } from "/dist/nexa-components.js";
+import { Card, Button } from "/dist/nexa-components-core.js";
 import { PRICING_ITEMS } from "../../data.js";
 
 export function CardPricing() {

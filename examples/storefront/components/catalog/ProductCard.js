@@ -1,5 +1,5 @@
 import { h } from "/dist/nexa.js";
-import { Button, Card } from "/dist/nexa-components.js";
+import { Button, Card } from "/dist/nexa-components-core.js";
 
 // Catalog never imports the cart domain — it just calls the callback it was
 // handed. Shell.js is the only place that wires this prop to cart.addItem.

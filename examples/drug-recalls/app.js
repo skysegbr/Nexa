@@ -1,5 +1,5 @@
 import { Fragment, h, render, useDebounce, useState } from "/dist/nexa.js";
-import { Alert, Spinner } from "/dist/nexa-components.js";
+import { Alert, Spinner } from "/dist/nexa-components-core.js";
 import { useDrugRecalls } from "./components/useDrugRecalls.js";
 import { DashboardToolbar } from "./components/DashboardToolbar.js";
 import { RecallFilters } from "./components/RecallFilters.js";

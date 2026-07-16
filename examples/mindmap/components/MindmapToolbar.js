@@ -1,5 +1,6 @@
 import { h } from "/dist/nexa.js";
-import { Button, ThemeToggle } from "/dist/nexa-components.js";
+import { Button } from "/dist/nexa-components-core.js";
+import { ThemeToggle } from "/dist/nexa-components-theme.js";
 
 export function MindmapToolbar({ nodeCount, onReset }) {
   return h(

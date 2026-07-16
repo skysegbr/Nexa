@@ -1,5 +1,6 @@
 import { h } from "/dist/nexa.js";
-import { Button, Table } from "/dist/nexa-components.js";
+import { Button } from "/dist/nexa-components-core.js";
+import { Table } from "/dist/nexa-components-data.js";
 import { STATUS_BADGE_CLASS } from "../data.js";
 import { formatFdaDate } from "./format.js";
 

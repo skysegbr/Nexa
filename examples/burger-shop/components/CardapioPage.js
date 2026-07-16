@@ -1,7 +1,7 @@
 import {
   h, Fragment, useState, useFetch,
 } from "/dist/nexa.js";
-import { Spinner, Alert } from "/dist/nexa-components.js";
+import { Spinner, Alert } from "/dist/nexa-components-core.js";
 import { CATS } from "../data.js";
 import { brl } from "../api.js";
 import { EmptyMessage } from "./EmptyMessage.js";

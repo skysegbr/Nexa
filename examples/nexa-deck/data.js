@@ -138,7 +138,7 @@ export const FRAMES = [
       heading: "A Nexa app fits in just a few imports",
       body: "The page imports CSS, mounts a container and executes a plain ESM module.",
       code: `import { h, render, useState } from "/dist/nexa.js";
-import { Button } from "/dist/nexa-components.js";
+import { Button } from "/dist/nexa-components-core.js";
 
 function App() {
   const [count, setCount] = useState(0);

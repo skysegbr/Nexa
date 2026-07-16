@@ -1,5 +1,6 @@
 import { h } from "/dist/nexa.js";
-import { Breadcrumb as BreadcrumbComponent, Divider } from "/dist/nexa-components.js";
+import { Divider } from "/dist/nexa-components-core.js";
+import { Breadcrumb as BreadcrumbComponent } from "/dist/nexa-components-nav.js";
 
 export function Breadcrumb() {
   return h(

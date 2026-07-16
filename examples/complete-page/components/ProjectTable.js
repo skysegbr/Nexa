@@ -1,5 +1,6 @@
 import { h } from "/dist/nexa.js";
-import { Button, Chip, Table } from "/dist/nexa-components.js";
+import { Button, Chip } from "/dist/nexa-components-core.js";
+import { Table } from "/dist/nexa-components-data.js";
 
 const STATUS_LABEL = { active: "Active", review: "Under review", paused: "Paused" };
 

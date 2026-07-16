@@ -1,5 +1,5 @@
 import { h, useState } from "/dist/nexa.js";
-import { RadioGroup, NumberInput, TimePicker } from "/dist/nexa-components.js";
+import { RadioGroup, NumberInput, TimePicker } from "/dist/nexa-components-forms.js";
 
 export function FormControls() {
   const [frequency, setFrequency] = useState("daily");

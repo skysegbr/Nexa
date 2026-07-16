@@ -1,5 +1,5 @@
 import { h } from "/dist/nexa.js";
-import { EmptyState } from "/dist/nexa-components.js";
+import { EmptyState } from "/dist/nexa-components-core.js";
 
 export function RecallStateBars({ byState }) {
   if (byState.length === 0) {

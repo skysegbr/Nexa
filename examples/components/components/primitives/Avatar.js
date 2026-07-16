@@ -1,5 +1,5 @@
 import { h } from "/dist/nexa.js";
-import { Avatar as AvatarComponent, AvatarGroup } from "/dist/nexa-components.js";
+import { Avatar as AvatarComponent, AvatarGroup } from "/dist/nexa-components-core.js";
 
 export function Avatar() {
   return h(

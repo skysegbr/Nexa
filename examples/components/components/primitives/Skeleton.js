@@ -1,5 +1,5 @@
 import { h, useState, useEffect } from "/dist/nexa.js";
-import { Skeleton as SkeletonComponent, Avatar } from "/dist/nexa-components.js";
+import { Skeleton as SkeletonComponent, Avatar } from "/dist/nexa-components-core.js";
 import { USERS } from "../../data.js";
 
 function SkeletonCard() {

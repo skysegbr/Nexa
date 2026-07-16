@@ -1,5 +1,7 @@
 import { h } from "/dist/nexa.js";
-import { Button, Checkbox, Dialog, Select, Textarea, TextField } from "/dist/nexa-components.js";
+import { Button } from "/dist/nexa-components-core.js";
+import { Checkbox, Select, Textarea, TextField } from "/dist/nexa-components-forms.js";
+import { Dialog } from "/dist/nexa-components-overlay.js";
 import { STATUS_OPTIONS } from "../data.js";
 
 export function ProjectDialog({ project, open, onClose, onSave }) {

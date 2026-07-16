@@ -1,5 +1,6 @@
 import { h, usePresence } from "/dist/nexa.js";
-import { Badge, Chip, Dropdown, EmptyState, Spinner, Tooltip } from "/dist/nexa-components.js";
+import { Badge, Chip, EmptyState, Spinner } from "/dist/nexa-components-core.js";
+import { Dropdown, Tooltip } from "/dist/nexa-components-overlay.js";
 
 const PRIORITY_LABEL = { high: "High", medium: "Medium", low: "Low" };
 const STATUS_LABEL = {

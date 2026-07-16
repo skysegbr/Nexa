@@ -1,8 +1,6 @@
 import { h } from "/dist/nexa.js";
-import {
-  Alert, Badge, Button, Card, Checkbox, Chip,
-  Select, Textarea, TextField,
-} from "/dist/nexa-components.js";
+import { Alert, Badge, Button, Card, Chip } from "/dist/nexa-components-core.js";
+import { Checkbox, Select, Textarea, TextField } from "/dist/nexa-components-forms.js";
 import { ROLE_OPTIONS } from "../data.js";
 
 export function ContactForm({ form }) {

@@ -1,5 +1,6 @@
 import { h, useContext, useState, useToast } from "/dist/nexa.js";
-import { ThemeToggle, ToastStack } from "/dist/nexa-components.js";
+import { ToastStack } from "/dist/nexa-components-overlay.js";
+import { ThemeToggle } from "/dist/nexa-components-theme.js";
 import { CatalogFilters } from "./catalog/CatalogFilters.js";
 import { ProductGrid } from "./catalog/ProductGrid.js";
 import { CartContext } from "./cart/CartContext.js";

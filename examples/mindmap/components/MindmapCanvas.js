@@ -1,5 +1,5 @@
 import { h } from "/dist/nexa.js";
-import { Button } from "/dist/nexa-components.js";
+import { Button } from "/dist/nexa-components-core.js";
 import { MindmapNode } from "./MindmapNode.js";
 
 const DEFAULT_SIZE = { width: 200, height: 56 };

@@ -1,5 +1,5 @@
 import { h, useContext } from "/dist/nexa.js";
-import { Select, TextField } from "/dist/nexa-components.js";
+import { Select, TextField } from "/dist/nexa-components-forms.js";
 import { CatalogContext } from "./CatalogContext.js";
 
 export function CatalogFilters() {

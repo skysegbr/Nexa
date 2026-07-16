@@ -1,5 +1,5 @@
 import { h, useContext } from "/dist/nexa.js";
-import { Badge, IconButton } from "/dist/nexa-components.js";
+import { Badge, IconButton } from "/dist/nexa-components-core.js";
 import { CartContext } from "./CartContext.js";
 
 export function CartButton({ onClick }) {

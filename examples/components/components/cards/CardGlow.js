@@ -1,5 +1,5 @@
 import { h } from "/dist/nexa.js";
-import { Button } from "/dist/nexa-components.js";
+import { Button } from "/dist/nexa-components-core.js";
 import { GLOW_ITEMS } from "../../data.js";
 
 export function CardGlow() {

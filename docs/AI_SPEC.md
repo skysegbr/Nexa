@@ -45,7 +45,8 @@ Consequences you must respect when writing code, tooling, or reviews:
 
 ```
 /dist/nexa.js              ← core framework  (h, render, hooks, context)
-/dist/nexa-components.js   ← UI component library (~40 components)
+/dist/nexa-components.js   ← UI component library barrel (~60 components; re-exports the 6 category modules below)
+/dist/nexa-components-{core,forms,overlay,data,nav,theme}.js ← component categories (import only what you use — see §9)
 /dist/nexa-ui.css          ← design system CSS (required for components to look right)
 /dist/nexa-bootstrap.css   ← optional Bootstrap 5 visual skin (opt-in, see §9)
 /dist/nexa-server.js       ← server-side rendering entry (renderToString)
@@ -867,11 +868,33 @@ h('article', { className: 'post', innerHTML: markdownToHtml(post.body) })
 
 ## 9. UI Components (`/dist/nexa-components.js`)
 
-~60 components + CSS-only primitives. Import only what you use:
+~60 components + CSS-only primitives, organized in **six category modules**.
+`nexa-components.js` is a barrel that re-exports all of them — convenient,
+but in no-build ESM importing the barrel downloads every category. Production
+apps should import only the categories they use:
+
+| Module | Components |
+|---|---|
+| `nexa-components-core.js` | Button, IconButton, Card, Alert, Badge, Chip, FormField, Spinner, Divider, Skeleton, EmptyState, Avatar, AvatarGroup, Progress |
+| `nexa-components-forms.js` | TextField, Textarea, Select, Checkbox, Radio, RadioGroup, Switch, Slider, RangeSlider, NumberInput, Combobox, DatePicker, TimePicker, FileDropZone, CodeEditor |
+| `nexa-components-overlay.js` | Dialog, Drawer, Dropdown, Tooltip, Popover, Menu, ContextMenu, BottomSheet, CommandPalette, Toast, ToastStack |
+| `nexa-components-data.js` | Table, DataTable, Pagination, Stat, StatGrid, TreeView, Accordion, Collapse |
+| `nexa-components-nav.js` | Tabs, TabPanel, Navbar, AppBar, BottomNav, Breadcrumb, Stepper, FAB, SpeedDial, SwipeableListItem |
+| `nexa-components-theme.js` | ThemeToggle, PaletteSwitcher, DesignSwitcher |
 
 ```js
+// preferred: category imports (loads only what the page needs)
+import { Button, Card } from '/dist/nexa-components-core.js';
+import { TextField } from '/dist/nexa-components-forms.js';
+
+// also valid: the barrel (same names, loads ALL categories)
 import { Button, Card, TextField } from '/dist/nexa-components.js';
 ```
+
+Every category depends only on `nexa-components-core.js`, an internal
+`nexa-components-util.js` helper module (not public API) and `nexa.js`.
+Both forms have identical exports — the same component name never moves
+between the barrel and its category.
 
 ### Basic
 

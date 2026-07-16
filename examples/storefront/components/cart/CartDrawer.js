@@ -1,5 +1,6 @@
 import { h, useContext } from "/dist/nexa.js";
-import { Button, Drawer, EmptyState, IconButton } from "/dist/nexa-components.js";
+import { Button, EmptyState, IconButton } from "/dist/nexa-components-core.js";
+import { Drawer } from "/dist/nexa-components-overlay.js";
 import { CartContext } from "./CartContext.js";
 
 // onCheckout is a prop, not something CartDrawer figures out itself — whether

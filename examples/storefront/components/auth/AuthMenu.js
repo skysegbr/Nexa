@@ -1,5 +1,5 @@
 import { h, useContext } from "/dist/nexa.js";
-import { Button } from "/dist/nexa-components.js";
+import { Button } from "/dist/nexa-components-core.js";
 import { AuthContext } from "./AuthContext.js";
 
 export function AuthMenu({ onSignIn }) {

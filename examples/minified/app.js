@@ -11,7 +11,8 @@
 // meant as a throwaway showcase.
 
 import { h, render, useState, useRoutes, useRouter, useHead } from "/dist/nexa.min.js";
-import { Button, Card, ThemeToggle, Badge } from "/dist/nexa-components.min.js";
+import { Button, Card, Badge } from "/dist/nexa-components-core.min.js";
+import { ThemeToggle } from "/dist/nexa-components-theme.min.js";
 
 function Nav() {
   const { path } = useRouter();
@@ -38,7 +39,7 @@ function Home() {
       "This page imports ",
       h("code", null, "/dist/nexa.min.js"),
       " and ",
-      h("code", null, "/dist/nexa-components.min.js"),
+      h("code", null, "/dist/nexa-components-core.min.js"),
       ". Same API, ~25% smaller uncompressed.",
     ),
   );

@@ -131,7 +131,7 @@ export const ARCHITECTURE_FRAMES = [
       heading: "A Nexa application is standard JavaScript",
       body: "This is the starting point architects need to validate: the runtime enters as a module, the UI is a function, and the browser executes. The same model scales from the first component up to the entire application.",
       code: `import { h, render, useState } from "/dist/nexa.js";
-import { Button } from "/dist/nexa-components.js";
+import { Button } from "/dist/nexa-components-core.js";
 
 function App() {
   const [count, setCount] = useState(0);

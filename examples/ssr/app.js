@@ -16,7 +16,7 @@
 
 import { h, useState, useHead } from "/dist/nexa.js";
 import { renderToString, renderHeadToString, hydrate } from "/dist/nexa-server.js";
-import { Card, Button, Badge } from "/dist/nexa-components.js";
+import { Card, Button, Badge } from "/dist/nexa-components-core.js";
 
 function App() {
   const [n, setN] = useState(3);

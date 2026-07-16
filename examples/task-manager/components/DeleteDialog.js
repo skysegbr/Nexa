@@ -1,5 +1,6 @@
 import { h } from "/dist/nexa.js";
-import { Button, Dialog } from "/dist/nexa-components.js";
+import { Button } from "/dist/nexa-components-core.js";
+import { Dialog } from "/dist/nexa-components-overlay.js";
 
 /**
  * Deletion confirmation dialog.

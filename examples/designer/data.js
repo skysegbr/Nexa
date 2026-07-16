@@ -1,9 +1,12 @@
 import {
-  Button, Badge, Chip, Alert, Card, Spinner, Progress,
-  TextField, Textarea, Select, Checkbox, Switch, Tabs, Pagination,
-  Navbar, AppBar, BottomNav, FAB, IconButton,
-  Stepper, Collapse, EmptyState, Table, Toast, Combobox,
-} from '/dist/nexa-components.js';
+  Button, Badge, Chip, Alert, Card, Spinner, Progress, EmptyState, IconButton,
+} from '/dist/nexa-components-core.js';
+import {
+  TextField, Textarea, Select, Checkbox, Switch, Combobox,
+} from '/dist/nexa-components-forms.js';
+import { Toast } from '/dist/nexa-components-overlay.js';
+import { Pagination, Collapse, Table } from '/dist/nexa-components-data.js';
+import { Tabs, Navbar, AppBar, BottomNav, FAB, Stepper } from '/dist/nexa-components-nav.js';
 
 import { BASIC_ENTRIES } from './catalog/basic.js';
 import { LAYOUT_ENTRIES } from './catalog/layout.js';

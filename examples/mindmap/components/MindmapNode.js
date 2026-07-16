@@ -1,5 +1,6 @@
 import { h, memo, useEffect, useRef, useState } from "/dist/nexa.js";
-import { IconButton, Tooltip } from "/dist/nexa-components.js";
+import { IconButton } from "/dist/nexa-components-core.js";
+import { Tooltip } from "/dist/nexa-components-overlay.js";
 
 function MindmapNodeImpl({ node, isRoot, onTextChange, onPositionChange, onAddChild, onDelete, onMeasure }) {
   const [isEditing, setIsEditing] = useState(false);

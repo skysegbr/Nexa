@@ -1,5 +1,5 @@
 import { h, useTheme } from "/dist/nexa.js";
-import { Badge, Button } from "/dist/nexa-components.js";
+import { Badge, Button } from "/dist/nexa-components-core.js";
 
 const navItems = ["Overview", "Projects", "Reports", "Settings"];
 

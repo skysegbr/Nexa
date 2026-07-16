@@ -1,5 +1,5 @@
 import { h } from "/dist/nexa.js";
-import { IconButton } from "/dist/nexa-components.js";
+import { IconButton } from "/dist/nexa-components-core.js";
 
 export function Compass({ index, total, label, controllerRef }) {
   const nav = controllerRef.current;

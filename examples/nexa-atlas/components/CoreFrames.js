@@ -1,5 +1,5 @@
 import { h } from "/dist/nexa.js";
-import { Badge } from "/dist/nexa-components.js";
+import { Badge } from "/dist/nexa-components-core.js";
 
 // Simple text frames — cover, territory, rules compass,
 // code board, numeric stats, world map and final horizon.

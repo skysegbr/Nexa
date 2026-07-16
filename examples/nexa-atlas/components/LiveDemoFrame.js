@@ -1,5 +1,6 @@
 import { h, useState, useTheme } from "/dist/nexa.js";
-import { Badge, Button, Progress, Switch, TextField } from "/dist/nexa-components.js";
+import { Badge, Button, Progress } from "/dist/nexa-components-core.js";
+import { Switch, TextField } from "/dist/nexa-components-forms.js";
 
 // The one frame in this deck that isn't a picture of Nexa — it IS Nexa.
 // Its useState/useTheme calls are real hooks, owned by this component's own

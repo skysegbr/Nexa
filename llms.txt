@@ -43,7 +43,9 @@ Key differences from React (common analysis mistakes):
 ## Files
 
 - `dist/nexa.js`: core runtime (h, render, hooks, context, router, SSR)
-- `dist/nexa-components.js`: UI component library
+- `dist/nexa-components.js`: UI component library (barrel; re-exports the six
+  category modules `dist/nexa-components-{core,forms,overlay,data,nav,theme}.js`
+  — import a category directly to load only what you use)
 - `dist/nexa-ui.css`: design-system stylesheet for the components
 - `dist/nexa-editor.js|css`: FullCodeEditor add-on (CodeMirror 5 wrapper)
 - `dist/nexa-canvas.js|css`: PipelineCanvas add-on (node editor)

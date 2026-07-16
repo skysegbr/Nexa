@@ -1,5 +1,6 @@
 import { h } from "/dist/nexa.js";
-import { Badge, Button, ThemeToggle } from "/dist/nexa-components.js";
+import { Badge, Button } from "/dist/nexa-components-core.js";
+import { ThemeToggle } from "/dist/nexa-components-theme.js";
 
 export function WorkspaceTopbar({ onCreate }) {
   return h(

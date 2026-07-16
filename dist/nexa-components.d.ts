@@ -8,6 +8,10 @@
  * Type declarations for /dist/nexa-components.js
  *
  * All 61 component functions. Signatures derived from the actual source.
+ * The runtime is split into six category modules (nexa-components-core.js,
+ * -forms.js, -overlay.js, -data.js, -nav.js, -theme.js) re-exported by the
+ * nexa-components.js barrel; each category ships its own .d.ts re-exporting
+ * the matching subset of these declarations.
  */
 
 import type { VNode, Ref, ToastItem } from "./nexa.js";

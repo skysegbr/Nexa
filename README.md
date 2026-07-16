@@ -13,7 +13,10 @@ for the browser: no Node, no JSX, no Vite, no Babel, and no build step.
 Its core ships in three files:
 
 - `dist/nexa.js` — components, state, effects, rendering, and mobile hooks.
-- `dist/nexa-components.js` — optional UI helpers built on top of `h`.
+- `dist/nexa-components.js` — optional UI helpers built on top of `h`. This is
+  a barrel over six category modules (`nexa-components-core.js`, `-forms.js`,
+  `-overlay.js`, `-data.js`, `-nav.js`, `-theme.js`) — import a category
+  directly to load only the components you use.
 - `dist/nexa-ui.css` — mobile-first CSS framework with a 12-column grid,
   responsive utilities, dark mode, and mobile shell components.
 
@@ -113,6 +116,12 @@ modules directly through jsDelivr:
 ```text
 https://cdn.jsdelivr.net/gh/skysegbr/Nexa@main/dist/nexa.js
 https://cdn.jsdelivr.net/gh/skysegbr/Nexa@main/dist/nexa-components.js
+https://cdn.jsdelivr.net/gh/skysegbr/Nexa@main/dist/nexa-components-core.js
+https://cdn.jsdelivr.net/gh/skysegbr/Nexa@main/dist/nexa-components-forms.js
+https://cdn.jsdelivr.net/gh/skysegbr/Nexa@main/dist/nexa-components-overlay.js
+https://cdn.jsdelivr.net/gh/skysegbr/Nexa@main/dist/nexa-components-data.js
+https://cdn.jsdelivr.net/gh/skysegbr/Nexa@main/dist/nexa-components-nav.js
+https://cdn.jsdelivr.net/gh/skysegbr/Nexa@main/dist/nexa-components-theme.js
 https://cdn.jsdelivr.net/gh/skysegbr/Nexa@main/dist/nexa-ui.css
 https://cdn.jsdelivr.net/gh/skysegbr/Nexa@main/dist/nexa-canvas.js
 https://cdn.jsdelivr.net/gh/skysegbr/Nexa@main/dist/nexa-canvas.css

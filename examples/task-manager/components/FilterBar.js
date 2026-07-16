@@ -1,5 +1,5 @@
 import { h } from "/dist/nexa.js";
-import { Select, TextField } from "/dist/nexa-components.js";
+import { Select, TextField } from "/dist/nexa-components-forms.js";
 import { STATUS_OPTIONS, PRIORITY_OPTIONS, SORT_OPTIONS } from "../data.js";
 
 const ALL_STATUSES = [{ value: "all", label: "All statuses" }, ...STATUS_OPTIONS];

@@ -1,5 +1,8 @@
 import { h, render, useHead, useToast, useRouter } from "/dist/nexa.js";
-import { Navbar, ThemeToggle, PaletteSwitcher, DesignSwitcher, ToastStack, Menu, Button } from "/dist/nexa-components.js";
+import { Button } from "/dist/nexa-components-core.js";
+import { ToastStack, Menu } from "/dist/nexa-components-overlay.js";
+import { Navbar } from "/dist/nexa-components-nav.js";
+import { ThemeToggle, PaletteSwitcher, DesignSwitcher } from "/dist/nexa-components-theme.js";
 
 import { PageSwitches }    from "./components/switches/PageSwitches.js";
 import { PageCombobox }    from "./components/PageCombobox.js";

@@ -1,5 +1,5 @@
 import { h } from "/dist/nexa.js";
-import { Card, Chip } from "/dist/nexa-components.js";
+import { Card, Chip } from "/dist/nexa-components-core.js";
 
 export function MetricCard({ label, value, trend, active }) {
   return h(

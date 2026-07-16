@@ -1,5 +1,5 @@
 import { h } from "/dist/nexa.js";
-import { Card } from "/dist/nexa-components.js";
+import { Card } from "/dist/nexa-components-core.js";
 
 export function RecallMetrics({ total, byClassification, byStatus }) {
   const classCount = (label) => byClassification.find((c) => c.term === label)?.count ?? 0;

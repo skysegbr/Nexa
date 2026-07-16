@@ -1,5 +1,5 @@
 import { h, useState } from "/dist/nexa.js";
-import { Accordion } from "/dist/nexa-components.js";
+import { Accordion } from "/dist/nexa-components-data.js";
 
 const FAQ_ITEMS = [
   {

@@ -1,16 +1,38 @@
 // Code and CSS generation for canvas items — turns the designer's item
 // objects back into copy-pasteable Nexa source and stylesheet rules.
 
+// Category module of each palette component, so generated code imports only
+// the nexa-components-* files it needs (smaller payload than the barrel).
+const COMPONENT_CATEGORY = {
+  Button: 'core', Badge: 'core', Chip: 'core', Alert: 'core', Card: 'core',
+  Spinner: 'core', Progress: 'core', EmptyState: 'core', IconButton: 'core',
+  TextField: 'forms', Textarea: 'forms', Select: 'forms', Checkbox: 'forms',
+  Switch: 'forms', Combobox: 'forms',
+  Toast: 'overlay',
+  Pagination: 'data', Collapse: 'data', Table: 'data',
+  Tabs: 'nav', Navbar: 'nav', AppBar: 'nav', BottomNav: 'nav', FAB: 'nav',
+  Stepper: 'nav',
+};
+
 export function generateCode(items) {
   if (items.length === 0) return '// Add components to the canvas to generate code.';
 
   const usedTypes = [...new Set(items.map((i) => i.type))];
-  const importLine = `import { ${usedTypes.join(', ')} } from '/dist/nexa-components.js';`;
+  const byCategory = new Map();
+  for (const type of usedTypes) {
+    const cat = COMPONENT_CATEGORY[type];
+    const file = cat ? `/dist/nexa-components-${cat}.js` : '/dist/nexa-components.js';
+    if (!byCategory.has(file)) byCategory.set(file, []);
+    byCategory.get(file).push(type);
+  }
+  const importLines = [...byCategory.entries()]
+    .map(([file, types]) => `import { ${types.join(', ')} } from '${file}';`)
+    .join('\n');
 
   const lines = items.map((item) => '    ' + generateItemCode(item)).join(',\n');
 
   return `import { h } from '/dist/nexa.js';
-${importLine}
+${importLines}
 
 function MyComponent() {
   return h('div', null,

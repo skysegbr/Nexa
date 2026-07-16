@@ -1,5 +1,8 @@
 import { h, render, useMemo, useState } from "/dist/nexa.js";
-import { Alert, Button, Card, Select, Tabs, TextField, Toast } from "/dist/nexa-components.js";
+import { Alert, Button, Card } from "/dist/nexa-components-core.js";
+import { Select, TextField } from "/dist/nexa-components-forms.js";
+import { Toast } from "/dist/nexa-components-overlay.js";
+import { Tabs } from "/dist/nexa-components-nav.js";
 import { PROJECTS, STATUS_OPTIONS, VIEWS } from "./data.js";
 import { MetricCard }       from "./components/MetricCard.js";
 import { ProjectDialog }    from "./components/ProjectDialog.js";

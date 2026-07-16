@@ -1,5 +1,6 @@
 import { h, useState } from "/dist/nexa.js";
-import { Combobox, Alert } from "/dist/nexa-components.js";
+import { Alert } from "/dist/nexa-components-core.js";
+import { Combobox } from "/dist/nexa-components-forms.js";
 import { PIPELINES } from "../data.js";
 
 export function PageCombobox() {

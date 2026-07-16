@@ -1,5 +1,5 @@
 import { h } from "/dist/nexa.js";
-import { Badge } from "/dist/nexa-components.js";
+import { Badge } from "/dist/nexa-components-core.js";
 
 // Frame components for every data.kind — title, point, rules, code and the
 // zoomed-out overview. They all share the same anatomy (badge + heading +

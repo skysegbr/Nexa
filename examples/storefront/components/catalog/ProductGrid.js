@@ -1,5 +1,5 @@
 import { h, useContext } from "/dist/nexa.js";
-import { Alert, EmptyState, Spinner } from "/dist/nexa-components.js";
+import { Alert, EmptyState, Spinner } from "/dist/nexa-components-core.js";
 import { CatalogContext } from "./CatalogContext.js";
 import { ProductCard } from "./ProductCard.js";
 

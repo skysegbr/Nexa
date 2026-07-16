@@ -1,9 +1,8 @@
 import {
   h, useMemo, useContext, useForm,
 } from "/dist/nexa.js";
-import {
-  Button, TextField, Textarea, Alert,
-} from "/dist/nexa-components.js";
+import { Button, Alert } from "/dist/nexa-components-core.js";
+import { TextField, Textarea } from "/dist/nexa-components-forms.js";
 import { ToastCtx } from "./ToastCtx.js";
 import { EmptyMessage } from "./EmptyMessage.js";
 import { api, brl } from "../api.js";

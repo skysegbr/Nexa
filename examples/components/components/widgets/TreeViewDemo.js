@@ -1,5 +1,5 @@
 import { h, useState } from "/dist/nexa.js";
-import { TreeView } from "/dist/nexa-components.js";
+import { TreeView } from "/dist/nexa-components-data.js";
 import { PROJECT_TREE } from "../../data.js";
 
 export function TreeViewDemo() {

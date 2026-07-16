@@ -1,5 +1,5 @@
 import { h, render, useForm, useState } from "/dist/nexa.js";
-import { Toast } from "/dist/nexa-components.js";
+import { Toast } from "/dist/nexa-components-overlay.js";
 import { ContactForm }  from "./components/ContactForm.js";
 import { FormHero }     from "./components/FormHero.js";
 import { FormSummary }  from "./components/FormSummary.js";

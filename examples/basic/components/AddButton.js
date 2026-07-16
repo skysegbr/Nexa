@@ -1,5 +1,5 @@
 import { h } from "/dist/nexa.js";
-import { Button } from "/dist/nexa-components.js";
+import { Button } from "/dist/nexa-components-core.js";
 
 export function AddButton({ setCount }) {
   return h(Button, {

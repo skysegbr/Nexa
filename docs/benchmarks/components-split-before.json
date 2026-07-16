@@ -1,0 +1,847 @@
+{
+  "generated": "2026-07-16 13:47:03",
+  "runs": 3,
+  "results": {
+    "basic": {
+      "js": {
+        "count": 7,
+        "bytes": 223832
+      },
+      "css": {
+        "count": 7,
+        "bytes": 201065
+      },
+      "all": {
+        "count": 16,
+        "bytes": 751879
+      },
+      "components_js": {
+        "count": 1,
+        "bytes": 114131
+      },
+      "timing": {
+        "domContentLoaded": 57,
+        "load": 68.3
+      },
+      "errors": [],
+      "js_files": [
+        "nexa-components.js",
+        "nexa.js"
+      ]
+    },
+    "burger-shop": {
+      "js": {
+        "count": 15,
+        "bytes": 252409
+      },
+      "css": {
+        "count": 9,
+        "bytes": 119390
+      },
+      "all": {
+        "count": 25,
+        "bytes": 372330
+      },
+      "components_js": {
+        "count": 1,
+        "bytes": 114131
+      },
+      "timing": {
+        "domContentLoaded": 74.5,
+        "load": 75
+      },
+      "errors": [],
+      "js_files": [
+        "nexa-components.js",
+        "nexa.js"
+      ]
+    },
+    "charts": {
+      "js": {
+        "count": 6,
+        "bytes": 112740
+      },
+      "css": {
+        "count": 4,
+        "bytes": 2808
+      },
+      "all": {
+        "count": 11,
+        "bytes": 115990
+      },
+      "components_js": {
+        "count": 0,
+        "bytes": 0
+      },
+      "timing": {
+        "domContentLoaded": 35.9,
+        "load": 38.3
+      },
+      "errors": [],
+      "js_files": [
+        "nexa.js"
+      ]
+    },
+    "complete-page": {
+      "js": {
+        "count": 9,
+        "bytes": 230538
+      },
+      "css": {
+        "count": 7,
+        "bytes": 201637
+      },
+      "all": {
+        "count": 18,
+        "bytes": 759165
+      },
+      "components_js": {
+        "count": 1,
+        "bytes": 114131
+      },
+      "timing": {
+        "domContentLoaded": 62.9,
+        "load": 82
+      },
+      "errors": [],
+      "js_files": [
+        "nexa-components.js",
+        "nexa.js"
+      ]
+    },
+    "components": {
+      "js": {
+        "count": 36,
+        "bytes": 458608
+      },
+      "css": {
+        "count": 9,
+        "bytes": 216943
+      },
+      "all": {
+        "count": 47,
+        "bytes": 806884
+      },
+      "components_js": {
+        "count": 1,
+        "bytes": 114131
+      },
+      "timing": {
+        "domContentLoaded": 134.2,
+        "load": 147.8
+      },
+      "errors": [],
+      "js_files": [
+        "nexa-components.js",
+        "nexa.js"
+      ]
+    },
+    "core": {
+      "js": {
+        "count": 8,
+        "bytes": 226758
+      },
+      "css": {
+        "count": 8,
+        "bytes": 201602
+      },
+      "all": {
+        "count": 18,
+        "bytes": 755341
+      },
+      "components_js": {
+        "count": 1,
+        "bytes": 114131
+      },
+      "timing": {
+        "domContentLoaded": 60.7,
+        "load": 73.5
+      },
+      "errors": [],
+      "js_files": [
+        "nexa-components.js",
+        "nexa.js"
+      ]
+    },
+    "designer": {
+      "js": {
+        "count": 15,
+        "bytes": 266589
+      },
+      "css": {
+        "count": 7,
+        "bytes": 218110
+      },
+      "all": {
+        "count": 24,
+        "bytes": 615647
+      },
+      "components_js": {
+        "count": 1,
+        "bytes": 114131
+      },
+      "timing": {
+        "domContentLoaded": 67.5,
+        "load": 87
+      },
+      "errors": [],
+      "js_files": [
+        "nexa-components.js",
+        "nexa.js"
+      ]
+    },
+    "drug-recalls": {
+      "js": {
+        "count": 13,
+        "bytes": 237403
+      },
+      "css": {
+        "count": 10,
+        "bytes": 204429
+      },
+      "all": {
+        "count": 25,
+        "bytes": 572815
+      },
+      "components_js": {
+        "count": 1,
+        "bytes": 114131
+      },
+      "timing": {
+        "domContentLoaded": 88.8,
+        "load": 108.2
+      },
+      "errors": [],
+      "js_files": [
+        "nexa-components.js",
+        "nexa.js"
+      ]
+    },
+    "form": {
+      "js": {
+        "count": 7,
+        "bytes": 227174
+      },
+      "css": {
+        "count": 6,
+        "bytes": 202036
+      },
+      "all": {
+        "count": 15,
+        "bytes": 756191
+      },
+      "components_js": {
+        "count": 1,
+        "bytes": 114131
+      },
+      "timing": {
+        "domContentLoaded": 47.8,
+        "load": 68.2
+      },
+      "errors": [],
+      "js_files": [
+        "nexa-components.js",
+        "nexa.js"
+      ]
+    },
+    "gallery": {
+      "js": {
+        "count": 6,
+        "bytes": 118883
+      },
+      "css": {
+        "count": 4,
+        "bytes": 4934
+      },
+      "all": {
+        "count": 23,
+        "bytes": 776032
+      },
+      "components_js": {
+        "count": 0,
+        "bytes": 0
+      },
+      "timing": {
+        "domContentLoaded": 35.5,
+        "load": 37.7
+      },
+      "errors": [],
+      "js_files": [
+        "nexa.js"
+      ]
+    },
+    "intro": {
+      "js": {
+        "count": 6,
+        "bytes": 111209
+      },
+      "css": {
+        "count": 5,
+        "bytes": 4898
+      },
+      "all": {
+        "count": 13,
+        "bytes": 442961
+      },
+      "components_js": {
+        "count": 0,
+        "bytes": 0
+      },
+      "timing": {
+        "domContentLoaded": 44.2,
+        "load": 53.3
+      },
+      "errors": [],
+      "js_files": [
+        "nexa.js"
+      ]
+    },
+    "landing": {
+      "js": {
+        "count": 9,
+        "bytes": 124345
+      },
+      "css": {
+        "count": 7,
+        "bytes": 13858
+      },
+      "all": {
+        "count": 17,
+        "bytes": 138676
+      },
+      "components_js": {
+        "count": 0,
+        "bytes": 0
+      },
+      "timing": {
+        "domContentLoaded": 46.4,
+        "load": 52.2
+      },
+      "errors": [],
+      "js_files": [
+        "nexa.js"
+      ]
+    },
+    "mindmap": {
+      "js": {
+        "count": 8,
+        "bytes": 233400
+      },
+      "css": {
+        "count": 6,
+        "bytes": 203323
+      },
+      "all": {
+        "count": 16,
+        "bytes": 567692
+      },
+      "components_js": {
+        "count": 1,
+        "bytes": 114131
+      },
+      "timing": {
+        "domContentLoaded": 73,
+        "load": 98.1
+      },
+      "errors": [],
+      "js_files": [
+        "nexa-components.js",
+        "nexa.js"
+      ]
+    },
+    "minified": {
+      "js": {
+        "count": 3,
+        "bytes": 134170
+      },
+      "css": {
+        "count": 2,
+        "bytes": 85512
+      },
+      "all": {
+        "count": 6,
+        "bytes": 220278
+      },
+      "components_js": {
+        "count": 1,
+        "bytes": 74924
+      },
+      "timing": {
+        "domContentLoaded": 30.8,
+        "load": 31.8
+      },
+      "errors": [],
+      "js_files": [
+        "nexa-components.min.js",
+        "nexa.min.js"
+      ]
+    },
+    "mobile": {
+      "js": {
+        "count": 8,
+        "bytes": 230203
+      },
+      "css": {
+        "count": 4,
+        "bytes": 114918
+      },
+      "all": {
+        "count": 13,
+        "bytes": 345588
+      },
+      "components_js": {
+        "count": 1,
+        "bytes": 114131
+      },
+      "timing": {
+        "domContentLoaded": 51,
+        "load": 51.8
+      },
+      "errors": [],
+      "js_files": [
+        "nexa-components.js",
+        "nexa.js"
+      ]
+    },
+    "motion-editor": {
+      "js": {
+        "count": 65,
+        "bytes": 340285
+      },
+      "css": {
+        "count": 11,
+        "bytes": 26334
+      },
+      "all": {
+        "count": 77,
+        "bytes": 367070
+      },
+      "components_js": {
+        "count": 0,
+        "bytes": 0
+      },
+      "timing": {
+        "domContentLoaded": 216.9,
+        "load": 235.8
+      },
+      "errors": [],
+      "js_files": [
+        "nexa-motion.js",
+        "nexa.js"
+      ]
+    },
+    "motion-landing": {
+      "js": {
+        "count": 11,
+        "bytes": 159353
+      },
+      "css": {
+        "count": 7,
+        "bytes": 18577
+      },
+      "all": {
+        "count": 20,
+        "bytes": 2037486
+      },
+      "components_js": {
+        "count": 0,
+        "bytes": 0
+      },
+      "timing": {
+        "domContentLoaded": 119.4,
+        "load": 148.5
+      },
+      "errors": [],
+      "js_files": [
+        "nexa-motion.js",
+        "nexa.js"
+      ]
+    },
+    "nexa-architecture": {
+      "js": {
+        "count": 13,
+        "bytes": 149606
+      },
+      "css": {
+        "count": 12,
+        "bytes": 213943
+      },
+      "all": {
+        "count": 28,
+        "bytes": 2210191
+      },
+      "components_js": {
+        "count": 0,
+        "bytes": 0
+      },
+      "timing": {
+        "domContentLoaded": 102.8,
+        "load": 123.2
+      },
+      "errors": [],
+      "js_files": [
+        "nexa-zoom.js",
+        "nexa.js"
+      ]
+    },
+    "nexa-atlas": {
+      "js": {
+        "count": 14,
+        "bytes": 273632
+      },
+      "css": {
+        "count": 12,
+        "bytes": 217582
+      },
+      "all": {
+        "count": 28,
+        "bytes": 622236
+      },
+      "components_js": {
+        "count": 1,
+        "bytes": 114131
+      },
+      "timing": {
+        "domContentLoaded": 125.7,
+        "load": 138.2
+      },
+      "errors": [],
+      "js_files": [
+        "nexa-components.js",
+        "nexa-zoom.js",
+        "nexa.js"
+      ]
+    },
+    "nexa-deck": {
+      "js": {
+        "count": 8,
+        "bytes": 257887
+      },
+      "css": {
+        "count": 6,
+        "bytes": 209945
+      },
+      "all": {
+        "count": 17,
+        "bytes": 925266
+      },
+      "components_js": {
+        "count": 1,
+        "bytes": 114131
+      },
+      "timing": {
+        "domContentLoaded": 79.3,
+        "load": 94.9
+      },
+      "errors": [],
+      "js_files": [
+        "nexa-components.js",
+        "nexa-zoom.js",
+        "nexa.js"
+      ]
+    },
+    "nexa-motion": {
+      "js": {
+        "count": 7,
+        "bytes": 149090
+      },
+      "css": {
+        "count": 4,
+        "bytes": 4446
+      },
+      "all": {
+        "count": 12,
+        "bytes": 154003
+      },
+      "components_js": {
+        "count": 0,
+        "bytes": 0
+      },
+      "timing": {
+        "domContentLoaded": 45.9,
+        "load": 47.3
+      },
+      "errors": [],
+      "js_files": [
+        "nexa-motion.js",
+        "nexa.js"
+      ]
+    },
+    "palate-journey": {
+      "js": {
+        "count": 8,
+        "bytes": 180701
+      },
+      "css": {
+        "count": 5,
+        "bytes": 17604
+      },
+      "all": {
+        "count": 19,
+        "bytes": 3031778
+      },
+      "components_js": {
+        "count": 0,
+        "bytes": 0
+      },
+      "timing": {
+        "domContentLoaded": 65.9,
+        "load": 66
+      },
+      "errors": [],
+      "js_files": [
+        "nexa-motion.js",
+        "nexa-zoom.js",
+        "nexa.js"
+      ]
+    },
+    "space-journey": {
+      "js": {
+        "count": 8,
+        "bytes": 178055
+      },
+      "css": {
+        "count": 5,
+        "bytes": 15531
+      },
+      "all": {
+        "count": 20,
+        "bytes": 4285816
+      },
+      "components_js": {
+        "count": 0,
+        "bytes": 0
+      },
+      "timing": {
+        "domContentLoaded": 65.8,
+        "load": 123.7
+      },
+      "errors": [],
+      "js_files": [
+        "nexa-motion.js",
+        "nexa-zoom.js",
+        "nexa.js"
+      ]
+    },
+    "spacecraft": {
+      "js": {
+        "count": 7,
+        "bytes": 145212
+      },
+      "css": {
+        "count": 6,
+        "bytes": 93988
+      },
+      "all": {
+        "count": 15,
+        "bytes": 370185
+      },
+      "components_js": {
+        "count": 0,
+        "bytes": 0
+      },
+      "timing": {
+        "domContentLoaded": 67.5,
+        "load": 80.2
+      },
+      "errors": [],
+      "js_files": [
+        "nexa-zoom.js",
+        "nexa.js"
+      ]
+    },
+    "ssr": {
+      "js": {
+        "count": 4,
+        "bytes": 226451
+      },
+      "css": {
+        "count": 2,
+        "bytes": 115085
+      },
+      "all": {
+        "count": 7,
+        "bytes": 342641
+      },
+      "components_js": {
+        "count": 1,
+        "bytes": 114131
+      },
+      "timing": {
+        "domContentLoaded": 40.7,
+        "load": 41.1
+      },
+      "errors": [],
+      "js_files": [
+        "nexa-components.js",
+        "nexa-server.js",
+        "nexa.js"
+      ]
+    },
+    "star-atlas": {
+      "js": {
+        "count": 8,
+        "bytes": 146051
+      },
+      "css": {
+        "count": 7,
+        "bytes": 92861
+      },
+      "all": {
+        "count": 17,
+        "bytes": 369888
+      },
+      "components_js": {
+        "count": 0,
+        "bytes": 0
+      },
+      "timing": {
+        "domContentLoaded": 69.3,
+        "load": 81.4
+      },
+      "errors": [],
+      "js_files": [
+        "nexa-zoom.js",
+        "nexa.js"
+      ]
+    },
+    "storefront": {
+      "js": {
+        "count": 14,
+        "bytes": 235792
+      },
+      "css": {
+        "count": 10,
+        "bytes": 203394
+      },
+      "all": {
+        "count": 26,
+        "bytes": 570158
+      },
+      "components_js": {
+        "count": 1,
+        "bytes": 114131
+      },
+      "timing": {
+        "domContentLoaded": 84.3,
+        "load": 105
+      },
+      "errors": [],
+      "js_files": [
+        "nexa-components.js",
+        "nexa.js"
+      ]
+    },
+    "synth-panel": {
+      "js": {
+        "count": 7,
+        "bytes": 146918
+      },
+      "css": {
+        "count": 6,
+        "bytes": 93916
+      },
+      "all": {
+        "count": 15,
+        "bytes": 371814
+      },
+      "components_js": {
+        "count": 0,
+        "bytes": 0
+      },
+      "timing": {
+        "domContentLoaded": 68.3,
+        "load": 83.8
+      },
+      "errors": [],
+      "js_files": [
+        "nexa-zoom.js",
+        "nexa.js"
+      ]
+    },
+    "task-manager": {
+      "js": {
+        "count": 10,
+        "bytes": 244606
+      },
+      "css": {
+        "count": 6,
+        "bytes": 118874
+      },
+      "all": {
+        "count": 17,
+        "bytes": 363984
+      },
+      "components_js": {
+        "count": 1,
+        "bytes": 114131
+      },
+      "timing": {
+        "domContentLoaded": 71.8,
+        "load": 78.2
+      },
+      "errors": [
+        "Failed to fetch"
+      ],
+      "js_files": [
+        "nexa-components.js",
+        "nexa.js"
+      ]
+    },
+    "transit-map": {
+      "js": {
+        "count": 7,
+        "bytes": 143059
+      },
+      "css": {
+        "count": 6,
+        "bytes": 92915
+      },
+      "all": {
+        "count": 15,
+        "bytes": 366956
+      },
+      "components_js": {
+        "count": 0,
+        "bytes": 0
+      },
+      "timing": {
+        "domContentLoaded": 70.5,
+        "load": 83
+      },
+      "errors": [],
+      "js_files": [
+        "nexa-zoom.js",
+        "nexa.js"
+      ]
+    },
+    "zoom-stage": {
+      "js": {
+        "count": 7,
+        "bytes": 252791
+      },
+      "css": {
+        "count": 6,
+        "bytes": 204202
+      },
+      "all": {
+        "count": 15,
+        "bytes": 588021
+      },
+      "components_js": {
+        "count": 1,
+        "bytes": 114131
+      },
+      "timing": {
+        "domContentLoaded": 71.2,
+        "load": 83
+      },
+      "errors": [],
+      "js_files": [
+        "nexa-components.js",
+        "nexa-zoom.js",
+        "nexa.js"
+      ]
+    }
+  }
+}

@@ -1,5 +1,5 @@
 import { h } from "/dist/nexa.js";
-import { EmptyState } from "/dist/nexa-components.js";
+import { EmptyState } from "/dist/nexa-components-core.js";
 import { CLASSIFICATION_COLORS } from "../data.js";
 
 const RADIUS = 15.5;

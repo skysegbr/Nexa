@@ -1,5 +1,5 @@
 import { h } from "/dist/nexa.js";
-import { Select, TextField } from "/dist/nexa-components.js";
+import { Select, TextField } from "/dist/nexa-components-forms.js";
 import { CLASSIFICATION_OPTIONS, STATUS_OPTIONS } from "../data.js";
 
 export function RecallFilters({ query, onQueryChange, classification, onClassificationChange, status, onStatusChange }) {

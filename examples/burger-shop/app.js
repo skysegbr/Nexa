@@ -5,7 +5,7 @@
 import {
   h, render, useState, useMemo, useToast,
 } from "/dist/nexa.js";
-import { ToastStack } from "/dist/nexa-components.js";
+import { ToastStack } from "/dist/nexa-components-overlay.js";
 
 import { ToastCtx }       from "./components/ToastCtx.js";
 import { TopBar }         from "./components/TopBar.js";

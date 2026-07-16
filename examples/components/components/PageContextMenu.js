@@ -1,5 +1,6 @@
 import { h, useState, useContextMenu } from "/dist/nexa.js";
-import { ContextMenu, Alert } from "/dist/nexa-components.js";
+import { Alert } from "/dist/nexa-components-core.js";
+import { ContextMenu } from "/dist/nexa-components-overlay.js";
 
 export function PageContextMenu() {
   const { menu, openMenu, closeMenu } = useContextMenu();

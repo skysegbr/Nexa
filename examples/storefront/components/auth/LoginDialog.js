@@ -1,5 +1,7 @@
 import { h, useForm } from "/dist/nexa.js";
-import { Button, Dialog, TextField } from "/dist/nexa-components.js";
+import { Button } from "/dist/nexa-components-core.js";
+import { TextField } from "/dist/nexa-components-forms.js";
+import { Dialog } from "/dist/nexa-components-overlay.js";
 
 export function LoginDialog({ open, onClose, onLogin }) {
   const { field, handleSubmit } = useForm({

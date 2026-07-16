@@ -1,5 +1,5 @@
 import { h, useState } from "/dist/nexa.js";
-import { Badge } from "/dist/nexa-components.js";
+import { Badge } from "/dist/nexa-components-core.js";
 
 import { ACTIVITY_ITEMS } from "../data.js";
 

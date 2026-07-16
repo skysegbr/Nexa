@@ -1,5 +1,5 @@
 import { h, useTheme } from "/dist/nexa.js";
-import { ThemeToggle } from "/dist/nexa-components.js";
+import { ThemeToggle } from "/dist/nexa-components-theme.js";
 
 export function CoreHeader() {
   const { theme } = useTheme();

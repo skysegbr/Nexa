@@ -178,7 +178,7 @@ export const FRAMES = [
       heading: "An entire Nexa app fits on one board",
       body: "No build step between this code and the browser — the module runs as-is.",
       code: `import { h, render, useState } from "/dist/nexa.js";
-import { Button } from "/dist/nexa-components.js";
+import { Button } from "/dist/nexa-components-core.js";
 
 function App() {
   const [count, setCount] = useState(0);

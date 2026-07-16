@@ -1,5 +1,6 @@
 import { h, useState } from "/dist/nexa.js";
-import { CodeEditor, Alert } from "/dist/nexa-components.js";
+import { Alert } from "/dist/nexa-components-core.js";
+import { CodeEditor } from "/dist/nexa-components-forms.js";
 import { INITIAL_CODE } from "../data.js";
 
 export function PageCodeEditor() {

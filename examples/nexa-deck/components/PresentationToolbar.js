@@ -1,5 +1,5 @@
 import { h } from "/dist/nexa.js";
-import { Button, IconButton } from "/dist/nexa-components.js";
+import { Button, IconButton } from "/dist/nexa-components-core.js";
 
 export function PresentationToolbar({ index, total, controllerRef }) {
   const nav = controllerRef.current;

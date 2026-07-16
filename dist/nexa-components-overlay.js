@@ -1,0 +1,1065 @@
+/*!
+ * Nexa — UI component library, `overlay` category: overlays (Dialog, Drawer, Menu, Popover, Toast, CommandPalette, ...).
+ * Part of the no-build Nexa framework — NOT React; see the AI/LLM notice
+ * in ./nexa-components-core.js and https://github.com/skysegbr/Nexa
+ * Import only the categories you use, or everything via ./nexa-components.js.
+ */
+import { h, useEffect, useRef, useState } from "./nexa.js";
+import { focusFirstElement, focusFirstElementIfOutside, hasChildren, joinClasses, moveMenuFocus, trapFocus } from "./nexa-components-util.js";
+import { IconButton } from "./nexa-components-core.js";
+
+function startDrag(e, panel) {
+  if (!panel || e.button !== 0) return;
+  const rect = panel.getBoundingClientRect();
+  const offX = e.clientX - rect.left;
+  const offY = e.clientY - rect.top;
+
+  panel.style.position = "fixed";
+  panel.style.margin = "0";
+  panel.style.left = `${rect.left}px`;
+  panel.style.top = `${rect.top}px`;
+  panel.style.transform = "none";
+  panel.style.animation = "none";
+
+  const onMove = (ev) => {
+    const x = Math.max(0, Math.min(window.innerWidth  - panel.offsetWidth,  ev.clientX - offX));
+    const y = Math.max(0, Math.min(window.innerHeight - panel.offsetHeight, ev.clientY - offY));
+    panel.style.left = `${x}px`;
+    panel.style.top  = `${y}px`;
+  };
+
+  const onUp = () => {
+    document.removeEventListener("mousemove", onMove);
+    document.removeEventListener("mouseup", onUp);
+  };
+
+  document.addEventListener("mousemove", onMove);
+  document.addEventListener("mouseup", onUp);
+  e.preventDefault();
+}
+
+export function Dialog({
+  open = false,
+  id = "nexa-dialog",
+  title,
+  closeLabel = "Close",
+  onClose,
+  actions,
+  size,
+  draggable = false,
+  className = "",
+  children,
+  ...props
+} = {}) {
+  const panelRef = useRef(null);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+
+  useEffect(() => {
+    if (!open) {
+      return undefined;
+    }
+
+    const previousActive = document.activeElement;
+    const previousOverflow = document.body.style.overflow;
+
+    document.body.style.overflow = "hidden";
+    queueMicrotask(() => focusFirstElementIfOutside(panelRef.current));
+
+    const onKeyDown = (event) => {
+      if (event.key === "Escape") {
+        onCloseRef.current?.();
+        return;
+      }
+
+      if (event.key === "Tab") {
+        trapFocus(event, panelRef.current);
+      }
+    };
+
+    document.addEventListener("keydown", onKeyDown);
+
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      document.body.style.overflow = previousOverflow;
+
+      if (previousActive && typeof previousActive.focus === "function") {
+        previousActive.focus();
+      }
+    };
+  }, [open]);
+
+  if (!open) {
+    return null;
+  }
+
+  const titleId = title ? `${id}-title` : undefined;
+
+  return h(
+    "div",
+    {
+      className: "m-dialog-backdrop",
+      onMouseDown: (event) => {
+        if (event.target === event.currentTarget) {
+          onClose?.();
+        }
+      },
+    },
+    h(
+      "section",
+      {
+        ...props,
+        ref: panelRef,
+        id,
+        className: joinClasses("m-dialog", size && `m-dialog-${size}`, className),
+        role: "dialog",
+        ariaModal: "true",
+        ariaLabelledby: titleId,
+        tabIndex: -1,
+      },
+      h(
+        "header",
+        {
+          className: joinClasses("m-dialog-header", draggable && "m-dialog-header-draggable"),
+          onMouseDown: draggable ? (e) => startDrag(e, panelRef.current) : undefined,
+        },
+        title && h("h2", { id: titleId }, title),
+        h(IconButton, { label: closeLabel, onClick: onClose }, "x"),
+      ),
+      h("div", { className: "m-dialog-body" }, children),
+      hasChildren(actions) && h("footer", { className: "m-dialog-actions" }, actions),
+    ),
+  );
+}
+
+export function Toast({
+  open = true,
+  variant = "info",
+  title,
+  message,
+  duration = 0,
+  onClose,
+  action,
+  className = "",
+  children,
+  ...props
+} = {}) {
+  useEffect(() => {
+    if (!open || !duration) {
+      return undefined;
+    }
+
+    const timeout = window.setTimeout(() => onClose?.(), duration);
+    return () => window.clearTimeout(timeout);
+  }, [open, duration, onClose]);
+
+  if (!open) {
+    return null;
+  }
+
+  return h(
+    "aside",
+    {
+      ...props,
+      className: joinClasses("m-toast", `m-toast-${variant}`, className),
+      role: variant === "danger" ? "alert" : "status",
+      ariaLive: variant === "danger" ? "assertive" : "polite",
+    },
+    h(
+      "div",
+      { className: "m-toast-content" },
+      title && h("strong", null, title),
+      message && h("p", null, message),
+      hasChildren(children) && children,
+    ),
+    hasChildren(action) && h("div", { className: "m-toast-action" }, action),
+    onClose && h(IconButton, { label: "Dismiss", onClick: onClose }, "x"),
+  );
+}
+
+export function Drawer({
+  open = false,
+  id = "nexa-drawer",
+  side = "left",
+  width = 280,
+  title,
+  closeLabel = "Close",
+  onClose,
+  className = "",
+  children,
+  ...props
+} = {}) {
+  const panelRef = useRef(null);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+
+  useEffect(() => {
+    if (!open) {
+      return undefined;
+    }
+
+    const previousActive = document.activeElement;
+    const previousOverflow = document.body.style.overflow;
+
+    document.body.style.overflow = "hidden";
+    queueMicrotask(() => focusFirstElementIfOutside(panelRef.current));
+
+    const onKeyDown = (event) => {
+      if (event.key === "Escape") {
+        onCloseRef.current?.();
+        return;
+      }
+      if (event.key === "Tab") {
+        trapFocus(event, panelRef.current);
+      }
+    };
+
+    document.addEventListener("keydown", onKeyDown);
+
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      document.body.style.overflow = previousOverflow;
+      if (previousActive && typeof previousActive.focus === "function") {
+        previousActive.focus();
+      }
+    };
+  }, [open]);
+
+  if (!open) {
+    return null;
+  }
+
+  const titleId = title ? `${id}-title` : undefined;
+
+  return h(
+    "div",
+    {
+      className: "m-drawer-backdrop",
+      onMouseDown: (event) => {
+        if (event.target === event.currentTarget) {
+          onClose?.();
+        }
+      },
+    },
+    h(
+      "aside",
+      {
+        ...props,
+        ref: panelRef,
+        id,
+        className: joinClasses("m-drawer", `m-drawer-${side}`, className),
+        style: { width: typeof width === "number" ? `${width}px` : width },
+        role: "dialog",
+        ariaModal: "true",
+        ariaLabelledby: titleId,
+        tabIndex: -1,
+      },
+      h(
+        "header",
+        { className: "m-drawer-header" },
+        title && h("h2", { id: titleId }, title),
+        h(IconButton, { label: closeLabel, onClick: onClose }, "x"),
+      ),
+      h("div", { className: "m-drawer-body" }, children),
+    ),
+  );
+}
+
+export function Dropdown({
+  id,
+  trigger,
+  items = [],
+  align = "left",
+  className = "",
+  ...props
+} = {}) {
+  const [open, setOpen] = useState(false);
+  const wrapRef = useRef(null);
+  const menuRef = useRef(null);
+  const menuId = id ? `${id}-menu` : undefined;
+
+  useEffect(() => {
+    if (!open) {
+      return undefined;
+    }
+
+    queueMicrotask(() => focusFirstElementIfOutside(menuRef.current));
+
+    const onMouseDown = (event) => {
+      if (wrapRef.current && !wrapRef.current.contains(event.target)) {
+        setOpen(false);
+      }
+    };
+    const onKeyDown = (event) => {
+      if (event.key === "Escape") {
+        setOpen(false);
+        focusFirstElement(wrapRef.current);
+        return;
+      }
+
+      if (event.key === "Tab") {
+        setOpen(false);
+        return;
+      }
+
+      if (["ArrowDown", "ArrowUp", "Home", "End"].includes(event.key)) {
+        moveMenuFocus(event, menuRef.current);
+      }
+    };
+
+    document.addEventListener("mousedown", onMouseDown);
+    document.addEventListener("keydown", onKeyDown);
+
+    return () => {
+      document.removeEventListener("mousedown", onMouseDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [open]);
+
+  return h(
+    "div",
+    { ...props, id, ref: wrapRef, className: joinClasses("m-dropdown", className) },
+    h(
+      "div",
+      {
+        className: "m-dropdown-trigger",
+        onClick: () => setOpen((v) => !v),
+        onKeyDown: (event) => {
+          if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+            event.preventDefault();
+            setOpen(true);
+          }
+        },
+        ariaHaspopup: "true",
+        ariaExpanded: open ? "true" : "false",
+        ariaControls: menuId,
+      },
+      trigger,
+    ),
+    open &&
+      h(
+        "ul",
+        {
+          ref: menuRef,
+          id: menuId,
+          className: joinClasses("m-dropdown-menu", `m-dropdown-menu-${align}`),
+          role: "menu",
+        },
+        items.map((item, index) =>
+          h(
+            "li",
+            { key: item.key ?? index, className: "m-dropdown-item", role: "none" },
+            item.divider
+              ? h("hr", { className: "m-dropdown-divider" })
+              : h(
+                  "button",
+                  {
+                    type: "button",
+                    className: joinClasses(
+                      "m-dropdown-button",
+                      item.danger && "m-dropdown-button-danger",
+                    ),
+                    role: "menuitem",
+                    disabled: item.disabled,
+                    onClick: () => {
+                      if (item.disabled) {
+                        return;
+                      }
+                      setOpen(false);
+                      item.onClick?.();
+                    },
+                  },
+                  item.icon && h("span", { className: "m-dropdown-icon", ariaHidden: "true" }, item.icon),
+                  item.label,
+                ),
+          ),
+        ),
+      ),
+  );
+}
+
+export function Tooltip({
+  content,
+  position = "top",
+  id = "nexa-tooltip",
+  className = "",
+  children,
+  ...props
+} = {}) {
+  const [dismissed, setDismissed] = useState(false);
+  const bubbleId = `${id}-bubble`;
+
+  // Nexa evaluates function components eagerly (h() calls them immediately),
+  // so a single wrapped element already arrives here as a resolved
+  // `{ type, props }` DOM vnode — "TEXT_NODE" is the internal sentinel `h()`
+  // uses for bare text/null/boolean children, never a real tag name.
+  const [only] = children;
+  const canClone =
+    children.length === 1 && only && typeof only === "object" && only.type !== "TEXT_NODE";
+
+  const wrappedChildren = canClone
+    ? [{ ...only, props: { ...only.props, ariaDescribedby: joinClasses(only.props.ariaDescribedby, bubbleId) } }]
+    : children;
+
+  return h(
+    "span",
+    {
+      ...props,
+      className: joinClasses(
+        "m-tooltip-wrap",
+        `m-tooltip-${position}`,
+        dismissed && "m-tooltip-dismissed",
+        className,
+      ),
+      ariaDescribedby: canClone ? undefined : bubbleId,
+      onKeyDown: (event) => {
+        if (event.key === "Escape") {
+          setDismissed(true);
+        }
+      },
+      onMouseLeave: () => setDismissed(false),
+      onBlur: () => setDismissed(false),
+    },
+    wrappedChildren,
+    h("span", { id: bubbleId, role: "tooltip", className: "m-tooltip-bubble" }, content),
+  );
+}
+
+
+// ── ContextMenu ────────────────────────────────────────────
+
+export function ContextMenu({
+  open = false,
+  x = 0,
+  y = 0,
+  items = [],
+  onClose,
+  ariaLabel = "Context menu",
+  className = "",
+} = {}) {
+  const menuRef = useRef(null);
+
+  useEffect(() => {
+    if (!open) return undefined;
+
+    const previousActive = document.activeElement;
+    queueMicrotask(() => focusFirstElementIfOutside(menuRef.current));
+
+    const onMouseDown = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) onClose?.();
+    };
+    const onKeyDown = (e) => {
+      if (e.key === "Escape" || e.key === "Tab") {
+        onClose?.();
+        return;
+      }
+
+      if (["ArrowDown", "ArrowUp", "Home", "End"].includes(e.key)) {
+        moveMenuFocus(e, menuRef.current);
+      }
+    };
+    document.addEventListener("mousedown", onMouseDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", onMouseDown);
+      document.removeEventListener("keydown", onKeyDown);
+
+      if (previousActive && typeof previousActive.focus === "function") {
+        previousActive.focus();
+      }
+    };
+  }, [open, onClose]);
+
+  if (!open) return null;
+
+  return h(
+    "ul",
+    {
+      ref: menuRef,
+      className: joinClasses("m-context-menu", className),
+      role: "menu",
+      ariaLabel,
+      style: { top: `${y}px`, left: `${x}px` },
+    },
+    items.map((item, i) =>
+      h(
+        "li",
+        { key: item.key ?? i, className: "m-context-menu-item", role: "none" },
+        item.divider
+          ? h("hr", { className: "m-context-menu-divider" })
+          : h(
+              "button",
+              {
+                type: "button",
+                className: joinClasses(
+                  "m-context-menu-button",
+                  item.danger && "m-context-menu-button-danger",
+                ),
+                role: "menuitem",
+                disabled: item.disabled,
+                onClick: () => {
+                  onClose?.();
+                  item.onClick?.();
+                },
+              },
+              item.icon &&
+                h("span", { className: "m-context-menu-icon", ariaHidden: "true" }, item.icon),
+              item.label,
+            ),
+      ),
+    ),
+  );
+}
+
+// ── ToastStack ─────────────────────────────────────────────
+
+export function ToastStack({ toasts = [], onClose, className = "" } = {}) {
+  if (!toasts.length) return null;
+
+  return h(
+    "div",
+    { className: joinClasses("m-toast-stack", className), ariaLive: "polite" },
+    toasts.map((t) =>
+      h(Toast, {
+        key: t.id,
+        open: true,
+        variant: t.variant,
+        title: t.title,
+        message: t.message,
+        duration: t.duration,
+        onClose: () => onClose?.(t.id),
+      }),
+    ),
+  );
+}
+export function BottomSheet({
+  open,
+  title,
+  onClose,
+  children,
+  className = "",
+} = {}) {
+  const sheetRef = useRef(null);
+
+  useEffect(() => {
+    if (!open) return undefined;
+
+    const previousActive = document.activeElement;
+    queueMicrotask(() => focusFirstElementIfOutside(sheetRef.current));
+
+    const onKey = (e) => {
+      if (e.key === "Escape") {
+        onClose?.();
+        return;
+      }
+
+      if (e.key === "Tab") {
+        trapFocus(e, sheetRef.current);
+      }
+    };
+
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("keydown", onKey);
+
+      if (previousActive && typeof previousActive.focus === "function") {
+        previousActive.focus();
+      }
+    };
+  }, [open]);
+
+  if (!open) return null;
+
+  return h(
+    "div",
+    null,
+    h("div", {
+      className: "m-bottom-sheet-backdrop",
+      onClick: onClose,
+      ariaHidden: "true",
+    }),
+    h(
+      "div",
+      {
+        ref: sheetRef,
+        className: joinClasses("m-bottom-sheet", className),
+        role: "dialog",
+        ariaModal: "true",
+        ariaLabel: title,
+        tabIndex: -1,
+      },
+      h("div", { className: "m-bottom-sheet-handle" }),
+      h(
+        "div",
+        { className: "m-bottom-sheet-header" },
+        h("h2", null, title),
+        onClose &&
+          h(
+            IconButton,
+            { label: "Close", onClick: onClose },
+            "✕",
+          ),
+      ),
+      h("div", { className: "m-bottom-sheet-body" }, children),
+    ),
+  );
+}
+
+
+// ── Menu ─────────────────────────────────────────────────────
+//
+// Like Dropdown, but items may nest a `children` array to open a flyout
+// submenu (any number of levels deep). Each level tracks which single child
+// submenu is open (Accordion-style single-open), so hovering or arrowing
+// into a sibling closes the previous one.
+//
+// Props:
+//   trigger   element that opens the root menu on click
+//   items     [{ label, onClick?, children?, icon?, danger?, disabled?, divider? }]
+//   align     'left' | 'right' (root menu only)
+//   className extra classes
+//
+// Keyboard (per level): ArrowUp/ArrowDown/Home/End move between siblings;
+// ArrowRight (or Enter/click) opens a submenu and focuses its first item;
+// ArrowLeft closes the current submenu and returns focus to its parent
+// item. Escape/Tab close the whole menu, same as Dropdown.
+
+function getMenuItemButtons(list) {
+  if (!list) return [];
+  return Array.from(list.querySelectorAll(":scope > li > .m-menu-button"));
+}
+
+function MenuItemNode({ item, index, isOpen, onOpenChange, onLeafSelect, listRef, submenu, onCloseToParent }) {
+  const hasSubmenu = hasChildren(item.children);
+  const key = item.key ?? index;
+  const submenuRef = useRef(null);
+  const buttonRef = useRef(null);
+
+  const openSubmenu = () => onOpenChange(key);
+  const closeSubmenu = () => onOpenChange((current) => (current === key ? null : current));
+
+  return h(
+    "li",
+    {
+      className: "m-menu-item",
+      role: "none",
+      onMouseEnter: hasSubmenu ? openSubmenu : undefined,
+      onMouseLeave: hasSubmenu ? closeSubmenu : undefined,
+    },
+    h(
+      "button",
+      {
+        ref: buttonRef,
+        type: "button",
+        className: joinClasses("m-menu-button", item.danger && "m-menu-button-danger"),
+        role: "menuitem",
+        disabled: item.disabled,
+        ariaHaspopup: hasSubmenu ? "true" : undefined,
+        ariaExpanded: hasSubmenu ? (isOpen ? "true" : "false") : undefined,
+        onClick: () => {
+          if (item.disabled) return;
+          if (hasSubmenu) {
+            onOpenChange((current) => (current === key ? null : key));
+            return;
+          }
+          onLeafSelect(item);
+        },
+        onKeyDown: (event) => {
+          const buttons = getMenuItemButtons(listRef.current);
+
+          if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+            event.preventDefault();
+            const direction = event.key === "ArrowDown" ? 1 : -1;
+            const currentIndex = Math.max(0, buttons.indexOf(buttonRef.current));
+            buttons[(currentIndex + direction + buttons.length) % buttons.length]?.focus();
+          } else if (event.key === "Home") {
+            event.preventDefault();
+            buttons[0]?.focus();
+          } else if (event.key === "End") {
+            event.preventDefault();
+            buttons[buttons.length - 1]?.focus();
+          } else if (event.key === "ArrowRight" && hasSubmenu) {
+            event.preventDefault();
+            openSubmenu();
+            queueMicrotask(() => focusFirstElementIfOutside(submenuRef.current));
+          } else if (event.key === "ArrowLeft" && submenu) {
+            event.preventDefault();
+            onCloseToParent?.();
+          }
+        },
+      },
+      item.icon && h("span", { className: "m-menu-icon", ariaHidden: "true" }, item.icon),
+      h("span", { className: "m-menu-label" }, item.label),
+      hasSubmenu && h("span", { className: "m-menu-caret", ariaHidden: "true" }, "›"),
+    ),
+    hasSubmenu &&
+      isOpen &&
+      h(MenuList, {
+        items: item.children,
+        listRef: submenuRef,
+        onLeafSelect,
+        submenu: true,
+        onCloseToParent: () => {
+          closeSubmenu();
+          buttonRef.current?.focus();
+        },
+      }),
+  );
+}
+
+function MenuList({ items, listRef, onLeafSelect, submenu = false, onCloseToParent, id, className = "" }) {
+  const [openKey, setOpenKey] = useState(null);
+
+  return h(
+    "ul",
+    {
+      ref: listRef,
+      id,
+      className: joinClasses("m-menu-list", submenu && "m-menu-list-submenu", className),
+      role: "menu",
+    },
+    items.map((item, index) =>
+      item.divider
+        ? h(
+            "li",
+            { key: `divider-${index}`, className: "m-menu-divider-wrap", role: "none" },
+            h("hr", { className: "m-menu-divider" }),
+          )
+        : h(MenuItemNode, {
+            key: item.key ?? index,
+            item,
+            index,
+            isOpen: openKey === (item.key ?? index),
+            onOpenChange: setOpenKey,
+            onLeafSelect,
+            listRef,
+            submenu,
+            onCloseToParent,
+          }),
+    ),
+  );
+}
+
+export function Menu({
+  id,
+  trigger,
+  items = [],
+  align = "left",
+  className = "",
+  ...props
+} = {}) {
+  const [open, setOpen] = useState(false);
+  const wrapRef = useRef(null);
+  const menuRef = useRef(null);
+  const menuId = id ? `${id}-menu` : undefined;
+
+  useEffect(() => {
+    if (!open) {
+      return undefined;
+    }
+
+    queueMicrotask(() => focusFirstElementIfOutside(menuRef.current));
+
+    const onMouseDown = (event) => {
+      if (wrapRef.current && !wrapRef.current.contains(event.target)) {
+        setOpen(false);
+      }
+    };
+    const onKeyDown = (event) => {
+      if (event.key === "Escape") {
+        setOpen(false);
+        focusFirstElement(wrapRef.current);
+        return;
+      }
+      if (event.key === "Tab") {
+        setOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", onMouseDown);
+    document.addEventListener("keydown", onKeyDown);
+
+    return () => {
+      document.removeEventListener("mousedown", onMouseDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [open]);
+
+  return h(
+    "div",
+    { ...props, id, ref: wrapRef, className: joinClasses("m-menu", className) },
+    h(
+      "div",
+      {
+        className: "m-menu-trigger",
+        onClick: () => setOpen((v) => !v),
+        onKeyDown: (event) => {
+          if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+            event.preventDefault();
+            setOpen(true);
+          }
+        },
+        ariaHaspopup: "true",
+        ariaExpanded: open ? "true" : "false",
+        ariaControls: menuId,
+      },
+      trigger,
+    ),
+    open &&
+      h(MenuList, {
+        id: menuId,
+        items,
+        listRef: menuRef,
+        submenu: false,
+        className: `m-menu-list-${align}`,
+        onLeafSelect: (item) => {
+          if (item.disabled) return;
+          setOpen(false);
+          item.onClick?.();
+        },
+      }),
+  );
+}
+
+// ── Popover ──────────────────────────────────────────────────
+//
+// Generic anchored panel — the primitive Tooltip/Dropdown/Menu don't cover:
+// arbitrary interactive content next to a trigger. Unlike Dialog it does
+// not trap Tab (the panel is part of the page flow); Escape and outside
+// clicks close it, Escape also restores focus to the trigger.
+
+export function Popover({
+  id,
+  trigger,
+  placement = "bottom",
+  title,
+  className = "",
+  children,
+  ...props
+} = {}) {
+  const [open, setOpen] = useState(false);
+  const wrapRef = useRef(null);
+  const panelRef = useRef(null);
+  const panelId = id ? `${id}-panel` : undefined;
+  const titleId = id && title ? `${id}-title` : undefined;
+
+  useEffect(() => {
+    if (!open) return undefined;
+
+    queueMicrotask(() => focusFirstElementIfOutside(panelRef.current));
+
+    const onMouseDown = (event) => {
+      if (wrapRef.current && !wrapRef.current.contains(event.target)) setOpen(false);
+    };
+    const onKeyDown = (event) => {
+      if (event.key === "Escape") {
+        setOpen(false);
+        focusFirstElement(wrapRef.current);
+      }
+    };
+
+    document.addEventListener("mousedown", onMouseDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", onMouseDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [open]);
+
+  return h(
+    "span",
+    { ...props, id, ref: wrapRef, className: joinClasses("m-popover", className) },
+    h(
+      "span",
+      {
+        className: "m-popover-trigger",
+        onClick: () => setOpen((v) => !v),
+        ariaHaspopup: "dialog",
+        ariaExpanded: open ? "true" : "false",
+        ariaControls: panelId,
+      },
+      trigger,
+    ),
+    open &&
+      h(
+        "div",
+        {
+          ref: panelRef,
+          id: panelId,
+          className: joinClasses("m-popover-panel", `m-popover-${placement}`),
+          role: "dialog",
+          ariaLabelledby: titleId,
+        },
+        title && h("h3", { id: titleId, className: "m-popover-title" }, title),
+        children,
+      ),
+  );
+}
+
+// ── CommandPalette ───────────────────────────────────────────
+//
+// Ctrl/Cmd-K style launcher. Controlled like Dialog (open/onClose) — bind
+// the global shortcut in the app, not here. Commands are
+// `{ id, label, hint?, icon?, section?, keywords?, onSelect }`; filtering
+// is a case-insensitive substring match over label/hint/section/keywords.
+// The text input keeps focus the whole time and drives an
+// aria-activedescendant listbox, so ArrowUp/Down/Enter never move focus.
+
+export function CommandPalette({
+  open = false,
+  id = "nexa-command",
+  onClose,
+  commands = [],
+  placeholder = "Type a command…",
+  emptyLabel = "No matching commands",
+  className = "",
+  ...props
+} = {}) {
+  const [query, setQuery] = useState("");
+  const [active, setActive] = useState(0);
+  const inputRef = useRef(null);
+  const panelRef = useRef(null);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+
+  useEffect(() => {
+    if (!open) return undefined;
+
+    setQuery("");
+    setActive(0);
+
+    const previousActive = document.activeElement;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    queueMicrotask(() => inputRef.current?.focus());
+
+    const onKeyDown = (event) => {
+      if (event.key === "Escape") {
+        onCloseRef.current?.();
+        return;
+      }
+      if (event.key === "Tab") {
+        trapFocus(event, panelRef.current);
+      }
+    };
+
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      document.body.style.overflow = previousOverflow;
+      if (previousActive && typeof previousActive.focus === "function") {
+        previousActive.focus();
+      }
+    };
+  }, [open]);
+
+  if (!open) return null;
+
+  const q = query.trim().toLowerCase();
+  const filtered = commands.filter((cmd) => {
+    if (!q) return true;
+    return [cmd.label, cmd.hint, cmd.section, ...(cmd.keywords ?? [])]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase()
+      .includes(q);
+  });
+  const activeIndex = Math.max(0, Math.min(active, filtered.length - 1));
+  const listId = `${id}-listbox`;
+
+  const runCommand = (cmd) => {
+    cmd.onSelect?.(cmd);
+    onCloseRef.current?.();
+  };
+
+  const moveActive = (next) => {
+    setActive(next);
+    queueMicrotask(() =>
+      document.getElementById(`${id}-option-${next}`)?.scrollIntoView({ block: "nearest" }),
+    );
+  };
+
+  const onInputKeyDown = (event) => {
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      if (filtered.length) moveActive(Math.min(activeIndex + 1, filtered.length - 1));
+    } else if (event.key === "ArrowUp") {
+      event.preventDefault();
+      if (filtered.length) moveActive(Math.max(activeIndex - 1, 0));
+    } else if (event.key === "Enter") {
+      event.preventDefault();
+      if (filtered[activeIndex]) runCommand(filtered[activeIndex]);
+    }
+  };
+
+  let lastSection;
+  const listChildren = [];
+  filtered.forEach((cmd, index) => {
+    if (cmd.section && cmd.section !== lastSection) {
+      lastSection = cmd.section;
+      listChildren.push(
+        h("li", { key: `section-${cmd.section}`, className: "m-command-section", role: "presentation" }, cmd.section),
+      );
+    }
+    listChildren.push(
+      h(
+        "li",
+        {
+          key: cmd.id ?? cmd.label,
+          id: `${id}-option-${index}`,
+          role: "option",
+          ariaSelected: index === activeIndex ? "true" : "false",
+          className: joinClasses("m-command-option", index === activeIndex && "m-command-option-active"),
+          onMouseEnter: () => setActive(index),
+          onClick: () => runCommand(cmd),
+        },
+        cmd.icon && h("span", { className: "m-command-icon", ariaHidden: "true" }, cmd.icon),
+        h("span", { className: "m-command-label" }, cmd.label),
+        cmd.hint && h("span", { className: "m-command-hint" }, cmd.hint),
+      ),
+    );
+  });
+  if (filtered.length === 0) {
+    listChildren.push(h("li", { key: "empty", className: "m-command-empty", role: "presentation" }, emptyLabel));
+  }
+
+  return h(
+    "div",
+    {
+      className: "m-command-backdrop",
+      onMouseDown: (event) => {
+        if (event.target === event.currentTarget) onClose?.();
+      },
+    },
+    h(
+      "section",
+      {
+        ...props,
+        ref: panelRef,
+        id,
+        className: joinClasses("m-command", className),
+        role: "dialog",
+        ariaModal: "true",
+        ariaLabel: "Command palette",
+      },
+      h("input", {
+        ref: inputRef,
+        type: "text",
+        className: "m-command-input",
+        placeholder,
+        value: query,
+        role: "combobox",
+        ariaExpanded: "true",
+        ariaControls: listId,
+        ariaActivedescendant: filtered.length ? `${id}-option-${activeIndex}` : undefined,
+        ariaAutocomplete: "list",
+        onInput: (event) => {
+          setQuery(event.target.value);
+          setActive(0);
+        },
+        onKeyDown: onInputKeyDown,
+      }),
+      h("ul", { id: listId, className: "m-command-list", role: "listbox" }, listChildren),
+    ),
+  );
+}

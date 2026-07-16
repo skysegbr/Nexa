@@ -1,14 +1,7 @@
 import { h, useEffect, useForm } from "/dist/nexa.js";
-import {
-  Alert,
-  Button,
-  Checkbox,
-  Chip,
-  Drawer,
-  Select,
-  Textarea,
-  TextField,
-} from "/dist/nexa-components.js";
+import { Alert, Button, Chip } from "/dist/nexa-components-core.js";
+import { Checkbox, Select, Textarea, TextField } from "/dist/nexa-components-forms.js";
+import { Drawer } from "/dist/nexa-components-overlay.js";
 import { PRIORITY_OPTIONS } from "../data.js";
 
 function valuesFromTask(task) {

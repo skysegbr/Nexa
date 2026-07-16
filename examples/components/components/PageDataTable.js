@@ -1,5 +1,6 @@
 import { h } from "/dist/nexa.js";
-import { DataTable, Badge } from "/dist/nexa-components.js";
+import { Badge } from "/dist/nexa-components-core.js";
+import { DataTable } from "/dist/nexa-components-data.js";
 
 const ROLES = ["Admin", "Editor", "Viewer"];
 const FIRST_NAMES = ["Ana", "Bruno", "Carla", "Diego", "Elisa", "Fabio", "Gabi", "Hugo", "Ines", "Joao"];

@@ -1,5 +1,7 @@
 import { h, useState } from "/dist/nexa.js";
-import { Popover, Button, Checkbox } from "/dist/nexa-components.js";
+import { Button } from "/dist/nexa-components-core.js";
+import { Checkbox } from "/dist/nexa-components-forms.js";
+import { Popover } from "/dist/nexa-components-overlay.js";
 
 export function PopoverDemo() {
   const [onlyActive, setOnlyActive] = useState(true);
