@@ -86,6 +86,46 @@ test("motion: transform composes in canonical order with per-axis scale", async 
   assertEqual(el.style.transform, "translate3d(10px, 0px, 0px) rotate(90deg) scale(2, 1)");
 });
 
+test("motion: a settled element drops an identity transform so it de-promotes", async () => {
+  const { tl, el } = boundTimeline({
+    tracks: { box: [{ at: 0, x: 80, opacity: 0 }, { at: 1000, x: 0, opacity: 1 }] },
+  });
+
+  // Parked off the identity (x:40): the promoting translate3d stays, ready to
+  // tween on its own layer.
+  tl.seek(500);
+  assertEqual(el.style.transform, "translate3d(40px, 0px, 0px)");
+
+  // Landed at rest on the identity (x:0): translate3d(0,0,0) would keep the
+  // element promoted forever, so it is dropped to `none` and the will-change
+  // hint is released — a large node never lingers as its own tiled layer.
+  tl.seek(1000);
+  assertEqual(el.style.transform, "none", "identity transform is dropped at rest");
+  assertEqual(el.style.willChange, "auto", "will-change is released at rest");
+});
+
+test("motion: a moving element is promoted, then de-promotes when it completes", async () => {
+  const mp = mountPoint();
+  let tl;
+  function Movie() {
+    tl = useTimeline({ duration: 120, tracks: { hero: [{ at: 0, x: 60 }, { at: 120, x: 0 }] } });
+    return h("div", { ref: tl.track("hero") }, "x");
+  }
+  render(Movie, mp);
+  await flush();
+  const el = mp.querySelector("div");
+
+  tl.play();
+  await wait(50);
+  assert(el.style.transform.startsWith("translate3d("), "promoted with translate3d while moving");
+  assertEqual(el.style.willChange, "transform, opacity", "will-change hints the compositor while moving");
+
+  await wait(220); // run past the 120ms duration so the movie completes at x:0
+  assert(!tl.isPlaying, "movie completed");
+  assertEqual(el.style.transform, "none", "de-promoted after settling on the identity");
+  assertEqual(el.style.willChange, "auto");
+});
+
 test("motion: duration is inferred from the last keyframe when omitted", async () => {
   const tl = createTimeline({
     tracks: { a: [{ at: 0, x: 0 }, { at: 1234, x: 10 }] },

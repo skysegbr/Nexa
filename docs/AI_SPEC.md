@@ -1666,6 +1666,15 @@ function Intro() {
   (call `destroy()` yourself). `useTimeline` captures its spec on first
   render (like `createLazy` — treat it as static) and autoplays on mount
   unless `autoplay: false`.
+- **Compositor promotion**: while a timeline moves, each tracked element is
+  promoted to its own GPU layer (`will-change` + `translate3d`) for a smooth
+  tween, then **de-promoted at rest** (an identity transform becomes `none`
+  and the `will-change` hint is released). So do **not** animate `x`/`y`/
+  `scale` on a very large node — a full `ZoomStage` frame, or an SVG wider/
+  taller than ~4096px. While it animates it becomes a layer bigger than the
+  GPU's max texture, which the browser must tile; the tiles blank out and
+  flicker when an ancestor (like `ZoomStage`'s world) is scaled at the same
+  time. Animate its `opacity` instead, or animate a small child element.
 
 Full showcase: `examples/nexa-motion` — preloader, flying logo, letter
 cascade, SKIP INTRO, scrubber and scene-jump deck. Visual authoring:
@@ -1756,6 +1765,17 @@ other frame combined. `ZoomStage` renders frames sorted by descending area
 don't need to manage `z-index` yourself, but keep it in mind when authoring
 geometry: a frame that's smaller than something it overlaps will always be
 the one left visible on top.
+
+**Mind the GPU texture ceiling (~4096px).** The world — the union of every
+frame — is one layer the camera scales. Past ~4096px on either axis it exceeds
+the GPU's max texture, so the browser tiles the layer and the tiles blank out /
+flicker while zooming. `ZoomStage` guards the *world* automatically (above that
+size it paints on the main thread instead of compositing it), but the same
+limit applies to your **content**: never `nexa-motion`-animate `x`/`y`/`scale`
+on a giant node — a full-canvas overview SVG, a background that spans the whole
+frame. Animate its `opacity` (or a small child) instead; see nexa-motion's
+"Compositor promotion" note. Flicker or vanishing elements *while zooming* is
+almost always an oversized animated element.
 
 **Structuring a multi-frame deck:** once a presentation has more than a
 couple of frame *kinds* (title slide, bullet list, code sample, …), give

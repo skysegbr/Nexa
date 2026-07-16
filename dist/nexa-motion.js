@@ -388,7 +388,7 @@ function pointsAt(points, time, defaultEase, lerp) {
 // Computes every style this track drives at `time`, as one flat object of
 // camelCase style properties. Discrete `set` steps are assigned first and
 // tweened properties second, so a tween always wins over a conflicting set.
-function styleAt(compiled, time, defaultEase) {
+function styleAt(compiled, time, defaultEase, settle) {
   const style = {};
 
   // 1. Frame-by-frame steps: the last `set` at or before the playhead holds.
@@ -452,6 +452,9 @@ function styleAt(compiled, time, defaultEase) {
 
   if (compiled.hasTransform) {
     const parts = [];
+    // Track whether the composed transform is the identity, so a settled
+    // element can drop it entirely (see the `settle` branch below).
+    let identity = true;
     // translate3d over translate: no browser collapses its serialized form
     // (Firefox rewrites `translate(50px, 0px)` as `translate(50px)`), and it
     // promotes the element to its own compositor layer.
@@ -459,19 +462,32 @@ function styleAt(compiled, time, defaultEase) {
       const x = guidePoint ? guidePoint.x : value("x", 0);
       const y = guidePoint ? guidePoint.y : value("y", 0);
       parts.push(`translate3d(${x}px, ${y}px, 0px)`);
+      if (x !== 0 || y !== 0) identity = false;
     }
     if (compiled.perProp.has("rotate") || compiled.hasOrient) {
       const rotate = guideAngle !== null ? guideAngle : value("rotate", 0);
       parts.push(`rotate(${rotate}deg)`);
+      if (rotate !== 0) identity = false;
     }
     if (compiled.perProp.has("skewX") || compiled.perProp.has("skewY")) {
-      parts.push(`skew(${value("skewX", 0)}deg, ${value("skewY", 0)}deg)`);
+      const skewX = value("skewX", 0);
+      const skewY = value("skewY", 0);
+      parts.push(`skew(${skewX}deg, ${skewY}deg)`);
+      if (skewX !== 0 || skewY !== 0) identity = false;
     }
     if (compiled.perProp.has("scale") || compiled.perProp.has("scaleX") || compiled.perProp.has("scaleY")) {
       const uniform = value("scale", 1);
-      parts.push(`scale(${value("scaleX", uniform)}, ${value("scaleY", uniform)})`);
+      const scaleX = value("scaleX", uniform);
+      const scaleY = value("scaleY", uniform);
+      parts.push(`scale(${scaleX}, ${scaleY})`);
+      if (scaleX !== 1 || scaleY !== 1) identity = false;
     }
-    style.transform = parts.join(" ");
+    // While the timeline moves, keep translate3d so the tween stays on its own
+    // GPU layer. Once settled at the identity transform, drop to `none`: a
+    // lingering translate3d(0,0,0) keeps the element promoted forever, and for
+    // a large node (e.g. a full ZoomStage frame) that layer can exceed the
+    // GPU's max texture size, tile, and flicker whenever an ancestor is scaled.
+    style.transform = settle && identity ? "none" : parts.join(" ");
   }
 
   if (compiled.hasOpacity) {
@@ -554,20 +570,28 @@ export function createTimeline(spec = {}) {
   function applyTrack(name, compiled) {
     const bound = elements.get(name);
     if (!bound || bound.size === 0) return;
-    const style = styleAt(compiled, time, defaultEase);
+    // Promote to a compositor layer only while the timeline is moving. A node
+    // left permanently promoted (its own will-change / translate3d layer) is
+    // wasteful, and under a scaled ancestor like ZoomStage's world a large one
+    // can tile past the GPU limit and flicker. `settle` (= not playing) makes
+    // styleAt drop an identity transform; we drop the will-change hint to match.
+    const settle = !playing;
+    const style = styleAt(compiled, time, defaultEase, settle);
     const keys = Object.keys(style);
+    const willChange = settle ? "auto" : "transform, opacity";
     for (const element of bound) {
+      element.style.willChange = willChange;
       for (const key of keys) {
         element.style[key] = style[key];
       }
     }
   }
 
-  function applyAll() {
+  function applyAll(fireUpdate = true) {
     for (const [name, compiled] of tracks) {
       applyTrack(name, compiled);
     }
-    spec.onUpdate?.(time);
+    if (fireUpdate) spec.onUpdate?.(time);
   }
 
   // Fire scripts the playhead crossed moving from `fromTime` to `toTime`
@@ -642,10 +666,11 @@ export function createTimeline(spec = {}) {
       fireCrossedScripts(previous, next);
     }
 
+    // Flip to stopped before the final apply so the settled frame de-promotes.
+    if (completed) playing = false;
     applyAll();
 
     if (completed) {
-      playing = false;
       spec.onComplete?.();
       return;
     }
@@ -700,6 +725,8 @@ export function createTimeline(spec = {}) {
     stop() {
       playing = false;
       stopTicker();
+      // Re-commit the settled frame (no onUpdate) so the element de-promotes.
+      applyAll(false);
     },
     gotoAndPlay(target) {
       if (destroyed) return;
@@ -710,8 +737,10 @@ export function createTimeline(spec = {}) {
       for (const script of scripts) {
         if (script.at === target_) script.fn();
       }
-      applyAll();
+      // Promote before the apply (playing drives the compositor hint) so the
+      // starting frame is already on its own layer.
       playing = true;
+      applyAll();
       startTicker();
     },
     gotoAndStop(target) {
@@ -746,7 +775,8 @@ export function createTimeline(spec = {}) {
 
         if (node) {
           bound.add(node);
-          node.style.willChange = "transform, opacity";
+          // will-change is set per-apply by applyTrack (promoted only while the
+          // timeline moves), so there is nothing to hint here at bind time.
           // Sync the newcomer to the playhead immediately (through the one
           // canonical apply path) so late-mounting elements never flash
           // their unanimated state.
@@ -782,6 +812,8 @@ export function createTimeline(spec = {}) {
       destroyed = true;
       playing = false;
       stopTicker();
+      // De-promote any elements still bound before we release them.
+      applyAll(false);
       elements.clear();
       // Guides are pre-sampled at compile time — their temporary <path>
       // elements already left the hidden <svg>; nothing to clean up here.

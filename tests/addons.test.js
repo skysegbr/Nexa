@@ -261,6 +261,33 @@ test("ZoomStage: mount fits the camera to the first frame", async () => {
   );
 });
 
+test("ZoomStage: de-promotes an oversized world so it can't tile and flicker", async () => {
+  // A normal deck (world 1200x900) stays composited for a smooth GPU tween.
+  const small = mountPoint();
+  render(zoomApp(), small);
+  await flush();
+  assertEqual(
+    small.querySelector(".m-zoom-world").style.willChange,
+    "transform",
+    "a world within the GPU budget stays promoted",
+  );
+
+  // A world past the ~4096px texture limit would tile as a compositor layer,
+  // blanking tiles as the camera scales — so it is painted on the main thread.
+  const big = mountPoint();
+  const bigFrames = [
+    { id: "a", x: 0, y: 0, w: 800, h: 600, content: h("p", null, "a") },
+    { id: "overview", x: 0, y: 0, w: 6500, h: 4800, content: h("p", null, "overview") },
+  ];
+  render(() => h(ZoomStage, { frames: bigFrames, padding: 0, style: CANVAS_SIZE }), big);
+  await flush();
+  assertEqual(
+    big.querySelector(".m-zoom-world").style.willChange,
+    "auto",
+    "an oversized world is painted on the main thread, not tiled",
+  );
+});
+
 test("ZoomStage: controllerRef next/prev/goTo drive the active frame and onIndexChange", async () => {
   const container = mountPoint();
   const controllerRef = { current: null };

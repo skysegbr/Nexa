@@ -575,6 +575,20 @@ export function ZoomStage({
     return () => { ctrl.destroy(); ctrlRef.current = null; };
   }, []);
 
+  // Guard against tiled-layer flicker. The world (the union of every frame) is
+  // one layer the camera transforms; past the GPU's max texture (~4096px on an
+  // axis) it can't be a single texture, so promoting it makes the browser tile
+  // the layer — and tiles blank out / flicker while the camera scales. Above
+  // that budget, paint the world on the main thread (`will-change: auto`)
+  // instead; below it, keep it composited for a smooth GPU tween.
+  const worldBox = boundsOf(seq);
+  useEffect(() => {
+    const el = worldRef.current;
+    if (!el) return;
+    const MAX_LAYER = 4096;
+    el.style.willChange = worldBox.w > MAX_LAYER || worldBox.h > MAX_LAYER ? "auto" : "transform";
+  }, [worldBox.w, worldBox.h]);
+
   useEffect(() => { ctrlRef.current?.setPadding(padding); }, [padding]);
   useEffect(() => {
     ctrlRef.current?.setInteraction(freeZoom, swipeNav, minZoom, maxZoom);
