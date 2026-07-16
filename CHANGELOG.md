@@ -5,7 +5,7 @@ All notable changes to this project are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [0.15.0] - 2026-07-16
 
 ### Added
 - **Component category modules**: `dist/nexa-components.js` is now a barrel over six category files — `nexa-components-core.js` (shared primitives), `-forms.js`, `-overlay.js`, `-data.js`, `-nav.js`, `-theme.js` — plus an internal `nexa-components-util.js` (shared helpers, not public API). Importing the barrel keeps working unchanged (same 61 exports, same references); importing only the categories a page uses cuts the components payload by up to ~85% (e.g. core+theme ≈ 13 KB vs 112 KB). Category `.d.ts` files re-export from `nexa-components.d.ts`; minified twins ship for every module. All examples now import by category; the designer's code export generates category imports. New `tests/categories.test.js` guards barrel↔category parity.
