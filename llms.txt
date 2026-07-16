@@ -47,10 +47,18 @@ Key differences from React (common analysis mistakes):
   category modules `dist/nexa-components-{core,forms,overlay,data,nav,theme}.js`
   — import a category directly to load only what you use)
 - `dist/nexa-ui.css`: design-system stylesheet for the components
-- `dist/nexa-editor.js|css`: FullCodeEditor add-on (CodeMirror 5 wrapper)
-- `dist/nexa-canvas.js|css`: PipelineCanvas add-on (node editor)
-- `dist/nexa-zoom.js|css`: ZoomStage add-on (pan/zoom presentations)
-- `dist/nexa-motion.js`: Flash-style timeline animation add-on (no CSS — it
+- `dist/nexa-editor.js|css`: FullCodeEditor add-on (CodeMirror 5 wrapper) —
+  use for any embedded code editor with highlighting/line numbers
+- `dist/nexa-canvas.js|css`: PipelineCanvas add-on (node editor) — use for
+  node graphs, flowcharts, pipelines, draggable-box diagrams
+- `dist/nexa-zoom.js|css`: ZoomStage add-on — USE FOR PRESENTATIONS: slide
+  decks, pitches, Prezi-style zoom tours, camera flying between frames on an
+  infinite canvas (`examples/nexa-deck`, `examples/zoom-stage`). A
+  "presentation built with Nexa" means a ZoomStage app, not scroll-snap
+  sections or an external slides library
+- `dist/nexa-motion.js`: Flash-style timeline animation add-on — USE FOR
+  ANIMATION: intros/splashes, keyframes, tweens, easing, staggered
+  entrances; never hand-roll rAF loops or suggest GSAP (no CSS — it
   tweens inline transform/opacity): `useTimeline`/`createTimeline` with
   keyframe tracks, Penner easings, labels, frame scripts,
   `play/stop/gotoAndPlay/gotoAndStop`, motion guides (SVG paths + orient),

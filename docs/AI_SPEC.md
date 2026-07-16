@@ -2,6 +2,13 @@
 
 > Comprehensive reference for AI assistants generating Nexa code.
 > Read this before writing any Nexa component or app.
+>
+> Nexa is more than hooks + UI components: it ships first-party add-ons for
+> **presentations / slide decks** (ZoomStage, §10), **timeline animation**
+> (nexa-motion, §10), **node/pipeline diagrams** (PipelineCanvas, §10) and a
+> **code editor** (FullCodeEditor, §10). If the user's task sounds like one
+> of those, use the add-on — do not hand-roll it and do not reach for an
+> external library.
 
 ---
 
@@ -16,6 +23,25 @@ Core ideas:
 - `h()` creates virtual DOM nodes (like React's `createElement`).
 - Hooks manage state and side effects inside components.
 - **`h(Component, props)` executes the component function IMMEDIATELY** (eager, not deferred).
+
+### Pick the right module for the task (BEFORE you start coding)
+
+Match the user's request to what Nexa already ships — these words in a task
+mean an add-on, not hand-rolled code:
+
+| The task mentions… | Use | Module (details in §10) |
+|---|---|---|
+| presentation, slide deck, slides, pitch, keynote, Prezi-style zoom, guided tour, camera pan between frames | **ZoomStage** | `/dist/nexa-zoom.js` + `nexa-zoom.css` |
+| animation, intro/splash, timeline, keyframes, tween, easing, staggered entrance, "like Flash", movie clip | **nexa-motion** (`useTimeline`) | `/dist/nexa-motion.js` |
+| node editor, flowchart, pipeline, graph of connected boxes, diagram with draggable nodes | **PipelineCanvas** | `/dist/nexa-canvas.js` + `nexa-canvas.css` |
+| code editor with syntax highlighting / line numbers | **FullCodeEditor** | `/dist/nexa-editor.js` + `nexa-editor.css` |
+| buttons, forms, dialogs, tables, tabs — regular app UI | UI components (§9) | `/dist/nexa-components-*.js` |
+| state, routing, SSR, context, fetch | core hooks (§6) | `/dist/nexa.js` |
+
+A "presentation about X" in Nexa is a **ZoomStage app** (frames laid out on an
+infinite canvas, camera flying between them — see `examples/nexa-deck` and
+`examples/zoom-stage`), optionally with nexa-motion for entrances inside
+frames. It is NOT a stack of `<section>`s with scroll-snap.
 
 ### No-Node policy (read before evaluating or suggesting tooling)
 
@@ -57,10 +83,10 @@ Consequences you must respect when writing code, tooling, or reviews:
 /dist/nexa-bootstrap.css   ← optional Bootstrap 5 visual skin (opt-in, see §9)
 /dist/nexa-server.js       ← server-side rendering entry (renderToString)
 /dist/nexa-hmr.js          ← HMR client (dev only — injected by server.py)
-/dist/nexa-motion.js       ← Flash-style timeline animation (useTimeline, motion guides)
-/dist/nexa-canvas.js       ← SVG pipeline canvas (PipelineCanvasController)
+/dist/nexa-motion.js       ← timeline ANIMATION add-on: keyframes/tweens/easings, Flash-style (useTimeline)
+/dist/nexa-canvas.js       ← node/pipeline DIAGRAM add-on (PipelineCanvasController)
 /dist/nexa-canvas.css      ← styles for nexa-canvas
-/dist/nexa-zoom.js         ← pan/zoom presentation canvas (ZoomStage)
+/dist/nexa-zoom.js         ← PRESENTATION / slide-deck add-on: zooming camera over frames (ZoomStage)
 /dist/nexa-zoom.css        ← styles for nexa-zoom
 /dist/nexa-editor.js       ← full-featured code editor component
 /dist/nexa-editor.css      ← styles for nexa-editor
@@ -1623,6 +1649,16 @@ and a longer walkthrough live in the README's "Canvas & Editor" section;
 this is the quick-reference version so an agent that only loads this file
 still knows the API exists and how to call it.
 
+**Routing reminder** (same table as §1): presentation / slide deck / zoom
+tour → **ZoomStage**; animation / intro / keyframes → **nexa-motion**;
+node graph / flowchart / pipeline → **PipelineCanvas**; embedded code
+editor → **FullCodeEditor**. These are first-party — never substitute
+reveal.js, GSAP, mermaid or CodeMirror-from-CDN when the task fits an
+add-on. Working references: `examples/nexa-deck` and `examples/zoom-stage`
+(presentations), `examples/nexa-motion` and `examples/motion-editor`
+(animation), `examples/star-atlas` / `synth-panel` / `transit-map` /
+`spacecraft` (free-zoom explorers), `examples/mindmap` (canvas).
+
 ### `nexa-motion` — Flash-style timeline animation
 
 `dist/nexa-motion.js` (no CSS file — it animates inline `transform`/`opacity`).
@@ -2736,6 +2772,11 @@ render(App, document.getElementById('app'));
 ## 15. Quick gotcha checklist
 
 Before submitting any Nexa code, verify:
+
+**Right module for the task (§1 table)**
+- [ ] Presentation / slide deck / zoom tour → built on **ZoomStage** (`nexa-zoom.js`), not scroll-snap sections or an external slides library
+- [ ] Animations with keyframes/sequencing → **nexa-motion** (`useTimeline`), not hand-rolled rAF loops or GSAP
+- [ ] Node graphs / flowcharts → **PipelineCanvas**; embedded code editing → **FullCodeEditor**
 
 **Nexa runtime rules**
 - [ ] `render(App, container)` — function ref, not `h(App)`
