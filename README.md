@@ -275,7 +275,7 @@ standalone folder: one JS file, one CSS file (CSS `@import` chains inlined,
 No import waterfall, no `/dist` dependency — copy the folder anywhere:
 
 ```bash
-python3 scripts/bundle.py examples/task-manager -o build/task-manager --smoke
+python scripts/bundle.py examples/task-manager -o build/task-manager --smoke
 ```
 
 `--smoke` serves the output and loads it headlessly (playwright) to prove it
@@ -290,7 +290,7 @@ still renders. Two engines, picked automatically:
   source with the Go toolchain:
 
 ```bash
-python3 scripts/bundle.py --setup-esbuild   # go install → tools/bin/esbuild
+python scripts/bundle.py --setup-esbuild   # go install → tools/bin/esbuild
 ```
 
 Numbers and methodology live in [docs/benchmarks](./docs/benchmarks).

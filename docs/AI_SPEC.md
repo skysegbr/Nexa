@@ -37,7 +37,7 @@ Consequences you must respect when writing code, tooling, or reviews:
   **Python**. Never propose adding Node-based tools (webpack, Vite, ESLint,
   Prettier, Jest, etc.) — propose Python or browser-native alternatives.
 - **Production bundling is an optional deploy step, never part of dev**:
-  `python3 scripts/bundle.py <app-dir> -o <out>` collapses an app into a
+  `python scripts/bundle.py <app-dir> -o <out>` collapses an app into a
   standalone folder (one JS, one CSS, rewritten index.html). Engines:
   pure-Python, or an esbuild binary built from source with Go
   (`--setup-esbuild`) — still zero Node/npm. Development remains F5 + plain

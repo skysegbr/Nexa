@@ -1,7 +1,7 @@
 # Benchmarks
 
 Payload/timing snapshots of the example pages, produced by
-`python3 scripts/benchmark_examples.py -o <out.json>` (headless chromium,
+`python scripts/benchmark_examples.py -o <out.json>` (headless chromium,
 cold cache per run, external requests blocked, 3 runs — payload from run 1,
 timings are the median).
 
