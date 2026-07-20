@@ -1,0 +1,649 @@
+/*! Nexa — forms styles. Generated from nexa-ui.css by scripts/split_css.py. */
+/* AUTO-GENERATED — do not edit. Edit dist/nexa-ui.css and re-run scripts/split_css.py. */
+/* ── Switch ────────────────────────────────────────────── */
+
+.m-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--m-space-3);
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.m-switch-disabled {
+  opacity: 0.56;
+  cursor: not-allowed;
+}
+
+.m-switch-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.m-switch-track {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+  border-radius: 999px;
+  background: var(--m-border);
+  flex-shrink: 0;
+  transition: background 150ms ease;
+}
+
+.m-switch-track::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  background: #fff;
+  box-shadow: var(--m-shadow-1);
+  transition: transform 150ms ease;
+}
+
+.m-switch-input:checked + .m-switch-track {
+  background: var(--m-primary);
+}
+
+.m-switch-input:checked + .m-switch-track::after {
+  transform: translateX(20px);
+}
+
+.m-switch-input:focus-visible + .m-switch-track {
+  outline: 3px solid var(--m-focus);
+  outline-offset: 2px;
+}
+
+.m-switch-label {
+  font-size: var(--m-font-size-sm);
+  font-weight: 700;
+  color: var(--m-text);
+}
+
+/* ── Combobox ──────────────────────────────────────────── */
+
+.m-combobox { position: relative; }
+
+.m-combobox-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--m-space-2);
+  cursor: pointer;
+  text-align: left;
+}
+
+.m-combobox-value {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.m-combobox-placeholder { color: var(--m-text-muted); }
+
+.m-combobox-chevron {
+  color: var(--m-text-muted);
+  flex-shrink: 0;
+  font-size: 12px;
+}
+
+.m-combobox-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: var(--m-z-dropdown);
+  border: 1px solid var(--m-border);
+  border-radius: var(--m-radius);
+  background: var(--m-surface);
+  box-shadow: var(--m-shadow-2);
+  overflow: hidden;
+  animation: m-slide-up 160ms ease both;
+}
+
+.m-combobox-search-wrap {
+  padding: var(--m-space-2);
+  border-bottom: 1px solid var(--m-border);
+}
+
+.m-combobox-search {
+  width: 100%;
+  height: 36px;
+  padding: 0 10px;
+  border: 1px solid var(--m-border);
+  border-radius: var(--m-radius-sm);
+  background: var(--m-bg);
+  color: var(--m-text);
+  font: inherit;
+  font-size: var(--m-font-size-sm);
+}
+
+.m-combobox-search:focus {
+  border-color: var(--m-primary);
+  outline: 2px solid var(--m-focus);
+  outline-offset: 0;
+}
+
+.m-combobox-list {
+  max-height: 220px;
+  overflow-y: auto;
+  margin: 0;
+  padding: var(--m-space-1);
+  list-style: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.m-combobox-option {
+  display: flex;
+  align-items: center;
+  min-height: 36px;
+  padding: var(--m-space-2) var(--m-space-3);
+  border-radius: calc(var(--m-radius) - 2px);
+  font-size: var(--m-font-size-sm);
+  cursor: pointer;
+}
+
+.m-combobox-option:hover { background: var(--m-surface-muted); }
+
+.m-combobox-option-selected {
+  background: var(--m-primary-soft);
+  color: var(--m-primary);
+  font-weight: 700;
+}
+
+.m-combobox-option-active {
+  outline: 2px solid var(--m-focus);
+  outline-offset: -2px;
+}
+
+.m-combobox-empty {
+  padding: var(--m-space-4);
+  text-align: center;
+  color: var(--m-text-muted);
+  font-size: var(--m-font-size-sm);
+  list-style: none;
+}
+
+/* ── FileDropZone ──────────────────────────────────────── */
+
+.m-file-dropzone {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--m-space-3);
+  min-height: 140px;
+  padding: var(--m-space-6);
+  border: 2px dashed var(--m-border);
+  border-radius: var(--m-radius-lg);
+  background: var(--m-surface);
+  cursor: pointer;
+  text-align: center;
+  transition: border-color 150ms ease, background 150ms ease;
+}
+
+.m-file-dropzone:hover {
+  border-color: var(--m-primary);
+  background: var(--m-primary-soft);
+}
+
+.m-file-dropzone-disabled {
+  opacity: 0.56;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.m-file-dropzone-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+
+.m-file-dropzone-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--m-space-2);
+  pointer-events: none;
+}
+
+.m-file-dropzone-icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  background: var(--m-primary-soft);
+  color: var(--m-primary);
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.m-file-dropzone-label {
+  margin: 0;
+  font-size: var(--m-font-size-sm);
+  font-weight: 700;
+  color: var(--m-text);
+}
+
+.m-file-dropzone-hint {
+  margin: 0;
+  font-size: var(--m-font-size-xs);
+  color: var(--m-text-muted);
+}
+
+.m-file-dropzone-progress {
+  width: 100%;
+  pointer-events: none;
+}
+
+/* ── CodeEditor ────────────────────────────────────────── */
+
+.m-code-editor {
+  width: 100%;
+  min-height: 200px;
+  border: 1px solid var(--m-border);
+  border-radius: var(--m-radius);
+  overflow: hidden;
+  background: var(--m-surface);
+}
+
+.m-dialog-header-draggable {
+  cursor: grab;
+}
+
+.m-dialog-header-draggable:active {
+  cursor: grabbing;
+}
+
+.m-code-editor-fallback {
+  min-height: 200px;
+  height: 200px;
+  padding: var(--m-space-3) var(--m-space-4);
+  resize: vertical;
+  font-family: "JetBrains Mono", "Fira Code", ui-monospace, monospace;
+  font-size: var(--m-font-size-sm);
+  line-height: 1.6;
+}
+
+.m-code-editor .CodeMirror,
+.m-code-editor .CodeMirror-scroll {
+  height: 100%;
+  min-height: 200px;
+  font-family: "JetBrains Mono", "Fira Code", "Cascadia Code", ui-monospace, monospace;
+  font-size: var(--m-font-size-sm);
+}
+
+/* ── Slider / RangeSlider ──────────────────────────────── */
+
+.m-slider {
+  display: flex;
+  align-items: center;
+  gap: var(--m-space-3);
+}
+
+.m-slider-input {
+  flex: 1;
+  min-width: 0;
+  height: 24px;
+  margin: 0;
+  appearance: none;
+  background: transparent;
+}
+
+.m-slider-input::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 999px;
+  background: var(--m-border);
+}
+
+.m-slider-input::-moz-range-track {
+  height: 4px;
+  border-radius: 999px;
+  background: var(--m-border);
+}
+
+.m-slider-input::-webkit-slider-thumb {
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  margin-top: -7px;
+  border-radius: 50%;
+  background: var(--m-primary);
+  border: 3px solid var(--m-surface);
+  box-shadow: var(--m-shadow-1);
+  cursor: pointer;
+}
+
+.m-slider-input::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--m-primary);
+  border: 3px solid var(--m-surface);
+  box-shadow: var(--m-shadow-1);
+  cursor: pointer;
+}
+
+.m-slider-input:focus-visible::-webkit-slider-thumb { outline: 3px solid var(--m-focus); outline-offset: 1px; }
+.m-slider-input:focus-visible::-moz-range-thumb      { outline: 3px solid var(--m-focus); outline-offset: 1px; }
+
+.m-slider-input:disabled { opacity: 0.56; cursor: not-allowed; }
+
+.m-slider-value {
+  min-width: 3ch;
+  color: var(--m-text-muted);
+  font-size: var(--m-font-size-sm);
+  font-weight: 700;
+  text-align: right;
+}
+
+/* RangeSlider: two inputs share one track. Each input keeps its own
+   invisible full-width hit area but pointer-events are only enabled on the
+   thumb, so the top input's empty track never blocks drags aimed at the
+   bottom input's thumb underneath it. */
+.m-slider-range-track {
+  position: relative;
+  flex: 1;
+  height: 24px;
+}
+
+.m-slider-range-track .m-slider-input {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 24px;
+  pointer-events: none;
+}
+
+.m-slider-range-track .m-slider-input::-webkit-slider-thumb { pointer-events: auto; }
+.m-slider-range-track .m-slider-input::-moz-range-thumb      { pointer-events: auto; }
+
+.m-slider-range-track .m-slider-input::-webkit-slider-runnable-track { background: transparent; }
+.m-slider-range-track .m-slider-input::-moz-range-track              { background: transparent; }
+
+.m-slider-range-track::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--m-border);
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+/* ── DatePicker ────────────────────────────────────────── */
+
+.m-datepicker { position: relative; }
+
+.m-datepicker-trigger {
+  min-width: 0;
+  width: 100%;
+  height: 48px;
+  padding: 0 14px;
+  border: 1px solid var(--m-border);
+  border-radius: var(--m-radius);
+  background: var(--m-surface);
+  color: var(--m-text);
+  font-size: var(--m-font-size-sm);
+  text-align: left;
+}
+
+.m-datepicker-trigger:focus-visible {
+  border-color: var(--m-primary);
+  outline: 3px solid var(--m-focus);
+  outline-offset: 0;
+}
+
+.m-datepicker-trigger:disabled {
+  opacity: 0.56;
+  cursor: not-allowed;
+}
+
+.m-datepicker-calendar {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: var(--m-z-dropdown);
+  width: 280px;
+  padding: var(--m-space-3);
+  border: 1px solid var(--m-border);
+  border-radius: var(--m-radius);
+  background: var(--m-surface);
+  box-shadow: var(--m-shadow-2);
+  animation: m-slide-up 160ms ease both;
+  transform-origin: top center;
+}
+
+.m-datepicker-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--m-space-2);
+}
+
+.m-datepicker-month {
+  font-size: var(--m-font-size-sm);
+  font-weight: 700;
+  color: var(--m-text);
+}
+
+.m-datepicker-weekdays,
+.m-datepicker-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+
+.m-datepicker-weekdays {
+  margin-bottom: var(--m-space-1);
+  color: var(--m-text-muted);
+  font-size: var(--m-font-size-xs);
+  font-weight: 700;
+  text-align: center;
+}
+
+.m-datepicker-day {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  border: none;
+  border-radius: var(--m-radius-sm);
+  background: transparent;
+  color: var(--m-text);
+  font-size: var(--m-font-size-sm);
+}
+
+.m-datepicker-day:hover:not(:disabled) { background: var(--m-surface-muted); }
+
+.m-datepicker-day:focus-visible {
+  outline: 3px solid var(--m-focus);
+  outline-offset: 1px;
+}
+
+.m-datepicker-day-outside { color: var(--m-text-muted); }
+
+.m-datepicker-day-selected {
+  background: var(--m-primary);
+  color: #ffffff;
+}
+
+.m-datepicker-day-selected:hover:not(:disabled) { background: var(--m-primary-hover); }
+
+.m-datepicker-day:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ── Radio ───────────────────────────────────────────────── */
+
+.m-radio {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+}
+
+.m-radio input {
+  width: 20px;
+  aspect-ratio: 1;
+  margin: 0;
+  accent-color: var(--m-primary);
+}
+
+.m-radio span { overflow-wrap: anywhere; }
+
+.m-radio-group {
+  display: grid;
+  gap: var(--m-space-2);
+}
+
+.m-radio-group-inline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--m-space-4);
+}
+
+/* ── NumberInput ─────────────────────────────────────────── */
+
+.m-number-input {
+  display: flex;
+  align-items: stretch;
+}
+
+.m-number-input .m-field {
+  flex: 1;
+  min-width: 0;
+  border-radius: 0;
+  text-align: center;
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+.m-number-input .m-field::-webkit-outer-spin-button,
+.m-number-input .m-field::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.m-number-input-btn {
+  width: 44px;
+  border: 1px solid var(--m-border);
+  background: var(--m-surface-muted);
+  color: var(--m-text);
+  font-size: var(--m-font-size-lg);
+  line-height: 1;
+  cursor: pointer;
+}
+
+.m-number-input-btn:first-child {
+  border-radius: var(--m-radius) 0 0 var(--m-radius);
+  border-inline-end: none;
+}
+
+.m-number-input-btn:last-child {
+  border-radius: 0 var(--m-radius) var(--m-radius) 0;
+  border-inline-start: none;
+}
+
+.m-number-input-btn:hover:not(:disabled) { background: var(--m-border); }
+
+.m-number-input-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.m-number-input-btn:focus-visible {
+  outline: 3px solid var(--m-focus);
+  outline-offset: -2px;
+}
+
+/* ── TimePicker ──────────────────────────────────────────── */
+
+.m-timepicker { position: relative; }
+
+.m-timepicker-trigger {
+  min-width: 0;
+  width: 100%;
+  height: 48px;
+  padding: 0 14px;
+  border: 1px solid var(--m-border);
+  border-radius: var(--m-radius);
+  background: var(--m-surface);
+  color: var(--m-text);
+  font-size: var(--m-font-size-sm);
+  text-align: left;
+  cursor: pointer;
+}
+
+.m-timepicker-trigger:focus-visible {
+  border-color: var(--m-primary);
+  outline: 3px solid var(--m-focus);
+  outline-offset: 1px;
+}
+
+.m-timepicker-trigger:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.m-timepicker-list {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: var(--m-z-dropdown);
+  width: 100%;
+  max-height: 240px;
+  margin: 0;
+  padding: var(--m-space-1);
+  overflow-y: auto;
+  list-style: none;
+  border: 1px solid var(--m-border);
+  border-radius: var(--m-radius);
+  background: var(--m-surface);
+  box-shadow: var(--m-shadow-2);
+}
+
+.m-timepicker-option {
+  display: block;
+  width: 100%;
+  padding: var(--m-space-2) var(--m-space-3);
+  border: none;
+  border-radius: var(--m-radius-sm);
+  background: none;
+  color: var(--m-text);
+  font-size: var(--m-font-size-sm);
+  text-align: left;
+  cursor: pointer;
+}
+
+.m-timepicker-option:hover { background: var(--m-surface-muted); }
+
+.m-timepicker-option:focus-visible {
+  outline: 3px solid var(--m-focus);
+  outline-offset: -2px;
+}
+
+.m-timepicker-option-selected {
+  background: var(--m-primary-soft);
+  color: var(--m-primary);
+  font-weight: 700;
+}
+

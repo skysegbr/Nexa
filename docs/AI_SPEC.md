@@ -927,6 +927,36 @@ h('article', { className: 'post', innerHTML: markdownToHtml(post.body) })
 - The string is **not sanitized**. Never pass user input or third-party
   content without sanitizing it first (XSS).
 
+### `href` / `src` with untrusted URLs → wrap in `safeUrl()`
+
+HTML-escaping (which the SSR serializer applies to every attribute) stops
+attribute **breakout**, but it does NOT stop a dangerous URL **scheme**:
+`h('a', { href: 'javascript:alert(1)' })` renders a valid, fully-escaped
+attribute whose scheme still runs code on click. This is the same class of
+gap as `innerHTML`, and the fix is the same shape — a blessed helper you opt
+into wherever the value is untrusted:
+
+```js
+import { safeUrl } from '/dist/nexa.js';
+
+h('a',   { href: safeUrl(user.website) }, user.website)
+h('img', { src:  safeUrl(user.avatar) })
+h('a',   { href: safeUrl(user.link, '#') }, 'Profile')  // custom fallback
+```
+
+`safeUrl(url, fallback = '')`:
+- Blocks `javascript:` and `vbscript:` (never legitimate in a link/resource)
+  and `data:` URLs **other than images** (`data:text/html,…` navigates to
+  attacker markup; `data:image/*` is a safe inline image and passes through).
+- Strips control characters and whitespace before testing the scheme, so
+  `"java\tscript:"` / `" JAVASCRIPT:"` can't slip past.
+- Returns safe URLs **unchanged** and unsafe ones as `fallback` (default `""`).
+- Pure string logic — works identically on the client and in `renderToString`.
+
+Nexa never rewrites URLs automatically (a `data:` image or a custom app scheme
+may be exactly what you want), so this is opt-in — reach for it on any URL that
+originated from user input, an API, or third-party content.
+
 ---
 
 ## 9. UI Components (`/dist/nexa-components.js`)
@@ -958,6 +988,41 @@ Every category depends only on `nexa-components-core.js`, an internal
 `nexa-components-util.js` helper module (not public API) and `nexa.js`.
 Both forms have identical exports — the same component name never moves
 between the barrel and its category.
+
+### Category CSS (match the JS split)
+
+`nexa-ui.css` (~114 KB) is the full design system in one file — the simplest
+option (one `<link>`), and unchanged. But it mirrors the JS: it's also
+available **pre-split by category**, so a page loads only the CSS it uses.
+
+| File | Contents |
+|---|---|
+| `nexa-ui-base.css` | tokens, dark mode, palettes, reset, 12-col grid, all utilities, typography, animations — the shared foundation |
+| `nexa-ui-core.css` | Card (+ variants), Button, Chip, Badge, Alert, form-field base, Progress, Spinner, Divider, Avatar, Skeleton, EmptyState |
+| `nexa-ui-forms.css` | Switch, Slider/RangeSlider, Combobox, DatePicker, TimePicker, NumberInput, Radio, FileDropZone, CodeEditor |
+| `nexa-ui-overlay.css` | Dialog, Drawer, Dropdown, Tooltip, Popover, Menu, ContextMenu, BottomSheet, CommandPalette, Toast(Stack) |
+| `nexa-ui-data.css` | Table, DataTable, Pagination, Stat/StatGrid, TreeView, Accordion, Collapse |
+| `nexa-ui-nav.css` | Tabs, Navbar, App shell, AppBar, BottomNav, Breadcrumb, Stepper, FAB, SpeedDial, Sidebar, SwipeableListItem |
+| `nexa-ui-theme.css` | PaletteSwitcher, DesignSwitcher |
+
+```html
+<!-- simplest: the whole design system (default) -->
+<link rel="stylesheet" href="/dist/nexa-ui.css">
+
+<!-- granular: base is always required; add core, then only the categories
+     you import components from (categories build on base + core) -->
+<link rel="stylesheet" href="/dist/nexa-ui-base.css">
+<link rel="stylesheet" href="/dist/nexa-ui-core.css">
+<link rel="stylesheet" href="/dist/nexa-ui-forms.css">
+```
+
+Loading `base + core + forms + overlay + data + nav + theme` is byte-for-byte
+identical to loading `nexa-ui.css`. The category files are **generated** from
+the monolith by `python scripts/split_css.py` (which asserts the split is
+lossless) — edit `nexa-ui.css`, never the `nexa-ui-*.css` files. Prefer the
+monolith for a quick page; reach for the split on a production page that uses
+only part of the library (a core-only page drops ~114 KB → ~52 KB before
+minify/gzip).
 
 ### Basic
 

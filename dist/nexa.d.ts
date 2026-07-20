@@ -243,6 +243,22 @@ export declare function createLazy<P extends Record<string, unknown>>(
  */
 export declare function loadCSS(href: string | URL): Promise<void>;
 
+// ── safeUrl ─────────────────────────────────────────────────────────────────
+
+/**
+ * Neutralizes URL-scheme XSS for an untrusted value bound to `href`/`src`.
+ * HTML-escaping stops attribute breakout but not `href="javascript:…"`, whose
+ * scheme still runs on click. Blocks `javascript:`, `vbscript:` and non-image
+ * `data:` URLs (control chars/whitespace are stripped before the scheme test);
+ * returns safe URLs unchanged and unsafe ones as `fallback` (default `""`).
+ * Opt-in — Nexa never rewrites URLs automatically.
+ *
+ * @example
+ * h("a",   { href: safeUrl(user.website) }, user.website)
+ * h("img", { src:  safeUrl(user.avatar) })
+ */
+export declare function safeUrl(url: unknown, fallback?: string): string;
+
 // ── useId ──────────────────────────────────────────────────────────────────
 
 /**
