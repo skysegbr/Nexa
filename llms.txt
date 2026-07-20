@@ -43,6 +43,10 @@ Key differences from React (common analysis mistakes):
   structure conventions, gotcha checklist. Read this before writing Nexa code.
   Stable fetchable URL:
   https://raw.githubusercontent.com/skysegbr/Nexa/main/docs/AI_SPEC.md
+- [AI_QA.md](docs/AI_QA.md): QA runbook for an AI (or human) running a full
+  quality pass — Python-only gates, the ~300-test browser suite across three
+  engines, and AI-executable visual/example checks. Read this before running
+  QA on Nexa (it is NOT for generating app code — that's AI_SPEC.md).
 - [README.md](README.md): human-oriented overview and component tables.
 - [CHANGELOG.md](CHANGELOG.md): versioned change history.
 

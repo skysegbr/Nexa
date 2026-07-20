@@ -396,6 +396,7 @@ above: compression and caching make it fast, `integrity` makes it tamper-proof.
 - [Video tutorials](./tutorials/) — auto-generated screen recordings
   (each folder has the player page and the `record.py` that regenerates the video)
 - [AI reference spec](./docs/AI_SPEC.md) — comprehensive reference for every hook, component, and pattern
+- [AI QA runbook](./docs/AI_QA.md) — how to run a full QA pass (Python gates, browser suite, visual checks) for an AI or human tester
 - [Changelog](./CHANGELOG.md)
 
 ## Examples
