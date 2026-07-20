@@ -397,6 +397,7 @@ above: compression and caching make it fast, `integrity` makes it tamper-proof.
   (each folder has the player page and the `record.py` that regenerates the video)
 - [AI reference spec](./docs/AI_SPEC.md) — comprehensive reference for every hook, component, and pattern
 - [AI QA runbook](./docs/AI_QA.md) — how to run a full QA pass (Python gates, browser suite, visual checks) for an AI or human tester
+- [AI QA scenario catalog](./docs/AI_QA_SCENARIOS.md) — the ID'd list of every test scenario (hooks, components, add-ons, CSS, examples) the runbook executes
 - [Changelog](./CHANGELOG.md)
 
 ## Examples

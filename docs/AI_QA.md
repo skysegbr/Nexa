@@ -8,6 +8,12 @@
 > Goal of a QA pass: prove the framework, components, add-ons, examples and
 > build tooling still behave correctly, over HTTP, in a real browser, on every
 > supported engine — and report findings in a form a human can act on.
+>
+> **The concrete cases to run live in the companion
+> [AI_QA_SCENARIOS.md](./AI_QA_SCENARIOS.md)** — an ID'd catalog covering every
+> hook, component, add-on, CSS surface and example. This file is the *process*
+> (how to run and report); that file is the *what* (each scenario + expected
+> result). Cite scenario IDs (`SC-OVL-04`) in findings.
 
 ---
 

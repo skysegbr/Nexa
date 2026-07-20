@@ -47,6 +47,10 @@ Key differences from React (common analysis mistakes):
   quality pass — Python-only gates, the ~300-test browser suite across three
   engines, and AI-executable visual/example checks. Read this before running
   QA on Nexa (it is NOT for generating app code — that's AI_SPEC.md).
+- [AI_QA_SCENARIOS.md](docs/AI_QA_SCENARIOS.md): the ID'd catalog of every test
+  scenario (core, hooks, all ~60 components, SSR, add-ons, CSS, security,
+  tooling, examples) the QA runbook executes — reusable baselines plus
+  per-item cases with expected results.
 - [README.md](README.md): human-oriented overview and component tables.
 - [CHANGELOG.md](CHANGELOG.md): versioned change history.
 
