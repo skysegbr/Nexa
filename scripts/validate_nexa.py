@@ -66,6 +66,24 @@ JS_SRC_RE = re.compile(r"""\bsrc\s*:\s*["']([^"']+)["']""")
 # `## [x.y.z]` release headings in CHANGELOG.md.
 CHANGELOG_VERSION_RE = re.compile(r"^## \[(\d+\.\d+\.\d+)\]", re.MULTILINE)
 
+# Per-category nexa-ui CSS (mirrors the JS component modules). An example that
+# opts into the split must load base + every category it uses, or those
+# components render unstyled — a silent failure the monolith never had.
+CSS_CATEGORIES = ("core", "forms", "overlay", "data", "nav", "theme")
+CSS_LOAD_ORDER = ("base",) + CSS_CATEGORIES
+# Captures the category from a nexa-ui link href; the group is empty ("") for
+# the monolith nexa-ui.css / nexa-ui.min.css.
+NEXA_UI_LINK_RE = re.compile(r'href="/dist/nexa-ui(?:-([a-z]+))?(?:\.min)?\.css"')
+NEXA_COMPONENT_IMPORT_RE = re.compile(
+    r"import\s*(?:([\w$]+)\s*,?\s*)?(?:\{([^}]*)\})?\s*from\s*"
+    r"['\"][^'\"]*nexa-components[^'\"]*['\"]",
+    re.DOTALL,
+)
+CSS_CLASS_SELECTOR_RE = re.compile(r"\.(m-[A-Za-z0-9_-]+)")
+JS_EXPORT_BLOCK_RE = re.compile(r"\bexport\s*\{([^}]*)\}")
+JS_EXPORT_DECL_RE = re.compile(r"\bexport\s+(?:function|const|class)\s+([A-Za-z0-9_$]+)")
+MCLASS_TOKEN_RE = re.compile(r"\bm-[A-Za-z0-9_-]+")
+
 
 @dataclass(frozen=True)
 class Issue:
@@ -116,6 +134,7 @@ def main() -> int:
     issues.extend(validate_no_monoliths(root))
     issues.extend(validate_js_asset_srcs(root))
     issues.extend(validate_version_sync(root))
+    issues.extend(validate_example_css_categories(root))
 
     if issues:
         print("Nexa static validation failed:\n")
@@ -321,6 +340,91 @@ def validate_no_monoliths(root: Path) -> list[Issue]:
                 )
             )
 
+    return issues
+
+
+def _component_category_map(dist: Path) -> dict[str, str]:
+    """component name -> its category module, read from the category JS exports."""
+    mapping: dict[str, str] = {}
+    for cat in CSS_CATEGORIES:
+        path = dist / f"nexa-components-{cat}.js"
+        if not path.is_file():
+            continue
+        src = path.read_text(encoding="utf-8")
+        names: set[str] = set()
+        for match in JS_EXPORT_BLOCK_RE.finditer(src):
+            for part in match.group(1).split(","):
+                name = part.strip().split(" as ")[-1].strip()
+                if re.fullmatch(r"[A-Za-z0-9_$]+", name):
+                    names.add(name)
+        for match in JS_EXPORT_DECL_RE.finditer(src):
+            names.add(match.group(1))
+        for name in names:
+            mapping.setdefault(name, cat)
+    return mapping
+
+
+def _class_category_map(dist: Path) -> dict[str, set[str]]:
+    """m-* class -> the category CSS file(s) that define it."""
+    mapping: dict[str, set[str]] = {}
+    for cat in CSS_LOAD_ORDER:
+        path = dist / f"nexa-ui-{cat}.css"
+        if not path.is_file():
+            continue
+        for match in CSS_CLASS_SELECTOR_RE.finditer(path.read_text(encoding="utf-8")):
+            mapping.setdefault(match.group(1), set()).add(cat)
+    return mapping
+
+
+def validate_example_css_categories(root: Path) -> list[Issue]:
+    """An example that links the per-category nexa-ui CSS must load base plus
+    every category it actually uses. A JS component renders its own m-* classes
+    internally, so an imported component is the reliable signal; classes written
+    directly in the example source are mapped too. A missing category renders
+    those components unstyled with no error, so it is a hard failure. Examples on
+    the monolith (nexa-ui.css) already contain everything and are skipped."""
+    dist = root / "dist"
+    examples_dir = root / "examples"
+    if not (dist / "nexa-ui-base.css").is_file() or not examples_dir.is_dir():
+        return []
+
+    comp_cat = _component_category_map(dist)
+    class_cat = _class_category_map(dist)
+    issues: list[Issue] = []
+
+    for index in sorted(examples_dir.glob("*/index.html")):
+        linked = NEXA_UI_LINK_RE.findall(index.read_text(encoding="utf-8"))
+        if not linked or any(token == "" for token in linked):
+            continue  # no design-system CSS, or the (complete) monolith
+        linked_set = {token for token in linked if token}
+
+        source = "\n".join(
+            f.read_text(encoding="utf-8", errors="ignore")
+            for f in list(index.parent.rglob("*.js")) + list(index.parent.rglob("*.html"))
+        )
+        needed = {"base"}
+        for match in NEXA_COMPONENT_IMPORT_RE.finditer(source):
+            blob = (match.group(2) or "") + "," + (match.group(1) or "")
+            for raw in blob.split(","):
+                name = raw.strip().split(" as ")[0].strip()
+                if name in comp_cat:
+                    needed.add(comp_cat[name])
+        for token in MCLASS_TOKEN_RE.findall(source):
+            needed |= class_cat.get(token, set())
+        if needed & set(CSS_CATEGORIES):
+            needed.add("core")  # every component category builds on core
+
+        missing = [c for c in CSS_LOAD_ORDER if c in needed and c not in linked_set]
+        if missing:
+            issues.append(
+                Issue(
+                    index,
+                    "uses but does not load "
+                    + ", ".join(f"nexa-ui-{c}.css" for c in missing)
+                    + " (those components would render unstyled); add the link(s) "
+                    "or switch to the nexa-ui.css monolith.",
+                )
+            )
     return issues
 
 
