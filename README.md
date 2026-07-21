@@ -381,8 +381,8 @@ is a footgun on an *unversioned* path like `/dist/nexa.js` served from your own
 origin: after you update the file, browsers keep the stale copy for a year.
 Immutable caching is safe only when the URL changes whenever the content does —
 a pinned CDN tag (`@v0.4.0`), a bundler output filename, or a versioned path
-such as `/dist/0.15.0/nexa.min.js`. For an unversioned self-hosted `/dist`, use
-`Cache-Control: no-cache` (revalidate via ETag) instead, or add a `?v=0.15.0`
+such as `/dist/0.16.0/nexa.min.js`. For an unversioned self-hosted `/dist`, use
+`Cache-Control: no-cache` (revalidate via ETag) instead, or add a `?v=0.16.0`
 query and bump it on release.
 
 Pair this with [SRI](#subresource-integrity-sri--pin-the-bytes-not-just-the-tag)
