@@ -393,6 +393,7 @@ above: compression and caching make it fast, `integrity` makes it tamper-proof.
 - [Nexa tutorial](./docs/TUTORIAL.md)
 - [Nexa UI guide](./docs/NEXA_UI.md)
 - [Nexa forms guide](./docs/FORMS.md)
+- [Nexa motion guide](./docs/MOTION.md) — Flash-style timeline animation (`nexa-motion`)
 - [Video tutorials](./tutorials/) — auto-generated screen recordings
   (each folder has the player page and the `record.py` that regenerates the video)
 - [AI reference spec](./docs/AI_SPEC.md) — comprehensive reference for every hook, component, and pattern
