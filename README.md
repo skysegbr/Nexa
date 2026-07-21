@@ -18,7 +18,10 @@ Its core ships in three files:
   `-overlay.js`, `-data.js`, `-nav.js`, `-theme.js`) — import a category
   directly to load only the components you use.
 - `dist/nexa-ui.css` — mobile-first CSS framework with a 12-column grid,
-  responsive utilities, dark mode, and mobile shell components.
+  responsive utilities, dark mode, and mobile shell components. Also ships
+  pre-split by category (`nexa-ui-base.css` + `nexa-ui-core.css`, `-forms.css`,
+  `-overlay.css`, `-data.css`, `-nav.css`, `-theme.css`) to match the JS
+  modules — load only the CSS a page uses.
 
 Four optional add-ons build on top of that core:
 
@@ -201,6 +204,57 @@ tag and pin the CDN URL to it, for example:
 https://cdn.jsdelivr.net/gh/skysegbr/Nexa@v0.4.0/dist/nexa.js
 ```
 
+### Subresource Integrity (SRI) — pin the bytes, not just the tag
+
+Pinning to `@v0.4.0` pins the *URL*, but a git tag can still be moved, so it is
+not a cryptographic guarantee of *which bytes* run. For the strongest
+supply-chain posture — the whole reason Nexa ships zero dependencies — add an
+`integrity` hash so the browser refuses to execute a file that doesn't match,
+even if the CDN or the tag is ever tampered with. Pair it with
+`crossorigin="anonymous"` (required for SRI on cross-origin resources):
+
+```html
+<link
+  rel="stylesheet"
+  href="https://cdn.jsdelivr.net/gh/skysegbr/Nexa@v0.4.0/dist/nexa-ui.min.css"
+  integrity="sha384-…"
+  crossorigin="anonymous"
+/>
+<script
+  type="module"
+  src="https://cdn.jsdelivr.net/gh/skysegbr/Nexa@v0.4.0/dist/nexa.min.js"
+  integrity="sha384-…"
+  crossorigin="anonymous"
+></script>
+```
+
+Generate the hash with the standard library (no Node, no extra tools) — from a
+local file or straight from the CDN URL:
+
+```bash
+# from a vendored file
+python -c "import base64,hashlib,sys;print('sha384-'+base64.b64encode(hashlib.sha384(open(sys.argv[1],'rb').read()).digest()).decode())" dist/nexa.min.js
+
+# from the pinned CDN URL (verifies what will actually be served)
+python -c "import base64,hashlib,sys,urllib.request as u;print('sha384-'+base64.b64encode(hashlib.sha384(u.urlopen(sys.argv[1]).read()).digest()).decode())" https://cdn.jsdelivr.net/gh/skysegbr/Nexa@v0.4.0/dist/nexa.min.js
+```
+
+**ES-module caveat.** `integrity` only covers the file the browser fetches
+because of that tag — it does **not** extend to the modules that file `import`s.
+So SRI on `nexa.min.js` protects the entry, but the component modules it (or
+your app) imports across files are not covered by that one hash. Two ways to get
+full coverage:
+
+- Add `integrity` to **every** `<link>`/`<script>` you reference directly in
+  HTML (all CSS, and each top-level module) — transitive `import`s inside those
+  modules remain uncovered.
+- Or collapse the app to a single file with the optional bundler
+  (`python scripts/bundle.py <app-dir> -o <out>`, see below) and SRI that one
+  file — one hash then covers everything.
+
+For maximum immutability without SRI, you can also pin to a **commit SHA**
+(`@<40-char-sha>/dist/…`) instead of a tag; a commit hash can't be moved.
+
 ## Using Locally
 
 ```html
@@ -297,6 +351,43 @@ Numbers and methodology live in [docs/benchmarks](./docs/benchmarks).
 Limits: top-level import/export only, no circular imports, and dynamic
 `import()` targets are not bundled (a warning is printed).
 
+## Production Serving (compression + caching)
+
+`python server.py` is a **dev** server — no compression, no cache headers, and
+that is by design. In production Nexa is just static files, so the two wins are
+at the HTTP layer, not in the framework:
+
+**1. Serve the `.min.*` files and compress them.** The minified CSS/JS still
+compress well over the wire (text). On the jsDelivr CDN this is already done for
+you (brotli + long-lived immutable caching per pinned tag — nothing to
+configure). Self-hosting behind nginx:
+
+```nginx
+# text assets compress ~4–5x; precompress at deploy time for brotli
+gzip on;
+gzip_types text/css application/javascript;
+# brotli on;  brotli_types text/css application/javascript;   # if built with the module
+
+location /dist/ {
+    # SAFE only because these URLs are version-pinned or content-hashed
+    # (a jsDelivr tag, a bundler output filename, or a /dist/vX.Y.Z/ path):
+    # the bytes at a given URL never change, so cache them forever.
+    add_header Cache-Control "public, max-age=31536000, immutable";
+}
+```
+
+**2. Cache immutably — but only versioned URLs.** `Cache-Control: immutable`
+is a footgun on an *unversioned* path like `/dist/nexa.js` served from your own
+origin: after you update the file, browsers keep the stale copy for a year.
+Immutable caching is safe only when the URL changes whenever the content does —
+a pinned CDN tag (`@v0.4.0`), a bundler output filename, or a versioned path
+such as `/dist/0.15.0/nexa.min.js`. For an unversioned self-hosted `/dist`, use
+`Cache-Control: no-cache` (revalidate via ETag) instead, or add a `?v=0.15.0`
+query and bump it on release.
+
+Pair this with [SRI](#subresource-integrity-sri--pin-the-bytes-not-just-the-tag)
+above: compression and caching make it fast, `integrity` makes it tamper-proof.
+
 ## Documentation
 
 - [Nexa tutorial](./docs/TUTORIAL.md)
@@ -305,6 +396,8 @@ Limits: top-level import/export only, no circular imports, and dynamic
 - [Video tutorials](./tutorials/) — auto-generated screen recordings
   (each folder has the player page and the `record.py` that regenerates the video)
 - [AI reference spec](./docs/AI_SPEC.md) — comprehensive reference for every hook, component, and pattern
+- [AI QA runbook](./docs/AI_QA.md) — how to run a full QA pass (Python gates, browser suite, visual checks) for an AI or human tester
+- [AI QA scenario catalog](./docs/AI_QA_SCENARIOS.md) — the ID'd list of every test scenario (hooks, components, add-ons, CSS, examples) the runbook executes
 - [Changelog](./CHANGELOG.md)
 
 ## Examples
@@ -832,6 +925,28 @@ non-route component, a top-level `await loadCSS(...)` inside the module that
 `createLazy` imports achieves the same: the lazy fallback stays up until the
 CSS is in.
 
+### `safeUrl`
+
+Neutralizes URL-scheme XSS for an **untrusted** value going into `href`/`src`.
+Escaping stops attribute breakout but not `href="javascript:alert(1)"` — a
+valid, escaped attribute whose scheme still runs on click. `safeUrl` blocks
+`javascript:`, `vbscript:` and non-image `data:` URLs (whitespace/control chars
+are stripped before the scheme test), returning safe URLs unchanged and unsafe
+ones as `fallback` (default `""`). Pure string logic — same result on the client
+and in `renderToString`.
+
+```js
+import { safeUrl } from "./dist/nexa.js";
+
+h("a",   { href: safeUrl(user.website) }, user.website)
+h("img", { src:  safeUrl(user.avatar) })
+h("a",   { href: safeUrl(user.link, "#") }, "Profile")   // custom fallback
+```
+
+Opt-in by design — Nexa never rewrites your URLs (a `data:` image or custom app
+scheme may be intended), so wrap the ones that came from user input or an API.
+It's the URL counterpart of the `innerHTML` sanitizing rule.
+
 ### `useId`
 
 Returns a stable, unique string ID for the component instance. Generated once
@@ -1156,6 +1271,34 @@ for the full list of `<script>`/`<link>` tags to include.
 
 `dist/nexa-ui.css` is mobile-first. Base styles target small screens; larger
 screens add layout via `min-width` media queries.
+
+### Category CSS (optional)
+
+`nexa-ui.css` is the whole design system in one file — the simple default. It
+also ships **pre-split by category**, mirroring the JS component modules, so a
+production page can load only the CSS it uses:
+
+| File | Contents |
+|---|---|
+| `nexa-ui-base.css` | tokens, dark mode, palettes, reset, grid, utilities, typography, animations (always required) |
+| `nexa-ui-core.css` | Card, Button, Chip, Badge, Alert, form-field base, Progress, Spinner, Divider, Avatar, Skeleton |
+| `nexa-ui-forms.css` | Switch, Slider, Combobox, Date/Time/Number pickers, Radio, FileDropZone, CodeEditor |
+| `nexa-ui-overlay.css` | Dialog, Drawer, Dropdown, Tooltip, Popover, Menu, ContextMenu, BottomSheet, CommandPalette, Toast |
+| `nexa-ui-data.css` | Table, DataTable, Pagination, Stat, TreeView, Accordion, Collapse |
+| `nexa-ui-nav.css` | Tabs, Navbar, AppBar, BottomNav, Breadcrumb, Stepper, FAB, SpeedDial, Sidebar |
+| `nexa-ui-theme.css` | PaletteSwitcher, DesignSwitcher |
+
+```html
+<!-- base is always required; add core, then only the categories you use -->
+<link rel="stylesheet" href="./dist/nexa-ui-base.css" />
+<link rel="stylesheet" href="./dist/nexa-ui-core.css" />
+<link rel="stylesheet" href="./dist/nexa-ui-forms.css" />
+```
+
+Loading all seven is byte-for-byte identical to loading `nexa-ui.css`; a
+core-only page instead drops ~114 KB to ~52 KB (before minify/gzip). The files
+are generated from the monolith by `python scripts/split_css.py` — edit
+`nexa-ui.css`, never the `nexa-ui-*.css` files (CI verifies they're in sync).
 
 ### Breakpoints
 

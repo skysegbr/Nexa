@@ -423,6 +423,49 @@ export function loadCSS(href) {
   return promise;
 }
 
+// ── safeUrl ────────────────────────────────────────────────
+//
+// Neutralizes URL-scheme XSS for values that flow into an href/src attribute.
+// HTML escaping (which the SSR serializer already applies to every attribute)
+// stops attribute breakout, but does NOT stop `href="javascript:alert(1)"` —
+// a perfectly valid, escaped attribute whose scheme still runs code on click.
+// Wrap any UNTRUSTED url before handing it to href/src:
+//
+//   h("a",   { href: safeUrl(user.website) }, user.website)
+//   h("img", { src:  safeUrl(user.avatar) })
+//
+// Blocks `javascript:` and `vbscript:` (never legitimate in a link/resource)
+// and `data:` URLs other than images (`data:text/html,…` navigates to
+// attacker markup; `data:image/*` is a safe inline image, allowed through).
+// Browsers ignore leading/embedded control characters and whitespace when
+// resolving a scheme ("java\tscript:"), so those are stripped before the test;
+// only the probe is stripped — the original string is what gets returned.
+//
+// Safe URLs are returned unchanged; unsafe ones return `fallback` (default "").
+// Nexa never rewrites your URLs automatically — a data: image or a custom app
+// scheme may be exactly what you want — so opt in wherever the value is
+// untrusted. This is the URL counterpart of the `innerHTML` sanitizing rule.
+
+const UNSAFE_URL_SCHEME = /^(?:javascript|vbscript|data):/i;
+
+export function safeUrl(url, fallback = "") {
+  if (url == null || url === false) return fallback;
+  const str = String(url);
+  // Strip characters a browser ignores while parsing the scheme (C0/C1
+  // controls, spaces and other Unicode whitespace, BOM) so "  java\nscript:"
+  // cannot slip past the test.
+  const probe = str.replace(
+    /[\u0000-\u0020\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000\uFEFF]/g,
+    "",
+  );
+  if (UNSAFE_URL_SCHEME.test(probe)) {
+    // A bare inline image is legitimate — let a data:image URL back through.
+    if (probe.slice(0, 11).toLowerCase() === "data:image/") return str;
+    return fallback;
+  }
+  return str;
+}
+
 // ── useId ──────────────────────────────────────────────────
 //
 // Returns a stable, unique ID for the component instance.
