@@ -4,9 +4,18 @@
  * in ./nexa-components-core.js and https://github.com/skysegbr/Nexa
  * Import only the categories you use, or everything via ./nexa-components.js.
  */
-import { h, useEffect, useRef, useState } from "./nexa.js";
+import { h, useEffect, useId, useRef, useState } from "./nexa.js";
 import { finiteNumber, focusFirstElement, hasChildren, joinClasses, moveMenuFocus } from "./nexa-components-util.js";
 import { IconButton, FormField, Progress } from "./nexa-components-core.js";
+
+// Resolves the field id: the caller's explicit id wins, otherwise a stable
+// auto-generated one so the FormField <label htmlFor> and the control's id
+// always associate (a11y) even when no id is passed. useId is called
+// unconditionally to keep hook order stable.
+function useFieldId(id) {
+  const autoId = useId();
+  return id ?? autoId;
+}
 
 export function TextField({
   id,
@@ -18,6 +27,7 @@ export function TextField({
   inputClassName = "",
   ...props
 } = {}) {
+  id = useFieldId(id);
   return h(
     FormField,
     { id, label, help, error, required, className },
@@ -35,6 +45,7 @@ export function Textarea({
   inputClassName = "",
   ...props
 } = {}) {
+  id = useFieldId(id);
   const { type, ...textareaProps } = props;
 
   return h(
@@ -56,6 +67,7 @@ export function Select({
   children,
   ...props
 } = {}) {
+  id = useFieldId(id);
   return h(
     FormField,
     { id, label, help, error, required, className },
@@ -150,7 +162,7 @@ export function Switch({
 // ── Combobox ───────────────────────────────────────────────
 
 export function Combobox({
-  id = "nexa-combobox",
+  id,
   label,
   help,
   error,
@@ -164,6 +176,7 @@ export function Combobox({
   inputClassName = "",
   ...props
 } = {}) {
+  id = useFieldId(id);
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -513,6 +526,7 @@ export function Slider({
   inputClassName = "",
   ...props
 } = {}) {
+  id = useFieldId(id);
   const helpId = help ? `${id}-help` : undefined;
   const errorId = error ? `${id}-error` : undefined;
 
@@ -563,6 +577,7 @@ export function RangeSlider({
   inputClassName = "",
   ...props
 } = {}) {
+  id = useFieldId(id);
   const [lower, upper] = value;
   const helpId = help ? `${id}-help` : undefined;
   const errorId = error ? `${id}-error` : undefined;
@@ -679,6 +694,7 @@ export function DatePicker({
   inputClassName = "",
   ...props
 } = {}) {
+  id = useFieldId(id);
   const selected = parseISODate(value);
   const minDate = parseISODate(min);
   const maxDate = parseISODate(max);
@@ -907,6 +923,7 @@ export function RadioGroup({
   className = "",
   ...props
 } = {}) {
+  id = useFieldId(id);
   const groupName = name ?? id;
   const helpId = help ? `${id}-help` : undefined;
   const errorId = error ? `${id}-error` : undefined;
@@ -980,6 +997,7 @@ export function NumberInput({
   inputClassName = "",
   ...props
 } = {}) {
+  id = useFieldId(id);
   const lo = finiteNumber(min, -Infinity);
   const hi = finiteNumber(max, Infinity);
   const stepValue = finiteNumber(step, 1);
@@ -1083,6 +1101,7 @@ export function TimePicker({
   inputClassName = "",
   ...props
 } = {}) {
+  id = useFieldId(id);
   const [open, setOpen] = useState(false);
   const wrapRef = useRef(null);
   const listRef = useRef(null);

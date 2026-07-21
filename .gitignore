@@ -12,3 +12,14 @@ examples/burger-shop/uploads/*
 # Build outputs (scripts/bundle.py) and locally-built tools (never committed)
 build/
 tools/
+
+# QA run artifacts — kept locally, never committed (heavy PNG/PDF evidence,
+# dated reports, and the exploratory QA runners). run_browser_tests.py stays
+# tracked because CI (.github/workflows/ci.yml) runs it.
+docs/qa-evidence/
+docs/QA_REPORT_*.md
+scripts/run_example_qa.py
+scripts/run_hmr_test.py
+scripts/run_priority_flows.py
+Nexa-Brief-Seguranca-Arquitetura-PT.pdf
+Nexa-Security-Architecture-Brief.pdf
