@@ -1,0 +1,17 @@
+.mp-finale { display: grid; grid-template-columns: 0.78fr 1.22fr; align-items: center; gap: 5%; padding: clamp(2rem, 6vw, 5rem); background: radial-gradient(circle at 26% 52%, rgb(255 91 85 / 0.15), transparent 28%), radial-gradient(circle at 72% 40%, rgb(83 223 209 / 0.08), transparent 34%); }
+.mp-finale-halo { position: relative; display: grid; place-items: center; justify-self: center; width: min(27vw, 230px); aspect-ratio: 1; border: 1px solid var(--mp-coral); border-radius: 50%; box-shadow: 0 0 90px rgb(255 91 85 / 0.14), 0 0 0 34px rgb(255 91 85 / 0.035); }
+.mp-finale-halo::before,
+.mp-finale-halo::after { position: absolute; border: 1px solid; border-radius: 50%; content: ""; }
+.mp-finale-halo::before { inset: 15%; border-color: var(--mp-cyan); border-inline-color: transparent; transform: rotate(35deg); }
+.mp-finale-halo::after { inset: 31%; border-color: var(--mp-yellow); border-block-color: transparent; transform: rotate(-35deg); }
+.mp-finale-halo span { font: 900 clamp(2rem, 6vw, 4.5rem) Consolas, monospace; letter-spacing: -0.12em; }
+.mp-finale-copy h1 { max-width: 8ch; margin: 0; font-size: clamp(4rem, 8vw, 7.6rem); font-weight: 560; letter-spacing: -0.075em; line-height: 0.82; }
+.mp-finale-copy > p:not(.mp-kicker) { max-width: 34rem; margin: 1.5rem 0; color: var(--mp-muted); font-size: clamp(0.85rem, 1.4vw, 1.05rem); line-height: 1.6; }
+.mp-finale-badge { display: inline-block; padding: 0.55rem 0.9rem; border: 1px solid var(--mp-cyan); border-radius: 999px; color: var(--mp-cyan); font: 700 0.62rem Consolas, monospace; letter-spacing: 0.18em; }
+
+@media (max-width: 700px) {
+  .mp-finale { grid-template-columns: 1fr; align-content: center; gap: 1.8rem; padding: 1.7rem; text-align: center; }
+  .mp-finale-halo { width: 42vw; max-width: 180px; }
+  .mp-finale-copy h1 { max-width: none; font-size: clamp(3.5rem, 17vw, 5rem); }
+  .mp-finale-copy > p:not(.mp-kicker) { margin-inline: auto; }
+}

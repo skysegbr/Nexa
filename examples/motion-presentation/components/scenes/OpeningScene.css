@@ -1,0 +1,20 @@
+.mp-opening { display: grid; grid-template-columns: 1.15fr 0.85fr; align-items: center; padding: clamp(2rem, 6vw, 5rem); }
+.mp-opening-copy { position: relative; z-index: 2; }
+.mp-kicker { margin: 0 0 1.1rem; color: var(--mp-coral); font: 700 0.66rem Consolas, monospace; letter-spacing: 0.2em; }
+.mp-opening h1 { margin: 0; font-size: clamp(3.6rem, 7.8vw, 7.2rem); font-weight: 560; letter-spacing: -0.075em; line-height: 0.82; }
+.mp-opening h1 span { display: block; }
+.mp-opening h1 span:last-child { color: transparent; -webkit-text-stroke: 1px var(--mp-cream); }
+.mp-opening-rule { display: block; width: min(360px, 78%); height: 2px; margin: 1.5rem 0 1rem; background: linear-gradient(90deg, var(--mp-coral), transparent); transform-origin: left; }
+.mp-opening-note { max-width: 31rem; margin: 0; color: var(--mp-muted); font-size: clamp(0.78rem, 1.3vw, 1rem); line-height: 1.6; }
+.mp-opening-signal { display: grid; place-items: center; }
+
+@media (max-width: 700px) {
+  .mp-opening { grid-template-columns: 1fr; align-content: center; gap: 0.7rem; padding: 1.2rem 1.6rem; }
+  .mp-opening-copy { align-self: end; }
+  .mp-opening .mp-kicker { margin-bottom: 0.65rem; font-size: 0.55rem; }
+  .mp-opening h1 { font-size: clamp(3rem, 14vw, 4.4rem); }
+  .mp-opening-rule { margin-block: 0.8rem 0.55rem; }
+  .mp-opening-note { font-size: 0.68rem; line-height: 1.4; }
+  .mp-opening-signal { align-self: start; }
+  .mp-opening .mp-signal { width: 36vw; max-width: 145px; }
+}

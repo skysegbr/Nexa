@@ -422,7 +422,7 @@ python -m http.server 8080
 | [examples/basic](./examples/basic) | Start here — minimal screen: `h`, `render`, `useState`, `useEffect`, components from `fluxaway-components.js` and `ThemeToggle` for dark mode |
 | [examples/form](./examples/form) | Controlled fields, validation, loading submit, reset, `useForm` |
 | [examples/complete-page](./examples/complete-page) | App-shell with sidebar, table, dialog, tabs, and toast |
-| [examples/docs-site](./examples/docs-site) | Published documentation app built in FluxaWay: 107 descriptor-driven reference pages with a consistent Setup → examples → API → notes flow, component CSS beside its JavaScript import, semantic desktop tables that become labelled mobile cards, live locally scoped design examples, a responsive scroll-spy TOC, Ctrl+K search, all 24 published examples, eight CSS guides, 61 components, 33 hooks, five add-ons and lazy read-only source viewers |
+| [examples/docs-site](./examples/docs-site) | Published documentation app built in FluxaWay: 107 descriptor-driven reference pages with a consistent Setup → examples → API → notes flow, component CSS beside its JavaScript import, semantic desktop tables that become labelled mobile cards, live locally scoped design examples, a responsive scroll-spy TOC, Ctrl+K search, all 25 published examples, eight CSS guides, 61 components, 33 hooks, five add-ons and lazy read-only source viewers |
 | [examples/components](./examples/components) | `Switch`, `Collapse`, `Combobox`, `ContextMenu`, `FileDropZone`, `CodeEditor`, toasts, a `Cards` page showcasing the `m-card-*` variants + `SpeedDial`, `Accordion`, `Slider`/`RangeSlider`, `Menu` with nested submenus, `DataTable`, `DatePicker`, a `Forms & Widgets` page with `RadioGroup`, `NumberInput`, `TimePicker`, `Stat`, `TreeView`, `Popover`, and `CommandPalette`, plus a `UI Primitives` page driving `Avatar`, `Breadcrumb`, `Skeleton`, and `Divider` through the component API |
 | [examples/mobile](./examples/mobile) | Polished mobile shell: animated responsive `Navbar`, `BottomNav`, `BottomSheet`, `FAB`, responsive cards, swipe, long press and live device status |
 | [examples/landing](./examples/landing) | SaaS landing page: sticky nav with mobile menu, SVG hero chart, testimonial carousel, pricing toggle |
@@ -441,6 +441,7 @@ python -m http.server 8080
 | [examples/fluxaway-motion](./examples/fluxaway-motion) | Flash-style animated intro on `fluxaway-motion`: preloader, logo flying in with `outBack`, staggered letter cascade, frame scripts, a nested looping movie clip, SKIP INTRO, and a control deck with scrubber, reverse, speed, and `gotoAndPlay` scene jumps |
 | [examples/motion-editor](./examples/motion-editor) | Flash-8-style visual authoring IDE on the real `fluxaway-motion` runtime: frame-based timeline (fps, dots, tween spans, zoom, labels, loop), auto-key on stage drag, Free Transform (rotate/scale at the playhead), multi-actor layers with folders, animated masks and guide layers, multi-scene movies, linked symbols with nested MovieClip editing, vector Line/Pencil tools, onion skinning with ruler brackets, per-actor Behavior panel and two-way `useTimeline()` code editing, undo/redo, save/load, versioned project schema |
 | [examples/motion-landing](./examples/motion-landing) | Animated product landing page for FluxaWay Motion, built on the add-on itself: hero timeline, scroll-driven scenes, replayable intro |
+| [examples/motion-presentation](./examples/motion-presentation) | Fixed-stage presentation built without ZoomStage: four overlapping scenes on one labelled Motion timeline, frame-script navigation, playback/scrubbing controls, keyboard shortcuts, a nested MovieClip and responsive mobile recomposition |
 | [examples/palate-journey](./examples/palate-journey) | Ten-course food & drink tasting journey: full-screen course cards with staggered `fluxaway-motion` timelines, dot-rail navigation and a "serve for me" autopilot |
 | [examples/vitra-protocol](./examples/vitra-protocol) | VITRA material narrative combining ZoomStage v2 and `fluxaway-motion`: six Inox, transparent-glass and red-signal scenes, five camera trajectories, settlement-driven entrances, closed loops, an interactive seal and a clickable world overview |
 | [examples/zoom-lab](./examples/zoom-lab) | Canonical ZoomStage v2 laboratory: compare Glide, Arc, Dolly, Orbit and Focus on one route, with automatic duration, frameless/circular/pill/polygon surfaces, independent camera bounds and visible flight lifecycle |
@@ -1194,8 +1195,10 @@ steps — sprite sheets via `backgroundPosition`). A component with its own
 `stagger(keyframes, eachMs, index)` builds cascade entrances;
 `createTimeline(spec)` is the imperative variant for use outside components.
 See [examples/fluxaway-motion](./examples/fluxaway-motion) for the full 2003-intro
-treatment, and [examples/motion-editor](./examples/motion-editor) for the
-Flash-IDE-style visual timeline editor with live code export.
+treatment, [examples/motion-presentation](./examples/motion-presentation) for a
+fixed-stage deck driven entirely by one labelled timeline, and
+[examples/motion-editor](./examples/motion-editor) for the Flash-IDE-style visual
+timeline editor with live code export.
 
 ### `PipelineCanvas`
 

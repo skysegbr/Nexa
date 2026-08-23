@@ -29,6 +29,7 @@ export const EXAMPLE_LINKS = [
   { label: "Mobile", href: "/examples/mobile/" },
   { label: "Motion Editor", href: "/examples/motion-editor/" },
   { label: "Motion Landing", href: "/examples/motion-landing/" },
+  { label: "Motion Presentation", href: "/examples/motion-presentation/" },
   { label: "Palate Journey", href: "/examples/palate-journey/" },
   { label: "SSR", href: "/examples/ssr/" },
   { label: "Star Atlas", href: "/examples/star-atlas/" },

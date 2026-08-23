@@ -1,0 +1,55 @@
+@import url("./components/PresentationStage.css");
+@import url("./components/PlaybackDeck.css");
+@import url("./components/SignalMovieClip.css");
+@import url("./components/scenes/OpeningScene.css");
+@import url("./components/scenes/TimelineScene.css");
+@import url("./components/scenes/LabelsScene.css");
+@import url("./components/scenes/FinaleScene.css");
+
+:root {
+  color-scheme: dark;
+  --mp-bg: #080a0f;
+  --mp-panel: #10131b;
+  --mp-panel-2: #171b25;
+  --mp-line: rgb(237 239 228 / 0.17);
+  --mp-cream: #f1efe3;
+  --mp-muted: #969cac;
+  --mp-coral: #ff5b55;
+  --mp-cyan: #53dfd1;
+  --mp-yellow: #f4d35e;
+}
+
+* { box-sizing: border-box; }
+html, body, #app { min-width: 100%; min-height: 100%; }
+body {
+  margin: 0;
+  background:
+    radial-gradient(circle at 15% 10%, rgb(255 91 85 / 0.1), transparent 28rem),
+    radial-gradient(circle at 85% 90%, rgb(83 223 209 / 0.08), transparent 28rem),
+    var(--mp-bg);
+  color: var(--mp-cream);
+  font-family: Inter, "Segoe UI", system-ui, sans-serif;
+}
+button, input { font: inherit; }
+
+.mp-app {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: 0.85rem;
+  width: min(1180px, calc(100vw - 2rem));
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: 1rem 0;
+}
+
+@media (max-width: 700px) {
+  .mp-app {
+    grid-template-rows: auto auto;
+    width: min(100% - 1rem, 480px);
+    padding-block: 0.5rem 1rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; }
+}

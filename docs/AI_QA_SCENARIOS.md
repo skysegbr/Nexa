@@ -316,7 +316,7 @@ Apply the relevant baseline to every component, then its specific rows.
 | SC-ZOOM-12 | Interrupted/reduced flight | a new flight starts from the live camera without a seam; reduced motion lands with Cut semantics | browser |
 | SC-ZOOM-13 | Motion-composed frame | child timelines begin on `settled`, animate only bounded elements and leave the complete scene inside the unobscured stage viewport | browser/visual (`vitra-protocol`) |
 
-### fluxaway-motion (`SC-MOTION`) — examples: fluxaway-motion, motion-landing, inox-landing, motion-editor, vitra-protocol
+### fluxaway-motion (`SC-MOTION`) — examples: fluxaway-motion, motion-presentation, motion-landing, inox-landing, motion-editor, vitra-protocol
 | ID | Scenario | Expected | Verify |
 |---|---|---|---|
 | SC-MOTION-01 | `createTimeline`/`useTimeline` play | tweens transform/opacity over time | suite (motion) |
@@ -330,6 +330,7 @@ Apply the relevant baseline to every component, then its specific rows.
 | SC-MOTION-09 | Motion-editor flows | drag keyframe (25ms snap), ruler scrub, undo/redo, multi-select, copy/paste, guide draw, code export round-trip, scenes/symbols | suite (motion-editor) |
 | SC-MOTION-10 | SSR-safe | no rAF in DOM-less runtime; stays parked | suite |
 | SC-MOTION-11 | Infinite loop closure + stagger duration | every animated property completes its return path; duration includes the last stagger offset; crossing the wrap has no visual jump | browser/visual |
+| SC-MOTION-12 | Motion-only presentation | labelled master timeline drives overlapping scenes; frame scripts, controls, keyboard navigation and scrubbing stay synchronized without ZoomStage | browser/visual (`motion-presentation`) |
 
 ### PipelineCanvas (`SC-CANVAS`) — example: mindmap
 | ID | Scenario | Expected | Verify |
@@ -421,7 +422,7 @@ Apply the relevant baseline to every component, then its specific rows.
 ## §17. Example apps — `SC-APP`
 
 Run the §3.1 per-example checklist against **every** dir in `examples/`
-(26). Priority + notable per-app scenarios:
+(29). Priority + notable per-app scenarios:
 
 | ID | Example | Notable scenarios | Verify |
 |---|---|---|---|
@@ -432,11 +433,11 @@ Run the §3.1 per-example checklist against **every** dir in `examples/`
 | SC-APP-05 | mobile | animated inline navbar/bottom-nav/bottom-sheet, Escape, swipe, safe-area | browser (touch) |
 | SC-APP-06 | ssr | hydration round-trip (SC-SSR-09) | browser |
 | SC-APP-07 | fluxaway-architecture / fluxaway-atlas | ZoomStage nav (SC-ZOOM) | browser |
-| SC-APP-08 | fluxaway-motion / motion-editor | motion + editor (SC-MOTION) | browser |
+| SC-APP-08 | fluxaway-motion / motion-presentation / motion-editor | motion, fixed-stage presentation + editor (SC-MOTION) | browser |
 | SC-APP-09 | mindmap | drag, inline edit, SVG connectors (hand-rolled — *not* PipelineCanvas; SC-CANVAS has no example app) | browser |
 | SC-APP-10 | designer | palette drag, inspector, code export (uses the `CodeEditor` component, *not* FullCodeEditor) | browser |
 | SC-APP-11 | gallery / landing / inox-landing / metallic-themes / star-atlas / palate-journey / motion-landing | domain-specific render + interaction; Inox assembly states; every Inox Next destination keeps its primary frame and following transition inside the desktop viewport; alloy-seal loop closes without a seam; console clean | visual/browser |
-| SC-APP-12 | docs-site | 107 descriptor-driven pages; Setup shows component CSS beside JS; local Cobalt scope does not leak; semantic desktop tables become labelled mobile cards; TOC compacts before squeezing API content; lazy home payload, responsive shell, 22-example menu, scroll spy, route/section focus, Ctrl+K search, AI/security guide, 13 add-on resources, eight CSS guides and five add-on pages | browser |
+| SC-APP-12 | docs-site | 107 descriptor-driven pages; Setup shows component CSS beside JS; local Cobalt scope does not leak; semantic desktop tables become labelled mobile cards; TOC compacts before squeezing API content; lazy home payload, responsive shell, 25-example menu, scroll spy, route/section focus, Ctrl+K search, AI/security guide, 16 add-on resources, eight CSS guides and five add-on pages | browser |
 | SC-APP-13 | category-CSS examples | render == monolith (SC-CSS-06), links complete (SC-CSS-07) | visual/static |
 
 ## §18. Cross-browser & performance — `SC-XB`

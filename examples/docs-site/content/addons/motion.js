@@ -63,11 +63,13 @@ return h("div", { ref: timeline.track("mark") }, "FW");`,
     ],
     resources: [
       { label: "Runtime showcase", href: "#/source/motion-runtime-example" },
+      { label: "Motion-only presentation", href: "#/source/motion-presentation-example" },
       { label: "Motion editor", href: "#/source/motion-editor-example" },
       { label: "Motion guide", href: "#/source/motion-guide" },
     ],
     notes: [
       "Animate transform and opacity on reasonably-sized elements; avoid promoting giant canvas nodes.",
+      "Use examples/motion-presentation for a fixed-stage labelled deck; use ZoomStage when camera travel or spatial relationships carry the presentation.",
       "See examples/fluxaway-motion and examples/motion-editor for the full runtime and visual authoring flow.",
     ],
   },

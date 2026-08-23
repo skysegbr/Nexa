@@ -1,0 +1,20 @@
+.mp-labels-scene { display: grid; grid-template-columns: 0.82fr 1.18fr; grid-template-rows: 1fr auto; align-items: center; gap: 1.5rem 6%; padding: clamp(2rem, 5vw, 4.5rem); }
+.mp-labels-scene header > h1 { max-width: 9ch; margin: 0; font-size: clamp(3rem, 6vw, 5.5rem); font-weight: 550; letter-spacing: -0.065em; line-height: 0.9; }
+.mp-labels-scene header > p:last-child { max-width: 29rem; margin: 1.35rem 0 0; color: var(--mp-muted); line-height: 1.6; }
+.mp-label-cards { display: grid; gap: 0.65rem; }
+.mp-label-card { display: grid; grid-template-columns: 2rem 1fr; gap: 0.15rem 0.7rem; padding: 1rem; border: 1px solid var(--mp-line); border-left: 3px solid currentColor; border-radius: 10px; background: var(--mp-panel); box-shadow: 0 14px 38px rgb(0 0 0 / 0.24); }
+.mp-label-card span { grid-row: 1 / 3; align-self: center; font: 0.62rem Consolas, monospace; }
+.mp-label-card strong { color: var(--mp-cream); font-size: 0.85rem; }
+.mp-label-card code { color: var(--mp-muted); font-size: 0.65rem; }
+.mp-label-card-coral { color: var(--mp-coral); }
+.mp-label-card-cyan { color: var(--mp-cyan); }
+.mp-label-card-yellow { color: var(--mp-yellow); }
+.mp-labels-code { grid-column: 1 / -1; justify-self: center; padding: 0.7rem 1.1rem; border: 1px solid rgb(83 223 209 / 0.3); border-radius: 999px; background: rgb(83 223 209 / 0.07); color: var(--mp-cyan); font-size: 0.72rem; }
+
+@media (max-width: 700px) {
+  .mp-labels-scene { grid-template-columns: 1fr; grid-template-rows: auto auto auto; align-content: center; gap: 1rem; padding: 1.5rem; }
+  .mp-labels-scene header > h1 { max-width: 11ch; font-size: 2.7rem; }
+  .mp-labels-scene header > p:last-child { display: none; }
+  .mp-label-card { padding: 0.75rem; }
+  .mp-labels-code { grid-column: 1; font-size: 0.62rem; }
+}

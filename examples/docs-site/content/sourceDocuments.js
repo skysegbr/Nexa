@@ -33,6 +33,16 @@ export const SOURCE_DOCUMENTS = Object.freeze({
     previewPath: "/examples/fluxaway-motion/",
     previewLabel: "Open runtime showcase",
   },
+  "motion-presentation-example": {
+    title: "Motion presentation source",
+    description: "The master-timeline entry for a fixed-stage presentation built without ZoomStage.",
+    path: "/examples/motion-presentation/app.js",
+    mode: "javascript",
+    backLabel: "FluxaWay Motion",
+    backPath: "/addons/fluxaway-motion",
+    previewPath: "/examples/motion-presentation/",
+    previewLabel: "Open Motion presentation",
+  },
   "motion-editor-example": {
     title: "Motion editor source",
     description: "The primary application entry for the interactive FluxaWay Motion editor.",

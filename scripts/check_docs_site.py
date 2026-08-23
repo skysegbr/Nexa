@@ -147,6 +147,7 @@ def run(browser_type, base: str) -> list[str]:
         "/examples/mobile/",
         "/examples/motion-editor/",
         "/examples/motion-landing/",
+        "/examples/motion-presentation/",
         "/examples/palate-journey/",
         "/examples/ssr/",
         "/examples/star-atlas/",
@@ -171,7 +172,7 @@ def run(browser_type, base: str) -> list[str]:
     desktop.keyboard.press("Escape")
     expect(desktop.locator("#docs-examples-menu").count() == 0, "Escape did not close examples")
     expect(examples_trigger.evaluate("(button) => document.activeElement === button"), "focus not restored")
-    passed.append("examples menu matches all 24 build links and supports keyboard navigation")
+    passed.append("examples menu matches all 25 build links and supports keyboard navigation")
 
     desktop.locator('.nd-sidebar-link[href="#/getting-started"]').click()
     desktop.wait_for_function("() => document.querySelector('h1')?.textContent === 'Getting started'")
@@ -249,14 +250,14 @@ def run(browser_type, base: str) -> list[str]:
           };
         }"""
     )
-    expect(source_catalog["count"] == 17, "source viewer catalog is incomplete")
+    expect(source_catalog["count"] == 18, "source viewer catalog is incomplete")
     expect(not source_catalog["failed"], f"source viewer files failed: {source_catalog['failed']}")
-    expect(source_catalog["resourceCount"] == 15, "add-on resource catalog is incomplete")
+    expect(source_catalog["resourceCount"] == 16, "add-on resource catalog is incomplete")
     expect(
         not source_catalog["missingResources"],
         f"resources outside CodeEditor: {source_catalog['missingResources']}",
     )
-    expect(source_catalog["previewCount"] == 9, "example viewers are missing demo actions")
+    expect(source_catalog["previewCount"] == 10, "example viewers are missing demo actions")
 
     open_route(desktop, base, "/source/motion-runtime-example", "Runtime showcase source")
     desktop.wait_for_selector(".nd-source-editor .CodeMirror")
@@ -450,6 +451,42 @@ def run(browser_type, base: str) -> list[str]:
     expect(catalog["mismatched"] == 0, f"{catalog['mismatched']} catalog modules do not match metadata")
     expect(catalog["unique"] == catalog["count"], "catalog contains duplicate slugs")
     passed.append("catalog metadata matches all 107 lazy entries")
+
+    motion_deck = desktop.context.browser.new_page(viewport={"width": 1440, "height": 900})
+    motion_deck_errors: list[str] = []
+    motion_deck.on("pageerror", lambda error: motion_deck_errors.append(str(error)))
+    motion_deck.on(
+        "console",
+        lambda msg: motion_deck_errors.append(msg.text) if msg.type == "error" else None,
+    )
+    motion_deck.goto(
+        base.replace("/examples/docs-site/", "/examples/motion-presentation/"),
+        wait_until="load",
+    )
+    motion_deck.get_by_role("button", name="Pause presentation").click()
+    motion_deck.locator(".mp-deck-labels button").nth(2).click()
+    motion_deck.wait_for_timeout(900)
+    expect(
+        "Labels" in motion_deck.locator(".mp-deck-label-active").inner_text(),
+        "Motion presentation did not synchronize gotoAndPlay navigation",
+    )
+    labels_opacity = motion_deck.locator(".mp-labels-scene").evaluate(
+        "element => Number(getComputedStyle(element).opacity)"
+    )
+    expect(labels_opacity > 0.75, "Motion presentation label scene did not enter")
+    motion_deck.locator('.mp-deck input[type="range"]').evaluate(
+        """input => {
+          input.value = 12500;
+          input.dispatchEvent(new Event("input", { bubbles: true }));
+        }"""
+    )
+    expect(
+        "Finale" in motion_deck.locator(".mp-deck-label-active").inner_text(),
+        "Motion presentation scrubber did not synchronize its scene label",
+    )
+    expect(not motion_deck_errors, "Motion presentation browser errors: " + " | ".join(motion_deck_errors))
+    motion_deck.close()
+    passed.append("Motion-only presentation synchronizes labels, scene entrances and scrubbing")
 
     zoom_lab = desktop.context.browser.new_page(viewport={"width": 1440, "height": 900})
     zoom_errors: list[str] = []

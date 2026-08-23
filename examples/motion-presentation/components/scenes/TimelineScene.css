@@ -1,0 +1,19 @@
+.mp-timeline-scene { display: grid; grid-template-columns: 0.82fr 1.18fr; align-items: center; gap: 5%; padding: clamp(2rem, 5vw, 4.5rem); }
+.mp-timeline-scene h1 { margin: 0; font-size: clamp(3rem, 6vw, 5.8rem); font-weight: 550; letter-spacing: -0.065em; line-height: 0.9; }
+.mp-timeline-panel { position: relative; padding: 2.35rem 1rem 0.8rem; border: 1px solid var(--mp-line); border-radius: 12px; background: rgb(16 19 27 / 0.86); box-shadow: 0 24px 70px rgb(0 0 0 / 0.32); }
+.mp-timeline-ruler { position: absolute; top: 0.55rem; right: 1rem; left: 5.8rem; display: flex; justify-content: space-between; color: var(--mp-muted); font: 0.48rem Consolas, monospace; }
+.mp-timeline-layer { display: grid; grid-template-columns: 4.2rem 1fr; align-items: center; gap: 0.6rem; height: 3.2rem; border-top: 1px solid var(--mp-line); }
+.mp-timeline-layer strong { color: var(--mp-muted); font: 0.62rem Consolas, monospace; }
+.mp-timeline-track { position: relative; height: 1.35rem; background: repeating-linear-gradient(90deg, rgb(241 239 227 / 0.04) 0 1px, transparent 1px 8.33%); }
+.mp-timeline-track::before { position: absolute; top: 50%; right: 0; left: 0; height: 1px; background: var(--mp-line); content: ""; }
+.mp-timeline-track span { position: absolute; top: 50%; width: 9px; height: 9px; transform: translate(-50%, -50%) rotate(45deg); box-shadow: 0 0 15px currentColor; }
+.mp-timeline-playhead { position: absolute; top: 1.8rem; bottom: 0.6rem; left: calc(50% + 2.6rem); z-index: 2; width: 1px; background: var(--mp-coral); box-shadow: 0 0 10px var(--mp-coral); }
+.mp-timeline-playhead::before { position: absolute; top: -4px; left: -4px; width: 9px; height: 9px; background: var(--mp-coral); clip-path: polygon(0 0, 100% 0, 50% 100%); content: ""; }
+
+@media (max-width: 700px) {
+  .mp-timeline-scene { grid-template-columns: 1fr; align-content: center; gap: 1.4rem; padding: 1.5rem; }
+  .mp-timeline-scene h1 { font-size: 3rem; }
+  .mp-timeline-panel { padding-inline: 0.7rem; }
+  .mp-timeline-ruler { left: 4.9rem; }
+  .mp-timeline-layer { grid-template-columns: 3.7rem 1fr; height: 2.8rem; }
+}

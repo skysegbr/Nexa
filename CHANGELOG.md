@@ -18,6 +18,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   material narrative combining every animated ZoomStage v2 trajectory with
   settlement-driven FluxaWay Motion, seven original photographic plates,
   closed loops, an interactive two-state seal and a clickable world overview.
+- `examples/motion-presentation/`, a fixed-stage four-scene deck driven only by
+  one labelled FluxaWay Motion timeline, with frame-script navigation,
+  playback and scrubbing controls, keyboard shortcuts, a nested MovieClip and
+  responsive mobile composition — no ZoomStage.
 
 ### Changed
 - ZoomStage now reports departing, arriving and settled flight lifecycle,

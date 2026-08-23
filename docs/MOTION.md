@@ -30,6 +30,21 @@ between the keyframes that *do* define it (per-property tracks, exactly like
 Flash's separate motion tweens). Only `transform` and `opacity` are tweened, so
 animations stay on the GPU.
 
+### Motion-only presentations
+
+Use Motion by itself when the presentation has one fixed stage and a linear
+sequence, like a Flash movie: mount the scene components in the same stage,
+give each scene a root opacity/transform track, place readable scene names in
+`labels`, and navigate with `gotoAndPlay(label)`. Frame scripts synchronize the
+active navigation item; a scrubber calls `seek()` and updates that item itself,
+because a plain seek intentionally fires no frame scripts. Child components may
+run independent `useTimeline` instances as nested MovieClips.
+
+Use ZoomStage instead when the presentation's meaning depends on camera travel,
+spatial relationships, non-linear exploration or fitting differently sized
+frames. The complete fixed-stage pattern lives in
+[`examples/motion-presentation`](../examples/motion-presentation).
+
 ```js
 import { useTimeline, easings, stagger } from "/dist/fluxaway-motion.js";
 ```

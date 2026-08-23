@@ -32,6 +32,7 @@ mean an add-on, not hand-rolled code:
 | The task mentions… | Use | Module (details in §10) |
 |---|---|---|
 | presentation, slide deck, slides, pitch, keynote, Prezi-style zoom, guided tour, camera pan between frames | **ZoomStage** | `/dist/fluxaway-zoom.js` + `fluxaway-zoom.css` |
+| fixed-stage linear deck, Flash-style presentation, labelled scenes on one timeline | **fluxaway-motion** (`useTimeline`) | `/dist/fluxaway-motion.js` |
 | animation, intro/splash, timeline, keyframes, tween, easing, staggered entrance, "like Flash", movie clip | **fluxaway-motion** (`useTimeline`) | `/dist/fluxaway-motion.js` |
 | node editor, flowchart, pipeline, graph of connected boxes, diagram with draggable nodes | **PipelineCanvas** | `/dist/fluxaway-canvas.js` + `fluxaway-canvas.css` |
 | chart, graph of data, plot, dashboard, KPI, metric tile, analytics, line/bar/pie/donut, sparkline, time series | **fluxaway-charts** | `/dist/fluxaway-charts.js` + `fluxaway-charts.css` |
@@ -39,10 +40,13 @@ mean an add-on, not hand-rolled code:
 | buttons, forms, dialogs, tables, tabs — regular app UI | UI components (§9) | `/dist/fluxaway-components-*.js` |
 | state, routing, SSR, context, fetch | core hooks (§6) | `/dist/fluxaway.js` |
 
-A "presentation about X" in FluxaWay is a **ZoomStage app** (frames laid out on an
-infinite canvas, camera flying between them — see `examples/fluxaway-architecture`
-and `examples/fluxaway-atlas`), optionally with fluxaway-motion for entrances inside
-frames. It is NOT a stack of `<section>`s with scroll-snap.
+A spatial "presentation about X" in FluxaWay is a **ZoomStage app** (frames laid
+out on an infinite canvas, camera flying between them — see
+`examples/fluxaway-architecture` and `examples/fluxaway-atlas`), optionally with
+fluxaway-motion for entrances inside frames. A deliberately fixed-stage, linear
+deck may instead use one labelled Motion timeline, overlapping scene components
+and `gotoAndPlay()` navigation; `examples/motion-presentation` is the canonical
+reference. Neither pattern is a stack of `<section>`s with scroll-snap.
 
 A "dashboard" or "chart" in FluxaWay is a **fluxaway-charts app** — never a
 CDN copy of Chart.js/D3/Recharts (that would break the zero-dependency rule),
@@ -1908,8 +1912,9 @@ and a longer walkthrough live in the README's "Canvas & Editor" section;
 this is the quick-reference version so an agent that only loads this file
 still knows the API exists and how to call it.
 
-**Routing reminder** (same table as §1): presentation / slide deck / zoom
-tour → **ZoomStage**; animation / intro / keyframes → **fluxaway-motion**;
+**Routing reminder** (same table as §1): spatial presentation / camera tour →
+**ZoomStage**; fixed-stage Flash-style deck / animation / intro / keyframes →
+**fluxaway-motion**;
 node graph / flowchart / pipeline → **PipelineCanvas**; chart / dashboard /
 KPI → **fluxaway-charts**; embedded code editor → **FullCodeEditor**. These
 are first-party — never substitute reveal.js, GSAP, mermaid, Chart.js, D3 or
@@ -2026,7 +2031,11 @@ cascade, SKIP INTRO, scrubber and scene-jump deck. Visual authoring:
 `examples/motion-editor` — a Flash-IDE-style timeline editor (draggable
 keyframe diamonds with multi-selection, undo/redo via `useHistory`, motion
 guides drawn by clicking on the stage, scrubbing, inspector, live
-`useTimeline` code export). For a production-shaped composition, see
+`useTimeline` code export). `examples/motion-presentation` is the canonical
+Motion-only presentation: four overlapping scenes share one labelled master
+timeline, frame scripts keep navigation state synchronized, a nested MovieClip
+runs independently, and the fixed stage is recomposed for mobile without
+ZoomStage. For a production-shaped composition, see
 `examples/inox-landing`: an Inox landing page with independent in-view reveals,
 an inspection scanner, a replayable three-state mechanical assembly and a
 staggered alloy seal whose final left-edge state closes its infinite loop.

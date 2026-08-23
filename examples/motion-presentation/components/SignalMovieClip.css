@@ -1,0 +1,10 @@
+.mp-signal { position: relative; display: grid; place-items: center; width: min(29vw, 250px); aspect-ratio: 1; }
+.mp-signal::before { position: absolute; width: 64%; aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle, rgb(255 91 85 / 0.32), transparent 68%); content: ""; }
+.mp-signal-ring { position: absolute; border-radius: 50%; }
+.mp-signal-ring-a { inset: 9%; border: 1px solid var(--mp-coral); border-block-color: transparent; }
+.mp-signal-ring-b { inset: 23%; border: 1px solid var(--mp-cyan); border-inline-color: transparent; }
+.mp-signal-core { display: grid; place-items: center; width: 28%; aspect-ratio: 1; border-radius: 50%; background: var(--mp-cream); color: var(--mp-bg); font: 900 clamp(1.1rem, 3vw, 2rem) Consolas, monospace; box-shadow: 0 0 42px rgb(255 91 85 / 0.42); }
+
+@media (max-width: 700px) {
+  .mp-signal { width: 52vw; max-width: 210px; }
+}
