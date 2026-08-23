@@ -41,7 +41,8 @@ Optional modules build on top of that core:
   one-hue sequential ramp for magnitude); the stylesheet is required because it
   carries the palette tokens.
 - `dist/fluxaway-zoom.js` + `dist/fluxaway-zoom.css` — `ZoomStage`, a pan/zoom
-  presentation canvas with animated camera pan/zoom/rotate between frames,
+  presentation canvas with Glide/Arc/Dolly/Orbit/Focus camera trajectories,
+  independent camera targets and non-card surfaces, stable flight lifecycle,
   optional free zoom/pan exploration (`freeZoom`), swipe/keyboard nav, and
   screen-reader announcements.
 - `dist/fluxaway-editor.js` + `dist/fluxaway-editor.css` (+ `dist/fluxaway-editor-snippets.js`)
@@ -203,12 +204,12 @@ Minimal page:
 tag and pin the CDN URL to it, for example:
 
 ```text
-https://cdn.jsdelivr.net/gh/skysegbr/FluxaWay@v0.24.1/dist/fluxaway.js
+https://cdn.jsdelivr.net/gh/skysegbr/FluxaWay@v0.24.2/dist/fluxaway.js
 ```
 
 ### Subresource Integrity (SRI) — pin the bytes, not just the tag
 
-Pinning to `@v0.24.1` pins the *URL*, but a git tag can still be moved, so it is
+Pinning to `@v0.24.2` pins the *URL*, but a git tag can still be moved, so it is
 not a cryptographic guarantee of *which bytes* run. For the strongest
 supply-chain posture — the whole reason FluxaWay ships zero dependencies — add an
 `integrity` hash so the browser refuses to execute a file that doesn't match,
@@ -218,13 +219,13 @@ even if the CDN or the tag is ever tampered with. Pair it with
 ```html
 <link
   rel="stylesheet"
-  href="https://cdn.jsdelivr.net/gh/skysegbr/FluxaWay@v0.24.1/dist/fluxaway-ui.min.css"
+  href="https://cdn.jsdelivr.net/gh/skysegbr/FluxaWay@v0.24.2/dist/fluxaway-ui.min.css"
   integrity="sha384-…"
   crossorigin="anonymous"
 />
 <script
   type="module"
-  src="https://cdn.jsdelivr.net/gh/skysegbr/FluxaWay@v0.24.1/dist/fluxaway.min.js"
+  src="https://cdn.jsdelivr.net/gh/skysegbr/FluxaWay@v0.24.2/dist/fluxaway.min.js"
   integrity="sha384-…"
   crossorigin="anonymous"
 ></script>
@@ -238,7 +239,7 @@ local file or straight from the CDN URL:
 python -c "import base64,hashlib,sys;print('sha384-'+base64.b64encode(hashlib.sha384(open(sys.argv[1],'rb').read()).digest()).decode())" dist/fluxaway.min.js
 
 # from the pinned CDN URL (verifies what will actually be served)
-python -c "import base64,hashlib,sys,urllib.request as u;print('sha384-'+base64.b64encode(hashlib.sha384(u.urlopen(sys.argv[1]).read()).digest()).decode())" https://cdn.jsdelivr.net/gh/skysegbr/FluxaWay@v0.24.1/dist/fluxaway.min.js
+python -c "import base64,hashlib,sys,urllib.request as u;print('sha384-'+base64.b64encode(hashlib.sha384(u.urlopen(sys.argv[1]).read()).digest()).decode())" https://cdn.jsdelivr.net/gh/skysegbr/FluxaWay@v0.24.2/dist/fluxaway.min.js
 ```
 
 **ES-module caveat.** `integrity` only covers the file the browser fetches
@@ -382,9 +383,9 @@ location /dist/ {
 is a footgun on an *unversioned* path like `/dist/fluxaway.js` served from your own
 origin: after you update the file, browsers keep the stale copy for a year.
 Immutable caching is safe only when the URL changes whenever the content does —
-a pinned CDN tag (`@v0.24.1`), a bundler output filename, or a versioned path
+a pinned CDN tag (`@v0.24.2`), a bundler output filename, or a versioned path
 such as `/dist/0.19.2/fluxaway.min.js`. For an unversioned self-hosted `/dist`, use
-`Cache-Control: no-cache` (revalidate via ETag) instead, or add a `?v=0.24.1`
+`Cache-Control: no-cache` (revalidate via ETag) instead, or add a `?v=0.24.2`
 query and bump it on release.
 
 Pair this with [SRI](#subresource-integrity-sri--pin-the-bytes-not-just-the-tag)
@@ -421,7 +422,7 @@ python -m http.server 8080
 | [examples/basic](./examples/basic) | Start here — minimal screen: `h`, `render`, `useState`, `useEffect`, components from `fluxaway-components.js` and `ThemeToggle` for dark mode |
 | [examples/form](./examples/form) | Controlled fields, validation, loading submit, reset, `useForm` |
 | [examples/complete-page](./examples/complete-page) | App-shell with sidebar, table, dialog, tabs, and toast |
-| [examples/docs-site](./examples/docs-site) | Published documentation app built in FluxaWay: 107 descriptor-driven reference pages with a consistent Setup → examples → API → notes flow, component CSS beside its JavaScript import, semantic desktop tables that become labelled mobile cards, live locally scoped design examples, a responsive scroll-spy TOC, Ctrl+K search, all 22 published examples, eight CSS guides, 61 components, 33 hooks, five add-ons and lazy read-only source viewers |
+| [examples/docs-site](./examples/docs-site) | Published documentation app built in FluxaWay: 107 descriptor-driven reference pages with a consistent Setup → examples → API → notes flow, component CSS beside its JavaScript import, semantic desktop tables that become labelled mobile cards, live locally scoped design examples, a responsive scroll-spy TOC, Ctrl+K search, all 24 published examples, eight CSS guides, 61 components, 33 hooks, five add-ons and lazy read-only source viewers |
 | [examples/components](./examples/components) | `Switch`, `Collapse`, `Combobox`, `ContextMenu`, `FileDropZone`, `CodeEditor`, toasts, a `Cards` page showcasing the `m-card-*` variants + `SpeedDial`, `Accordion`, `Slider`/`RangeSlider`, `Menu` with nested submenus, `DataTable`, `DatePicker`, a `Forms & Widgets` page with `RadioGroup`, `NumberInput`, `TimePicker`, `Stat`, `TreeView`, `Popover`, and `CommandPalette`, plus a `UI Primitives` page driving `Avatar`, `Breadcrumb`, `Skeleton`, and `Divider` through the component API |
 | [examples/mobile](./examples/mobile) | Polished mobile shell: animated responsive `Navbar`, `BottomNav`, `BottomSheet`, `FAB`, responsive cards, swipe, long press and live device status |
 | [examples/landing](./examples/landing) | SaaS landing page: sticky nav with mobile menu, SVG hero chart, testimonial carousel, pricing toggle |
@@ -441,6 +442,8 @@ python -m http.server 8080
 | [examples/motion-editor](./examples/motion-editor) | Flash-8-style visual authoring IDE on the real `fluxaway-motion` runtime: frame-based timeline (fps, dots, tween spans, zoom, labels, loop), auto-key on stage drag, Free Transform (rotate/scale at the playhead), multi-actor layers with folders, animated masks and guide layers, multi-scene movies, linked symbols with nested MovieClip editing, vector Line/Pencil tools, onion skinning with ruler brackets, per-actor Behavior panel and two-way `useTimeline()` code editing, undo/redo, save/load, versioned project schema |
 | [examples/motion-landing](./examples/motion-landing) | Animated product landing page for FluxaWay Motion, built on the add-on itself: hero timeline, scroll-driven scenes, replayable intro |
 | [examples/palate-journey](./examples/palate-journey) | Ten-course food & drink tasting journey: full-screen course cards with staggered `fluxaway-motion` timelines, dot-rail navigation and a "serve for me" autopilot |
+| [examples/vitra-protocol](./examples/vitra-protocol) | VITRA material narrative combining ZoomStage v2 and `fluxaway-motion`: six Inox, transparent-glass and red-signal scenes, five camera trajectories, settlement-driven entrances, closed loops, an interactive seal and a clickable world overview |
+| [examples/zoom-lab](./examples/zoom-lab) | Canonical ZoomStage v2 laboratory: compare Glide, Arc, Dolly, Orbit and Focus on one route, with automatic duration, frameless/circular/pill/polygon surfaces, independent camera bounds and visible flight lifecycle |
 | [examples/burger-shop-fastapi](./examples/burger-shop-fastapi) | Same app as burger-shop, backed by a real FastAPI + SQLModel + SQLite app instead of `http.server` — same frontend, `/dist` mounted straight from the monorepo |
 
 The burger shop example requires its own backend:
@@ -1224,16 +1227,22 @@ all built into the controller — see [dist/fluxaway-canvas.js](./dist/fluxaway-
 
 `dist/fluxaway-zoom.js` + `dist/fluxaway-zoom.css`. A pan/zoom presentation, in the
 style of non-linear zooming presentation tools: frame content is normal FluxaWay
-vdom positioned on one large canvas, and a single animated camera
-pans/zooms/rotates between frames.
+vdom positioned on one large canvas, and a single animated camera follows a
+chosen trajectory between subjects. Camera bounds are independent from the
+visible surface, so a subject can be frameless, circular or custom-clipped
+without pretending to be a rectangular slide.
+Version 2 expands the existing module in place: v1 frame descriptors remain
+valid, with no separate import or migration package.
 
 | Prop | Description |
 |---|---|
-| `frames` | Array of `{ id, x, y, w, h, rotate?, content }` — world-px geometry plus vdom content |
+| `frames` | Array of `{ id, x, y, w, h, rotate?, camera?, transition?, surface?, shape?, content?, render? }` |
 | `path` | Array of frame ids for navigation order — defaults to `frames` order |
 | `index` / `defaultIndex` / `onIndexChange` | Controlled/uncontrolled current frame |
-| `duration` / `easing` | Camera animation duration (ms) and easing function |
-| `controllerRef` | ref, set to `{ next, prev, goTo, index, frames }` every render |
+| `duration` / `easing` | Camera duration (ms or `"auto"`) and easing function |
+| `transition` | Glide, Arc, Dolly, Orbit, Focus, Cut, an options object or route resolver |
+| `preload` | Decode `"adjacent"` images (default), `"all"`, or `false` |
+| `controllerRef` | ref with navigation, free-camera controls, `prepare`, `index`, `settledIndex`, `moving` and `frames` |
 | `keyboardNav` | Arrow keys / Space navigate (default `true`) |
 | `advanceOnClick` | Click the stage background to advance (default `true`) |
 
@@ -1245,8 +1254,16 @@ h(ZoomStage, {
   index,
   onIndexChange: setIndex,
   controllerRef,
+  duration: "auto",
+  transition: "arc",
 })
 ```
+
+Use `frame.render({ phase, settled })` when content animation must follow the
+camera. Selection changes immediately; `settled` becomes true only after the
+flight ends, preventing an incoming scene from blanking while it is still in
+view. See [examples/zoom-lab](./examples/zoom-lab) for every trajectory and
+surface contract on one comparison stage.
 
 Frames can legitimately overlap in world space — an "overview" frame that
 zooms out to show the whole canvas is, by definition, as big as every other

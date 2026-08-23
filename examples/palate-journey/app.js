@@ -21,7 +21,7 @@ function App() {
   const frames = COURSES.map((course, courseIndex) => ({
     id: course.id,
     ...TABLE_GEOMETRY[courseIndex],
-    content: h(DishFrame, { course, active: index === courseIndex, courseIndex }),
+    render: ({ settled }) => h(DishFrame, { course, active: settled, courseIndex }),
   }));
 
   return h(
@@ -33,7 +33,8 @@ function App() {
       index,
       onIndexChange: setIndex,
       controllerRef,
-      duration: 1550,
+      duration: "auto",
+      transition: { preset: "dolly", lift: 0.18 },
       padding: 0.014,
       advanceOnClick: false,
       className: "pj-stage",

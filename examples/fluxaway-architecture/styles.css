@@ -82,12 +82,10 @@ body {
     inset 0 1px 0 rgba(255, 255, 255, 0.16),
     var(--arch-glow);
   color: var(--arch-text);
-  backdrop-filter: blur(18px);
 }
 
-.arch-stage .m-zoom-frame:not(.m-zoom-frame-active) {
+.arch-stage .m-zoom-frame:not(.m-zoom-frame-active):not(.m-zoom-frame-departing) {
   opacity: 0.28;
-  filter: saturate(0.72) brightness(0.72);
 }
 
 .arch-stage .m-zoom-frame::before {
@@ -104,7 +102,6 @@ body {
 .arch-stage .m-zoom-frame-active {
   z-index: 20;
   opacity: 1;
-  filter: none;
   border-color: rgba(88, 255, 179, 0.75);
   box-shadow:
     0 42px 120px rgba(0, 0, 0, 0.56),
@@ -112,9 +109,8 @@ body {
     inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
-.arch-stage .m-zoom-frame:not(.m-zoom-frame-active):hover {
+.arch-stage .m-zoom-frame:not(.m-zoom-frame-active):not(.m-zoom-frame-departing):hover {
   opacity: 0.44;
-  filter: saturate(0.86) brightness(0.84);
   border-color: rgba(35, 247, 255, 0.66);
   box-shadow:
     0 38px 100px rgba(0, 0, 0, 0.48),

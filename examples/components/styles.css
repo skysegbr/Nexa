@@ -2,6 +2,7 @@
 @import "./components/buttons/PageButtons.css";
 @import "./components/primitives/SidebarNav.css";
 @import "./components/accordion/PageAccordion.css";
+@import "./components/PageMenu.css";
 
 .demo-section {
   padding: var(--m-space-6) 0;

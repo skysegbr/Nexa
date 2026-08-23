@@ -206,6 +206,13 @@ Commit subjects follow Conventional Commits with a scope, e.g.
   hand-rolled rAF loop); presentations/decks → `ZoomStage` (`fluxaway-zoom`),
   not scroll-snap sections; node graphs → `PipelineCanvas`; embedded code
   editor → `FullCodeEditor` (needs the local `assets/codemirror/`, no CDN).
+- ZoomStage selection and camera settlement are different moments. Keep
+  navigation UI on `onIndexChange`, but start destination content motion from
+  `onSettledIndexChange` or `frame.render({ settled })`; resetting an incoming
+  timeline at selection time blanks it while the camera is still travelling.
+  Use the small Glide/Arc/Dolly/Orbit/Focus grammar, `duration: "auto"`, and
+  `frame.camera`/non-card surfaces instead of reproducing one rotated rectangle
+  layout. `examples/zoom-lab` is the canonical comparison surface.
 - Button interaction studies are public component API, not example-local CSS.
   Use `Button.effect` with one of `BUTTON_EFFECTS` (`reflection`, `edge`,
   `split`, `aperture`, `charge`, `corners`, `pulse`, `phase`, `conductor`)

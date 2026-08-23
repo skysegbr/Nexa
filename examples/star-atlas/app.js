@@ -35,6 +35,7 @@ function App() {
   // Content is built here, during render (h() can't run at module scope).
   const frames = FRAME_META.map((f, i) => ({
     ...f,
+    surface: "none",
     content: i === 0 ? h(Starfield) : h(Constellation, { data: CONSTELLATIONS[i - 1] }),
   }));
 
@@ -54,7 +55,10 @@ function App() {
       // Grabbing the sky (scroll/drag) quietly pauses the guided tour.
       onInteract: () => setPlaying(false),
       padding: 0.12,
-      duration: 1400,
+      duration: "auto",
+      transition: ({ to }) => to.id === "sky"
+        ? { preset: "dolly", lift: 0.24 }
+        : { preset: "orbit", curve: 0.22, roll: 4 },
       ariaLabel: "Interactive star atlas — a zoomable night sky",
       className: "sa-stage",
     }),

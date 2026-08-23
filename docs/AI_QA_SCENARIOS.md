@@ -299,7 +299,7 @@ Apply the relevant baseline to every component, then its specific rows.
 
 ## §12. Add-ons — `SC-ADDON`
 
-### ZoomStage (`SC-ZOOM`) — examples: fluxaway-architecture, fluxaway-atlas, star-atlas
+### ZoomStage (`SC-ZOOM`) — examples: fluxaway-architecture, fluxaway-atlas, star-atlas, zoom-lab, vitra-protocol
 | ID | Scenario | Expected | Verify |
 |---|---|---|---|
 | SC-ZOOM-01 | Frames render on canvas | all frames present, positioned | browser |
@@ -308,8 +308,15 @@ Apply the relevant baseline to every component, then its specific rows.
 | SC-ZOOM-04 | Wrap last→first | no error, wraps | suite (addons) |
 | SC-ZOOM-05 | `controllerRef` API | imperative goto works | suite (addons) |
 | SC-ZOOM-06 | Live content in a frame | interactive FluxaWay UI inside a frame still works | browser |
+| SC-ZOOM-07 | Flight lifecycle | exactly one departing and arriving frame while moving; destination becomes settled only after completion | suite (addons) / browser |
+| SC-ZOOM-08 | Camera trajectories | Glide, Arc, Dolly, Orbit and Focus move through distinct intermediate camera states and land exactly on target | browser/visual (`zoom-lab`) |
+| SC-ZOOM-09 | Independent camera target | `frame.camera` fits the specified subject without changing the visible frame geometry | suite (addons) / visual |
+| SC-ZOOM-10 | Non-card surfaces | frameless, glass, circle, pill and custom-clipped subjects retain correct camera fit | suite (addons) / visual |
+| SC-ZOOM-11 | Image preparation | current/adjacent lazy images are requested for decode; arrival never exposes an undecoded blank | browser |
+| SC-ZOOM-12 | Interrupted/reduced flight | a new flight starts from the live camera without a seam; reduced motion lands with Cut semantics | browser |
+| SC-ZOOM-13 | Motion-composed frame | child timelines begin on `settled`, animate only bounded elements and leave the complete scene inside the unobscured stage viewport | browser/visual (`vitra-protocol`) |
 
-### fluxaway-motion (`SC-MOTION`) — examples: fluxaway-motion, motion-landing, inox-landing, motion-editor
+### fluxaway-motion (`SC-MOTION`) — examples: fluxaway-motion, motion-landing, inox-landing, motion-editor, vitra-protocol
 | ID | Scenario | Expected | Verify |
 |---|---|---|---|
 | SC-MOTION-01 | `createTimeline`/`useTimeline` play | tweens transform/opacity over time | suite (motion) |

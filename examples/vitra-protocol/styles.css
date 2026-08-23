@@ -1,0 +1,63 @@
+@import url("./components/navigation/ControlDeck.css");
+@import url("./components/scenes/SceneContent.css");
+@import url("./components/scenes/PhotoPlate.css");
+@import url("./components/scenes/ThresholdScene.css");
+@import url("./components/scenes/VesselScene.css");
+@import url("./components/scenes/PressureScene.css");
+@import url("./components/scenes/AssemblyScene.css");
+@import url("./components/scenes/RefractionScene.css");
+@import url("./components/scenes/ProtocolScene.css");
+
+:root {
+  color-scheme: dark;
+  --vp-bg: #06080a;
+  --vp-deep: #030405;
+  --vp-steel-0: #f2f5f6;
+  --vp-steel-1: #a9b4ba;
+  --vp-steel-2: #59656c;
+  --vp-steel-3: #20282d;
+  --vp-glass: rgb(205 229 238 / 0.11);
+  --vp-glass-line: rgb(224 243 248 / 0.32);
+  --vp-red: #d0163b;
+  --vp-red-hot: #ff365a;
+  --vp-red-deep: #680718;
+  --vp-muted: #93a0a8;
+  --vp-rail-h: 92px;
+}
+
+* { box-sizing: border-box; }
+html, body, #app { width: 100%; height: 100%; }
+body { margin: 0; overflow: hidden; background: var(--vp-bg); color: var(--vp-steel-0); font-family: var(--m-font); }
+button { font: inherit; }
+
+.vp-app { position: relative; width: 100%; height: 100%; overflow: hidden; background: var(--vp-bg); }
+.vp-stage {
+  position: absolute;
+  inset: 0 0 var(--vp-rail-h);
+  background:
+    radial-gradient(circle at 50% 45%, rgb(178 205 216 / 0.08), transparent 34rem),
+    linear-gradient(rgb(190 217 226 / 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(190 217 226 / 0.035) 1px, transparent 1px),
+    var(--vp-bg);
+  background-size: auto, 68px 68px, 68px 68px, auto;
+}
+
+.vp-stage .m-zoom-frame { transition: opacity 180ms ease, border-color 180ms ease, box-shadow 180ms ease; }
+.vp-stage .m-zoom-frame-surface-glass {
+  border-color: var(--vp-glass-line);
+  background: linear-gradient(135deg, rgb(230 244 248 / 0.12), rgb(68 83 91 / 0.08));
+  box-shadow: 0 28px 90px rgb(0 0 0 / 0.34), 0 1px 0 rgb(255 255 255 / 0.2) inset;
+}
+
+.vp-world-axis { position: fixed; z-index: 2; pointer-events: none; background: rgb(205 229 238 / 0.08); }
+.vp-world-axis-x { top: calc((100% - var(--vp-rail-h)) / 2); right: 0; left: 0; height: 1px; }
+.vp-world-axis-y { top: 0; bottom: var(--vp-rail-h); left: 50%; width: 1px; }
+
+@media (max-width: 760px) {
+  :root { --vp-rail-h: 146px; }
+  .vp-stage { background-size: auto, 48px 48px, 48px 48px, auto; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vp-stage .m-zoom-frame { transition: none; }
+}

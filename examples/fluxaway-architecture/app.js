@@ -33,7 +33,8 @@ function App() {
       onIndexChange: setIndex,
       controllerRef,
       className: "arch-stage",
-      duration: 820,
+      duration: "auto",
+      transition: "glide",
       padding: 0.13,
     }),
     h(NavDock, {

@@ -1,0 +1,37 @@
+.vp-photo-plate {
+  position: absolute;
+  inset: -2%;
+  z-index: 0;
+  margin: 0;
+  overflow: hidden;
+  background: var(--vp-deep);
+  pointer-events: none;
+}
+
+.vp-photo-plate img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: var(--vp-photo-position, center);
+  filter: saturate(0.92) contrast(1.04);
+  user-select: none;
+}
+
+.vp-photo-plate::after {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, rgb(3 5 6 / 0.9), rgb(3 5 6 / 0.46) 38%, transparent 70%),
+    linear-gradient(0deg, rgb(3 5 6 / 0.42), transparent 46%);
+  content: "";
+}
+
+@media (max-width: 760px) {
+  .vp-photo-plate { inset: -1%; }
+  .vp-photo-plate::after {
+    background:
+      linear-gradient(180deg, rgb(3 5 6 / 0.9), rgb(3 5 6 / 0.48) 42%, transparent 72%),
+      linear-gradient(0deg, rgb(3 5 6 / 0.5), transparent 44%);
+  }
+}

@@ -5,6 +5,42 @@ All notable changes to this project are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.24.2] - 2026-08-23
+
+### Added
+- ZoomStage v2 motion language: exported Glide, Arc, Dolly, Orbit, Focus and
+  Cut presets; number-or-auto duration; per-destination camera bounds and
+  transition overrides; card/frameless/glass surfaces; rect/circle/pill/custom
+  clip geometry; and state-aware frame renderers.
+- `examples/zoom-lab/`, the canonical comparison stage for all five animated
+  camera trajectories, non-card subjects and independent focus geometry.
+- `examples/vitra-protocol/`, an original six-scene Inox, glass and red-signal
+  material narrative combining every animated ZoomStage v2 trajectory with
+  settlement-driven FluxaWay Motion, seven original photographic plates,
+  closed loops, an interactive two-state seal and a clickable world overview.
+
+### Changed
+- ZoomStage now reports departing, arriving and settled flight lifecycle,
+  prepares adjacent frame images by default, reveals the world only after the
+  initial camera fit, and interpolates scale perceptually in logarithmic space.
+- Existing ZoomStage examples now use the v2 trajectory and settlement APIs;
+  the AI specification adds a measured composition contract for alignment,
+  proportional geometry, shaped safe areas, fixed chrome and responsive fit.
+
+### Fixed
+- `Menu` submenus are actually reachable with the mouse. Two compounding
+  bugs: the 2px visual gap between an item and its flyout fired `mouseleave`
+  mid-crossing (fixed with an invisible `::before` hover bridge over the
+  gap), and any sibling hovered during a diagonal move into the open flyout
+  stole the opening instantly. Submenu hover now tracks recent pointer
+  movement and keeps deferring a sibling while the pointer advances through
+  the safe corridor toward the open flyout; stopping or turning away activates
+  the sibling normally. The small list overlap is now an intentional raised
+  plane, with a directional edge shadow separating each flyout level. Keyboard
+  and click behavior stay immediate.
+- Palate Journey keeps the animated wine inside its glass and starts dish
+  motion only after the destination camera has settled.
+
 ## [0.24.1] - 2026-08-17
 
 ### Fixed

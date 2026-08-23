@@ -26,7 +26,8 @@ import { h, useEffect, useRef, useState } from "./fluxaway.js";
 // pan/zoom/rotate between frames at 60fps, which the vdom diff loop can't do
 // smoothly on its own.
 //
-// Frame schema: { id, x, y, w, h, rotate?, label?, content }
+// Frame schema: { id, x, y, w, h, rotate?, camera?, transition?, surface?,
+//                 shape?, label?, content?, render? }
 //   x/y/w/h are world-pixel coordinates. rotate is degrees (default 0).
 //   label (optional) is announced to screen readers on navigation.
 //
@@ -34,8 +35,10 @@ import { h, useEffect, useRef, useState } from "./fluxaway.js";
 //   frames        Array<{ id, x, y, w, h, rotate?, label?, content }>
 //   path          Array<id> — navigation order, defaults to `frames` order
 //   index / defaultIndex / onIndexChange  — controlled/uncontrolled current step
-//   duration      ms per camera animation (default 900)
+//   duration      ms per camera animation or "auto" (default 900)
 //   easing        (t) => t easing function (default cubicEaseInOut)
+//   transition    glide/arc/dolly/orbit/focus/cut, a transition object, or
+//                 ({ from, to }) => transition; destination frames can override
 //   padding       fraction (0–0.45) of the viewport reserved as margin around
 //                 every framed frame (default 0.06). 0 = fill the viewport.
 //   controllerRef ref — { next, prev, goTo, reset, fitAll, index, frames }
@@ -53,6 +56,9 @@ import { h, useEffect, useRef, useState } from "./fluxaway.js";
 //   hashNav       bool, default false — sync the current frame id to location.hash
 //   onInteract    () => void — fired when the user first grabs the camera
 //                 (wheel/pinch/drag), e.g. to pause an autoplay tour
+//   onTransitionStart/onTransitionEnd — camera flight lifecycle
+//   onSettledIndexChange — destination index after the camera actually arrives
+//   preload       false/"adjacent"/"all" image preparation (default adjacent)
 //   ariaLabel     string — accessible name for the whole stage
 //
 // Respects prefers-reduced-motion: navigation jumps instead of animating.
@@ -60,6 +66,18 @@ import { h, useEffect, useRef, useState } from "./fluxaway.js";
 function cubicEaseInOut(t) {
   return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 }
+
+export const ZOOM_TRANSITIONS = Object.freeze([
+  "glide",
+  "arc",
+  "dolly",
+  "orbit",
+  "focus",
+  "cut",
+]);
+
+export const ZOOM_SURFACES = Object.freeze(["card", "none", "glass"]);
+export const ZOOM_SHAPES = Object.freeze(["rect", "circle", "pill"]);
 
 function prefersReducedMotion() {
   return typeof window !== "undefined" && typeof window.matchMedia === "function"
@@ -77,19 +95,37 @@ function shortestRotate(from, to) {
 const clamp = (v, lo, hi) => Math.min(Math.max(v, lo), hi);
 
 function cameraFor(frame, vw, vh, padding = 0) {
-  const pad = clamp(padding, 0, 0.45);
+  const focus = frame.camera || frame;
+  if (
+    Number.isFinite(focus.cx) &&
+    Number.isFinite(focus.cy) &&
+    Number.isFinite(focus.scale)
+  ) {
+    return {
+      cx: focus.cx,
+      cy: focus.cy,
+      scale: Math.max(0.0001, focus.scale),
+      rotate: focus.rotate ?? frame.rotate ?? 0,
+    };
+  }
+  const x = Number.isFinite(focus.x) ? focus.x : frame.x;
+  const y = Number.isFinite(focus.y) ? focus.y : frame.y;
+  const w = Number.isFinite(focus.w) && focus.w > 0 ? focus.w : frame.w;
+  const h = Number.isFinite(focus.h) && focus.h > 0 ? focus.h : frame.h;
+  const pad = clamp(focus.padding ?? padding, 0, 0.45);
   const effVw = vw * (1 - pad * 2);
   const effVh = vh * (1 - pad * 2);
   return {
-    cx: frame.x + frame.w / 2,
-    cy: frame.y + frame.h / 2,
-    scale: Math.min(effVw / frame.w, effVh / frame.h),
-    rotate: frame.rotate || 0,
+    cx: x + w * clamp(focus.anchorX ?? 0.5, 0, 1),
+    cy: y + h * clamp(focus.anchorY ?? 0.5, 0, 1),
+    scale: Math.min(effVw / w, effVh / h) * Math.max(0.0001, focus.zoom ?? 1),
+    rotate: focus.rotate ?? frame.rotate ?? 0,
   };
 }
 
 // The bounding box of every frame, as a pseudo-frame to fit an overview onto.
 function boundsOf(frames) {
+  if (!frames.length) return { x: 0, y: 0, w: 1, h: 1, rotate: 0 };
   let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
   for (const f of frames) {
     minX = Math.min(minX, f.x);
@@ -98,6 +134,72 @@ function boundsOf(frames) {
     maxY = Math.max(maxY, f.y + f.h);
   }
   return { x: minX, y: minY, w: maxX - minX, h: maxY - minY, rotate: 0 };
+}
+
+function normalizeTransition(value, duration, easing) {
+  const input = typeof value === "string" ? { preset: value } : (value || {});
+  const preset = ZOOM_TRANSITIONS.includes(input.preset) ? input.preset : "glide";
+  return {
+    ...input,
+    preset,
+    duration: input.duration ?? duration,
+    easing: input.easing || easing || cubicEaseInOut,
+  };
+}
+
+function automaticDuration(from, to, vw, vh) {
+  const viewport = Math.max(1, Math.hypot(vw, vh));
+  const averageScale = Math.sqrt(Math.max(0.0001, from.scale * to.scale));
+  const travel = Math.hypot(to.cx - from.cx, to.cy - from.cy) * averageScale / viewport;
+  const zoomStops = Math.abs(Math.log2(Math.max(0.0001, to.scale / from.scale)));
+  const rotation = Math.abs(to.rotate - from.rotate) / 45;
+  return clamp(480 + travel * 520 + zoomStops * 180 + rotation * 90, 480, 2400);
+}
+
+function logarithmicScale(from, to, progress) {
+  const a = Math.log(Math.max(0.0001, from));
+  const b = Math.log(Math.max(0.0001, to));
+  return Math.exp(a + (b - a) * progress);
+}
+
+function curvedCenter(from, to, progress, curve) {
+  const dx = to.cx - from.cx;
+  const dy = to.cy - from.cy;
+  const distance = Math.hypot(dx, dy) || 1;
+  const bend = distance * curve;
+  const controlX = (from.cx + to.cx) / 2 - (dy / distance) * bend;
+  const controlY = (from.cy + to.cy) / 2 + (dx / distance) * bend;
+  const inv = 1 - progress;
+  return {
+    cx: inv * inv * from.cx + 2 * inv * progress * controlX + progress * progress * to.cx,
+    cy: inv * inv * from.cy + 2 * inv * progress * controlY + progress * progress * to.cy,
+  };
+}
+
+function cameraAt(from, to, progress, transition) {
+  const preset = transition.preset;
+  const direct = {
+    cx: from.cx + (to.cx - from.cx) * progress,
+    cy: from.cy + (to.cy - from.cy) * progress,
+  };
+  const curve = Number.isFinite(transition.curve) ? transition.curve : 0.2;
+  const center = preset === "arc" || preset === "orbit"
+    ? curvedCenter(from, to, progress, curve)
+    : direct;
+  const baseScale = logarithmicScale(from.scale, to.scale, progress);
+  const wave = Math.sin(Math.PI * progress);
+  let scale = baseScale;
+  let rotate = from.rotate + (to.rotate - from.rotate) * progress;
+
+  if (preset === "dolly") {
+    scale *= 1 - (Number.isFinite(transition.lift) ? transition.lift : 0.22) * wave;
+  } else if (preset === "focus") {
+    scale *= 1 + (Number.isFinite(transition.lift) ? transition.lift : 0.12) * wave * wave;
+  } else if (preset === "orbit") {
+    rotate += (Number.isFinite(transition.roll) ? transition.roll : 7) * wave;
+  }
+
+  return { ...center, scale, rotate };
 }
 
 function applyCamera(worldEl, cam, vw, vh) {
@@ -129,6 +231,7 @@ class ZoomCameraController {
     this._start = 0;
     this._dur   = 900;
     this._ease  = cubicEaseInOut;
+    this._onCancel = null;
 
     // Gesture + momentum state.
     this._pointers = new Map(); // pointerId → { x, y }
@@ -220,36 +323,49 @@ class ZoomCameraController {
 
   // Ease the camera from where it is now to a target camera. Shared by frame
   // navigation, reset() and fitAll(). Honours prefers-reduced-motion.
-  _animateCam(target, { duration = 900, easing = cubicEaseInOut } = {}) {
+  _animateCam(target, opts = {}) {
+    const { duration = 900, easing = cubicEaseInOut } = opts;
     this._cancel();
     this._stopGlide();
-    if (prefersReducedMotion()) {
+    const to = { ...target, rotate: shortestRotate(this.cam.rotate, target.rotate) };
+    const transition = normalizeTransition(opts.transition, duration, easing);
+    const resolvedDuration = transition.duration === "auto"
+      ? automaticDuration(this.cam, to, this.vw, this.vh)
+      : Math.max(1, Number(transition.duration) || 900);
+    const detail = {
+      preset: transition.preset,
+      duration: transition.preset === "cut" || prefersReducedMotion() ? 0 : resolvedDuration,
+    };
+    opts.onStart?.(detail);
+    if (transition.preset === "cut" || prefersReducedMotion()) {
       this.cam = { ...target };
       this._from = this.cam;
       this._to = this.cam;
       applyCamera(this.world, this.cam, this.vw, this.vh);
+      opts.onComplete?.(detail);
       return;
     }
     this._from = this.cam;
-    this._to = { ...target, rotate: shortestRotate(this._from.rotate, target.rotate) };
-    this._dur = Math.max(1, duration);
-    this._ease = easing || cubicEaseInOut;
+    this._to = to;
+    this._dur = resolvedDuration;
+    this._ease = transition.easing;
+    this._transition = transition;
+    this._onCancel = opts.onCancel || null;
     this._start = performance.now();
 
     const tick = (now) => {
       const t = Math.min(1, (now - this._start) / this._dur);
       const e = this._ease(t);
-      const from = this._from;
-      const to = this._to;
-      this.cam = {
-        cx:     from.cx     + (to.cx     - from.cx)     * e,
-        cy:     from.cy     + (to.cy     - from.cy)     * e,
-        scale:  from.scale  + (to.scale  - from.scale)  * e,
-        rotate: from.rotate + (to.rotate - from.rotate) * e,
-      };
+      this.cam = cameraAt(this._from, this._to, e, this._transition);
       applyCamera(this.world, this.cam, this.vw, this.vh);
       if (t < 1) this._raf = requestAnimationFrame(tick);
-      else this._raf = null;
+      else {
+        this.cam = { ...this._to };
+        applyCamera(this.world, this.cam, this.vw, this.vh);
+        this._raf = null;
+        this._onCancel = null;
+        opts.onComplete?.(detail);
+      }
     };
     this._raf = requestAnimationFrame(tick);
   }
@@ -272,6 +388,9 @@ class ZoomCameraController {
     if (this._raf != null) {
       cancelAnimationFrame(this._raf);
       this._raf = null;
+      const onCancel = this._onCancel;
+      this._onCancel = null;
+      onCancel?.();
     }
   }
 
@@ -494,6 +613,7 @@ export function ZoomStage({
   onIndexChange,
   duration = 900,
   easing,
+  transition = "glide",
   padding = 0.06,
   controllerRef,
   keyboardNav = true,
@@ -505,6 +625,10 @@ export function ZoomStage({
   autoplay,
   hashNav = false,
   onInteract,
+  onTransitionStart,
+  onTransitionEnd,
+  onSettledIndexChange,
+  preload = "adjacent",
   ariaLabel,
   className = "",
   style,
@@ -514,7 +638,12 @@ export function ZoomStage({
   const ctrlRef  = useRef(null);
   const navRef   = useRef({});
   const cbRef    = useRef({});
-  cbRef.current = { onInteract };
+  const flightRef = useRef(0);
+  cbRef.current = { onInteract, onTransitionStart, onTransitionEnd, onSettledIndexChange };
+
+  const seq = path && path.length
+    ? path.map((id) => frames.find((f) => f.id === id)).filter(Boolean)
+    : frames;
 
   const hashIndex = () => {
     if (!hashNav || typeof location === "undefined") return -1;
@@ -525,24 +654,61 @@ export function ZoomStage({
     return i >= 0 ? i : defaultIndex;
   });
   const curIndex = index !== undefined ? index : internalIndex;
-
-  const seq = path && path.length
-    ? path.map((id) => frames.find((f) => f.id === id)).filter(Boolean)
-    : frames;
+  const [ready, setReady] = useState(false);
+  const [settledId, setSettledId] = useState(() => seq[curIndex]?.id);
+  const [flight, setFlight] = useState(null);
 
   const resolveFrame = (target) => {
     if (typeof target === "number") return seq[target];
     return seq.find((f) => f.id === target);
   };
 
-  const goTo = (target, { animate = true } = {}) => {
+  const transitionFor = (from, to, override) => {
+    let value = override ?? to?.transition ?? transition;
+    if (typeof value === "function") value = value({ from, to });
+    return value;
+  };
+
+  const runFlight = (frame, { animate = true, transition: override } = {}) => {
+    const ctrl = ctrlRef.current;
+    if (!ctrl || !frame) return;
+    const from = seq.find((candidate) => candidate.id === ctrl._activeFrame?.id)
+      || seq.find((candidate) => candidate.id === settledId)
+      || frame;
+    const token = ++flightRef.current;
+    const selectedTransition = animate ? transitionFor(from, frame, override) : "cut";
+    ctrl.animateTo(frame, {
+      duration,
+      easing,
+      transition: selectedTransition,
+      onStart: (camera) => {
+        const detail = { from, to: frame, ...camera };
+        setFlight({ fromId: from.id, toId: frame.id, ...camera });
+        cbRef.current.onTransitionStart?.(detail);
+      },
+      onCancel: () => {
+        if (token !== flightRef.current) return;
+        setFlight(null);
+      },
+      onComplete: (camera) => {
+        if (token !== flightRef.current) return;
+        const newSettledIndex = seq.indexOf(frame);
+        setSettledId(frame.id);
+        setFlight(null);
+        cbRef.current.onSettledIndexChange?.(newSettledIndex);
+        cbRef.current.onTransitionEnd?.({ from, to: frame, ...camera });
+      },
+    });
+  };
+
+  const goTo = (target, options = {}) => {
     const frame = resolveFrame(target);
     if (!frame) return;
     const newIndex = seq.indexOf(frame);
     if (index === undefined) setInternalIndex(newIndex);
     onIndexChange?.(newIndex);
-    const method = animate && !prefersReducedMotion() ? "animateTo" : "jumpTo";
-    ctrlRef.current?.[method](frame, { duration, easing });
+    if (preload !== false) prepareFrame(frame.id);
+    runFlight(frame, options);
   };
 
   const next = () => { if (curIndex < seq.length - 1) goTo(curIndex + 1); };
@@ -572,7 +738,13 @@ export function ZoomStage({
     });
     ctrlRef.current = ctrl;
     ctrl.jumpTo(seq[curIndex]);
-    return () => { ctrl.destroy(); ctrlRef.current = null; };
+    setSettledId(seq[curIndex]?.id);
+    setReady(true);
+    return () => {
+      flightRef.current += 1;
+      ctrl.destroy();
+      ctrlRef.current = null;
+    };
   }, []);
 
   // Guard against tiled-layer flicker. The world (the union of every frame) is
@@ -593,6 +765,42 @@ export function ZoomStage({
   useEffect(() => {
     ctrlRef.current?.setInteraction(freeZoom, swipeNav, minZoom, maxZoom);
   }, [freeZoom, swipeNav, minZoom, maxZoom]);
+
+  // A controlled index can change without going through controllerRef.goTo().
+  // When it does, animate from the camera's live position exactly once.
+  useEffect(() => {
+    const frame = seq[curIndex];
+    if (!frame || !ctrlRef.current || ctrlRef.current._activeFrame?.id === frame.id) return;
+    runFlight(frame);
+  }, [curIndex]);
+
+  const prepareFrame = (target) => {
+    const frame = resolveFrame(target);
+    const world = worldRef.current;
+    if (!frame || !world) return Promise.resolve([]);
+    const element = [...world.querySelectorAll(".m-zoom-frame")]
+      .find((candidate) => candidate.dataset.zoomFrameId === frame.id);
+    if (!element) return Promise.resolve([]);
+    const tasks = [...element.querySelectorAll("img")].map((image) => {
+      image.loading = "eager";
+      if (typeof image.decode === "function") return image.decode().catch(() => undefined);
+      if (image.complete) return Promise.resolve();
+      return new Promise((resolve) => {
+        image.addEventListener("load", resolve, { once: true });
+        image.addEventListener("error", resolve, { once: true });
+      });
+    });
+    return Promise.allSettled(tasks);
+  };
+
+  const sequenceKey = seq.map((frame) => frame.id).join("\u0001");
+  useEffect(() => {
+    if (preload === false || !ready || !seq.length) return;
+    const candidates = preload === "all"
+      ? seq
+      : [seq[curIndex - 1], seq[curIndex], seq[curIndex + 1]].filter(Boolean);
+    candidates.forEach((frame) => { prepareFrame(frame.id); });
+  }, [preload, ready, curIndex, sequenceKey]);
 
   // Keyboard: nav always; zoom/recenter shortcuts only while freeZoom is on.
   useEffect(() => {
@@ -654,7 +862,10 @@ export function ZoomStage({
       fitAll: () => ctrlRef.current?.fitAll(seq),
       zoomIn: () => ctrlRef.current?.zoomCenter(1.3),
       zoomOut: () => ctrlRef.current?.zoomCenter(1 / 1.3),
+      prepare: prepareFrame,
       index: curIndex,
+      settledIndex: seq.findIndex((frame) => frame.id === settledId),
+      moving: Boolean(flight),
       frames: seq,
     };
   }
@@ -665,7 +876,13 @@ export function ZoomStage({
     "div",
     {
       ref: wrapRef,
-      className: jc("m-zoom-stage", freeZoom && "m-zoom-stage-free", className),
+      className: jc(
+        "m-zoom-stage",
+        ready && "m-zoom-stage-ready",
+        flight && "m-zoom-stage-moving",
+        freeZoom && "m-zoom-stage-free",
+        className,
+      ),
       style,
       tabIndex: 0,
       role: "group",
@@ -694,25 +911,54 @@ export function ZoomStage({
       // is, by definition, as big as the whole canvas). Paint largest-area
       // frames first so they sit behind smaller nested frames instead of
       // covering them.
-      [...seq].sort((a, b) => (b.w * b.h) - (a.w * a.h)).map((frame) =>
-        h(
+      [...seq].sort((a, b) => (b.w * b.h) - (a.w * a.h)).map((frame) => {
+        const selected = frame.id === active?.id;
+        const settled = frame.id === settledId && !flight;
+        const phase = flight?.toId === frame.id
+          ? "arriving"
+          : flight?.fromId === frame.id
+            ? "departing"
+            : settled
+              ? "settled"
+              : "idle";
+        const surface = ZOOM_SURFACES.includes(frame.surface) ? frame.surface : "card";
+        const shape = ZOOM_SHAPES.includes(frame.shape) ? frame.shape : "rect";
+        const state = { phase, selected, settled, moving: Boolean(flight) };
+        const content = typeof frame.render === "function" ? frame.render(state) : frame.content;
+        return h(
           "div",
           {
             key: frame.id,
-            className: jc("m-zoom-frame", frame.id === active?.id && "m-zoom-frame-active"),
+            className: jc(
+              "m-zoom-frame",
+              `m-zoom-frame-surface-${surface}`,
+              `m-zoom-frame-shape-${shape}`,
+              selected && "m-zoom-frame-active",
+              settled && "m-zoom-frame-settled",
+              flight?.toId === frame.id && "m-zoom-frame-arriving",
+              flight?.fromId === frame.id && "m-zoom-frame-departing",
+              frame.frameClassName,
+            ),
+            dataset: {
+              zoomFrameId: frame.id,
+              zoomPhase: phase,
+              zoomSurface: surface,
+            },
             role: "group",
             ariaLabel: frame.label,
             style: {
+              ...frame.frameStyle,
               left: `${frame.x}px`,
               top: `${frame.y}px`,
               width: `${frame.w}px`,
               height: `${frame.h}px`,
               transform: `rotate(${frame.rotate || 0}deg)`,
+              clipPath: frame.clipPath || frame.frameStyle?.clipPath,
             },
           },
-          frame.content,
-        )
-      ),
+          content,
+        );
+      }),
     ),
   );
 }

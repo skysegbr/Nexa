@@ -1,0 +1,29 @@
+.vp-threshold {
+  overflow: hidden;
+  border: 1px solid rgb(210 231 238 / 0.3);
+  border-radius: 50%;
+  background: var(--vp-deep);
+  --vp-photo-position: center;
+}
+
+.vp-threshold-photo { border-radius: inherit; }
+.vp-threshold-photo::after {
+  background: linear-gradient(90deg, rgb(3 5 6 / 0.96), rgb(3 5 6 / 0.62) 42%, transparent 72%);
+}
+.vp-threshold-copy { position: absolute; top: 22%; left: 14%; width: 43%; }
+.vp-threshold-copy h1 { max-width: 8ch; font-size: clamp(3rem, 6vw, 5.6rem); }
+.vp-threshold-copy > p:last-child { max-width: 27rem; }
+.vp-threshold-contrast-text {
+  color: #fff;
+  font-weight: 650;
+  mix-blend-mode: difference;
+}
+
+@media (max-width: 760px) {
+  .vp-threshold { --vp-photo-position: 64% center; }
+  .vp-threshold-copy { top: 15%; left: 14%; width: 72%; }
+  .vp-threshold-copy h1 { font-size: 2.65rem; }
+  .vp-threshold-copy > p:last-child { font-size: 0.8rem; line-height: 1.45; }
+  .vp-threshold-contrast-text { color: inherit; font-weight: inherit; mix-blend-mode: normal; }
+  .vp-threshold-photo::after { background: linear-gradient(180deg, rgb(3 5 6 / 0.96), rgb(3 5 6 / 0.62) 45%, transparent 78%); }
+}
