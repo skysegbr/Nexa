@@ -116,7 +116,7 @@ https://cdn.jsdelivr.net/gh/skysegbr/FluxaWay@main/dist/fluxaway-ui.css
 ```
 
 Use `@main` for the latest code during development. For production, pin a
-release tag such as `@v0.24.1`.
+release tag such as `@v0.24.2`.
 
 Typical HTML entry point:
 
@@ -2060,16 +2060,23 @@ pan/zoom presentation, in the style of non-linear zooming presentation tools:
 every frame's `content` is normal FluxaWay vdom, positioned with plain CSS on one
 large shared canvas (all frames are mounted at once) — only the *camera* is
 imperative, easing pan/zoom/rotate between frames via `requestAnimationFrame`.
+The visible surface and camera target are independent: a camera still fits a
+rectangular viewport, but the subject may be frameless, circular, pill-shaped or
+custom-clipped instead of looking like a slide.
 Navigation respects `prefers-reduced-motion` (it jumps instead of animating).
+ZoomStage v2 is an in-place, backward-compatible expansion of the same module:
+existing v1 frame descriptors and props remain valid; there is no separate v2
+import or migration package.
 
 | Prop | Description |
 |---|---|
-| `frames` | Array of `{ id, x, y, w, h, rotate?, label?, content }` — world-px geometry plus vdom content; `label` is announced to screen readers on navigation |
+| `frames` | Array of `{ id, x, y, w, h, rotate?, camera?, transition?, surface?, shape?, clipPath?, label?, content?, render? }`; `render(state)` receives `idle` / `departing` / `arriving` / `settled` without a per-animation-frame render |
 | `path` | Array of frame ids for navigation order — defaults to `frames` order |
 | `index` / `defaultIndex` / `onIndexChange` | Controlled/uncontrolled current frame |
-| `duration` / `easing` | Camera animation duration (ms) and easing function |
+| `duration` / `easing` | Camera animation duration (`number` or `"auto"`) and easing function; automatic timing uses travel, zoom and rotation distance |
+| `transition` | `"glide"`, `"arc"`, `"dolly"`, `"orbit"`, `"focus"`, `"cut"`, an options object, or `({ from, to }) => options`; a destination frame may override it |
 | `padding` | Viewport-margin fraction (0–0.45) kept around each framed frame (default `0.06`; `0` fills the viewport) |
-| `controllerRef` | ref, set to `{ next, prev, goTo, reset, fitAll, zoomIn, zoomOut, index, frames }` every render |
+| `controllerRef` | ref, set to `{ next, prev, goTo, reset, fitAll, zoomIn, zoomOut, prepare, index, settledIndex, moving, frames }` every render |
 | `keyboardNav` | Arrow/Space step, Home/End jump to first/last (default `true`); with `freeZoom`, `+`/`-` zoom and `0`/`Esc` recenter; ignores keys typed into inputs, `<select>` and contentEditable |
 | `advanceOnClick` | Tap the stage background to advance (default `true`) — a drag/pan/swipe never counts as a tap |
 | `swipeNav` | Horizontal swipe steps frames on touch/pen (default `true`; a `freeZoom` drag pans instead) |
@@ -2078,6 +2085,9 @@ Navigation respects `prefers-reduced-motion` (it jumps instead of animating).
 | `autoplay` | Auto-advance the frames; a number sets the interval ms (default `4000`), looping back to the first |
 | `hashNav` | Sync the current frame id to `location.hash` for deep-linking (default `false`) |
 | `onInteract` | `() => void`, fired when the user first grabs the camera (wheel/pinch/drag) — e.g. to pause an `autoplay` tour |
+| `onTransitionStart` / `onTransitionEnd` | Flight lifecycle with `{ from, to, preset, duration }`; use settlement, not selection, to start expensive content motion |
+| `onSettledIndexChange` | Destination index after the camera has actually arrived |
+| `preload` | `"adjacent"` (default), `"all"` or `false`; requests image decode around the selected frame so a lazy image does not flash during arrival |
 | `ariaLabel` | Accessible name for the whole stage |
 
 ```js
@@ -2088,9 +2098,115 @@ h(ZoomStage, {
   index,
   onIndexChange: setIndex,
   controllerRef,
+  duration: "auto",
+  transition: "arc",
   freeZoom: true, // scroll/pinch to zoom, drag to roam
 })
 ```
+
+Camera movement is a small, deliberate grammar rather than a random effect
+picker. `glide` is direct and technical; `arc` curves the world-space centre;
+`dolly` creates depth by pulling back at mid-flight; `orbit` adds a restrained
+curved route and camera roll; `focus` commits attention through a small scale
+overshoot; `cut` jumps (and is also the reduced-motion result). Scale is
+interpolated logarithmically, so large zoom changes do not feel hard at one end.
+
+```js
+const frame = {
+  id: "sensor",
+  x: 1200, y: 300, w: 900, h: 620,
+  surface: "none",
+  shape: "circle",
+  // Fit this local instrument instead of the whole visible scene.
+  camera: { x: 1450, y: 470, w: 320, h: 260, padding: 0.14 },
+  transition: { preset: "dolly", duration: "auto", lift: 0.2 },
+  render: ({ phase, settled }) => h(SensorScene, { phase, active: settled }),
+};
+```
+
+`onIndexChange` still reports selection immediately for navigation UI.
+`onSettledIndexChange` and `frame.render(state)` report when the camera is truly
+there. Never reset an incoming frame's Motion timeline merely because it became
+selected: doing that blanks content while the camera is still travelling and
+looks like a transition flicker. Start its entrance at `settled`, keep departing
+content in its readable resting state, and preload adjacent imagery.
+
+#### ZoomStage composition and viewport contract
+
+A technically correct camera fit is not automatically a good composition.
+Author every destination as a measured viewport, not as a collection of objects
+that happen to exist in world space. These rules are required for generated
+ZoomStage applications:
+
+- **Define the usable viewport first.** Fixed headers, navigation rails,
+  captions and safe-area insets consume real space. Either keep the stage out of
+  that chrome with CSS (`inset-block-end`, for example), or make the frame's
+  `camera` target and `padding` leave equivalent clearance. A surface touching
+  the top of a fixed rail is a layout failure even when no pixels overlap.
+- **Build one proportional geometry system.** Choose a small family of frame
+  dimensions/aspect ratios, shared content insets and visible alignment axes.
+  Titles, media, readouts and navigation should recur on those axes. Place
+  frames relative to that system; do not accumulate unrelated `x`/`y` values
+  and then repair each destination with arbitrary child offsets.
+- **Separate world geometry, visible surface and camera target.** `x`/`y`/`w`/`h`
+  describe where a frame lives; `shape`/`clipPath` describe what is painted;
+  `frame.camera` describes what the viewer must see. Use an independent camera
+  target for optical centering or for a subject smaller than its surrounding
+  artwork. Prefer a modest per-frame `padding` adjustment over scaling or
+  translating every child to fix a bad fit.
+- **Keep semantic content inside the shape's safe area.** The usable width of a
+  circle, pill or polygon narrows near its top and bottom. Put headings and body
+  copy in an inner rectangular safe zone, or clip only the artwork layer while
+  leaving semantic content outside the decorative clip. Never rely on
+  `overflow: hidden` to conceal text that did not fit.
+- **Budget the complete scene.** Heading, body, image, controls, status panels
+  and the desired breathing room above fixed chrome must all fit at settlement.
+  Use `clamp()`, grid/flex relationships, intentional line lengths and a small
+  spacing scale. Reduce gaps or internal panel padding at constrained desktop
+  heights before shrinking the entire scene. Do not hide required content just
+  to satisfy a one-screen composition.
+- **Align optically as well as mathematically.** A photograph with visual weight
+  on one side, a rotated frame or a circular subject may look off-centre even
+  when its bounding box is centered. Use `camera.anchorX`/`anchorY`, a local
+  camera rectangle or `object-position` for that exception; keep the rest of
+  the layout on the shared axes.
+- **Design image and text contrast together.** Reserve negative space in the
+  image composition, add a restrained local gradient when needed, and keep text
+  as HTML instead of baking it into an image. If only a small run crosses a
+  changing light/dark surface, scope the contrast treatment to that run; do not
+  dim the whole photograph or recolor the whole paragraph.
+- **Author compact geometry, do not merely scale desktop.** At the responsive
+  breakpoint, provide compact `x`/`y`/`w`/`h` and override or clear a desktop
+  `camera` target. Recompose the scene for the narrower safe area, preserve
+  readable type and touch targets, and let content flow naturally when it
+  cannot remain a single frame.
+- **Keep the route legible.** Adjacent world positions and transition choices
+  should explain spatial relationships. Use the small Glide/Arc/Dolly/Orbit/
+  Focus grammar, prefer `duration: "auto"`, and reserve large rotation, zoom or
+  curved detours for a meaningful change in hierarchy. Motion should connect
+  compositions, not compensate for inconsistent ones.
+
+Validate **every destination after real navigation**, once the frame reports
+`settled`; the initial render alone proves nothing. At minimum, exercise a
+short desktop viewport, a common desktop viewport and a narrow mobile viewport.
+For each frame, inspect a screenshot and measure the settled surface, copy and
+interactive panels with `getBoundingClientRect()` or Playwright
+`bounding_box()`. Assert that:
+
+- the surface and all required content stay inside the usable viewport;
+- the surface retains visible breathing room above any fixed bottom rail;
+- headings, body text and controls remain inside their rectangular or shaped
+  safe zones without clipping;
+- repeated edges and centers remain aligned from frame to frame;
+- images are decoded, controls remain reachable and the console is clean;
+- the overview still exposes selectable subjects without accidental stacking
+  or an oversized frame hiding the route.
+
+Do not approve a ZoomStage layout from a static world view or a conveniently
+resized screenshot. The acceptance surface is the camera's settled composition
+in Chromium, Firefox and WebKit. `examples/zoom-lab` is the geometry/trajectory
+reference; `examples/vitra-protocol` is the reference for image-led scenes,
+fixed navigation chrome, shaped safe areas and settlement-driven content.
 
 **Free exploration (`freeZoom`)** turns the stage into a roamable canvas:
 scroll or pinch zooms toward the cursor, drag pans (a fast flick glides on with
@@ -2105,6 +2221,14 @@ auto-advances and `onInteract` lets you pause it the moment the viewer grabs the
 canvas; `hashNav` deep-links each frame to the URL hash. See
 [examples/star-atlas](../examples/star-atlas) — a zoomable night sky built on
 `freeZoom` with a guided tour flying between constellations.
+[examples/zoom-lab](../examples/zoom-lab) is the canonical comparison surface
+for the five animated trajectories, automatic duration, non-card shapes,
+independent camera bounds and the flight lifecycle.
+[examples/vitra-protocol](../examples/vitra-protocol) is the combined
+ZoomStage + FluxaWay Motion reference: six domain-componentized scenes use
+settlement-driven entrances, closed small-element loops, glass and non-card
+surfaces, an interactive overview, and an independent final camera target
+measured to keep the complete console above its fixed control rail.
 
 **Frames can legitimately overlap in world space** — an "overview" frame
 that zooms out to show the whole canvas is, by definition, as big as every

@@ -1,0 +1,51 @@
+.vp-assembly {
+  overflow: hidden;
+  padding: 4rem;
+  background: var(--vp-deep);
+  --vp-photo-position: center;
+}
+
+.vp-assembly-photo-group { position: absolute; inset: 0; z-index: 0; overflow: hidden; }
+.vp-assembly-photo::after {
+  background:
+    linear-gradient(90deg, rgb(3 5 6 / 0.97), rgb(3 5 6 / 0.58) 38%, transparent 70%),
+    linear-gradient(0deg, rgb(3 5 6 / 0.36), transparent 42%);
+}
+.vp-assembly-photo-sealed { opacity: 0; }
+.vp-assembly-copy { position: absolute; top: 13%; left: 6%; width: 36%; }
+.vp-assembly-copy h1 { max-width: 8ch; font-size: clamp(3rem, 5.3vw, 5rem); }
+.vp-assembly-panel {
+  position: absolute;
+  right: 4%;
+  bottom: 5%;
+  z-index: 5;
+  display: grid;
+  width: 238px;
+  gap: 1rem;
+  padding: 1.35rem;
+  border: 1px solid rgb(215 238 244 / 0.24);
+  background: rgb(5 8 10 / 0.78);
+  box-shadow: 0 24px 70px rgb(0 0 0 / 0.44);
+  backdrop-filter: blur(14px);
+}
+.vp-assembly-state { display: grid; gap: 0.35rem; padding-bottom: 0.8rem; border-bottom: 1px solid rgb(214 236 242 / 0.2); }
+.vp-assembly-state span { color: var(--vp-muted); font: 800 0.58rem/1 var(--m-font-mono); letter-spacing: 0.16em; }
+.vp-assembly-state strong { color: var(--vp-red-hot); font: 700 1rem/1.2 var(--m-font-mono); }
+.vp-assembly-panel dl { display: grid; margin: 0; }
+.vp-assembly-panel dl div { display: flex; justify-content: space-between; padding: 0.65rem 0; border-bottom: 1px solid rgb(214 236 242 / 0.12); }
+.vp-assembly-panel dt { color: var(--vp-muted); font-size: 0.7rem; }
+.vp-assembly-panel dd { margin: 0; font: 700 0.72rem/1 var(--m-font-mono); }
+.vp-assembly-actions { display: grid; gap: 0.45rem; }
+
+@media (max-width: 760px) {
+  .vp-assembly { padding: 3.5rem 1.5rem 1.5rem; --vp-photo-position: 60% center; }
+  .vp-assembly-photo::after { background: linear-gradient(180deg, rgb(3 5 6 / 0.96), rgb(3 5 6 / 0.5) 42%, transparent 72%); }
+  .vp-assembly-copy { top: 7%; left: 8%; width: 84%; }
+  .vp-assembly-copy h1 { margin-block: 0.6rem; font-size: 2.8rem; }
+  .vp-assembly-copy > p:last-child { display: none; }
+  .vp-assembly-panel { right: 6%; bottom: 4%; width: 88%; grid-template-columns: 0.8fr 1fr; gap: 0.7rem 1rem; padding: 0.85rem; }
+  .vp-assembly-state { padding: 0; border: 0; }
+  .vp-assembly-panel dl div { padding: 0.45rem 0; }
+  .vp-assembly-actions { grid-column: 1 / -1; grid-template-columns: 1fr 1fr; }
+  .vp-assembly-actions .m-button { min-height: 34px; padding-inline: 0.45rem; font-size: 0.65rem; }
+}

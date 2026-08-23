@@ -1,0 +1,23 @@
+.menu-page .demo-section {
+  padding-block: var(--m-space-4);
+}
+
+.menu-page .demo-label {
+  margin-bottom: var(--m-space-3);
+}
+
+.menu-intent-note {
+  max-width: 720px;
+  margin: calc(var(--m-space-1) * -1) 0 var(--m-space-3);
+  color: var(--m-text-muted);
+  line-height: 1.5;
+}
+
+.demo-row.menu-intent-stage {
+  min-height: 44px;
+  align-items: flex-start;
+}
+
+.demo-row.menu-intent-stage:has(> .m-menu > .m-menu-list) {
+  min-height: 190px;
+}

@@ -91,7 +91,12 @@ browser engines.
   decks, pitches, Prezi-style zoom tours, camera flying between frames on an
   infinite canvas (`examples/fluxaway-architecture`, `examples/fluxaway-atlas`). A
   "presentation built with FluxaWay" means a ZoomStage app, not scroll-snap
-  sections or an external slides library
+  sections or an external slides library. V2 trajectories are glide/arc/dolly/
+  orbit/focus/cut with number-or-auto duration; `frame.camera` decouples focus
+  bounds from card/circle/pill/frameless surfaces, `frame.render(state)` exposes
+  departing/arriving/settled, and adjacent image decode prevents arrival flash.
+  Canonical comparison: `examples/zoom-lab`
+  Combined Zoom + Motion reference: `examples/vitra-protocol`
 - `dist/fluxaway-motion.js`: Flash-style timeline animation add-on — USE FOR
   ANIMATION: intros/splashes, keyframes, tweens, easing, staggered
   entrances; never hand-roll rAF loops or suggest GSAP (no CSS — it

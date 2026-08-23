@@ -253,7 +253,9 @@ diffs — insert it where the category links were.
 - **ZoomStage** (`fluxaway-architecture`, `fluxaway-atlas`): frames render; clicking a
   thumbnail/next flies the camera; keyboard (arrows) advances; no error on the
   last→first wrap. `star-atlas` covers `freeZoom` (wheel zoom, drag pan,
-  `fitAll`/`reset`).
+  `fitAll`/`reset`). `zoom-lab` must run Glide, Arc, Dolly, Orbit and Focus with
+  distinct intermediate transforms, one departing/arriving pair, exact
+  settlement, non-card geometry and no blank image or compositor flash.
 - **fluxaway-motion** (`fluxaway-motion`, `motion-landing`, `inox-landing`): the
   intro timeline plays; infinite tracks close their return path and include the
   last stagger offset; `motion-editor` — drag a keyframe, scrub the ruler,

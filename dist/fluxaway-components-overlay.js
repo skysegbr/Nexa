@@ -629,22 +629,24 @@ function getMenuItemButtons(list) {
   return Array.from(list.querySelectorAll(":scope > li > .m-menu-button"));
 }
 
-function MenuItemNode({ item, index, isOpen, onOpenChange, onLeafSelect, listRef, submenu, onCloseToParent }) {
+function MenuItemNode({ item, index, isOpen, menu, onLeafSelect, listRef, submenu, onCloseToParent }) {
   const hasSubmenu = hasChildren(item.children);
   const key = item.key ?? index;
   const submenuRef = useRef(null);
   const buttonRef = useRef(null);
 
-  const openSubmenu = () => onOpenChange(key);
-  const closeSubmenu = () => onOpenChange((current) => (current === key ? null : current));
+  const openSubmenu = () => menu.openNow(key);
 
   return h(
     "li",
     {
       className: "m-menu-item",
       role: "none",
-      onMouseEnter: hasSubmenu ? openSubmenu : undefined,
-      onMouseLeave: hasSubmenu ? closeSubmenu : undefined,
+      // Every row participates in hover intent: leaf rows close an existing
+      // sibling flyout, but only after MenuList determines that the pointer is
+      // no longer travelling toward that flyout.
+      onMouseEnter: (event) => menu.hoverOpen(hasSubmenu ? key : null, event),
+      onMouseLeave: (event) => menu.hoverClose(key, event),
     },
     h(
       "button",
@@ -659,7 +661,7 @@ function MenuItemNode({ item, index, isOpen, onOpenChange, onLeafSelect, listRef
         onClick: () => {
           if (item.disabled) return;
           if (hasSubmenu) {
-            onOpenChange((current) => (current === key ? null : key));
+            menu.openNow(isOpen ? null : key);
             return;
           }
           onLeafSelect(item);
@@ -700,15 +702,128 @@ function MenuItemNode({ item, index, isOpen, onOpenChange, onLeafSelect, listRef
         onLeafSelect,
         submenu: true,
         onCloseToParent: () => {
-          closeSubmenu();
+          menu.openNow(null);
           buttonRef.current?.focus();
         },
       }),
   );
 }
 
+const SUBMENU_AIM_DELAY = 120;
+const SUBMENU_CLOSE_DELAY = 150;
+const SUBMENU_AIM_TOLERANCE = 16;
+const SUBMENU_MOUSE_LOCATIONS = 3;
+
 function MenuList({ items, listRef, onLeafSelect, submenu = false, onCloseToParent, id, className = "" }) {
   const [openKey, setOpenKey] = useState(null);
+  const openKeyRef = useRef(null);
+  const switchTimer = useRef(null);
+  const closeTimer = useRef(null);
+  const mouseLocations = useRef([]);
+  const lastAimLocation = useRef(null);
+
+  const cancelHoverTimers = () => {
+    if (switchTimer.current) {
+      clearTimeout(switchTimer.current);
+      switchTimer.current = null;
+    }
+    if (closeTimer.current) {
+      clearTimeout(closeTimer.current);
+      closeTimer.current = null;
+    }
+  };
+
+  const openNow = (key) => {
+    cancelHoverTimers();
+    lastAimLocation.current = null;
+    openKeyRef.current = key;
+    setOpenKey(key);
+  };
+
+  const trackMouse = (event) => {
+    if (!Number.isFinite(event?.clientX) || !Number.isFinite(event?.clientY)) return;
+    const location = { x: event.clientX, y: event.clientY };
+    const locations = mouseLocations.current;
+    const latest = locations[locations.length - 1];
+    if (latest?.x === location.x && latest?.y === location.y) return;
+    mouseLocations.current = [...locations, location].slice(-SUBMENU_MOUSE_LOCATIONS);
+  };
+
+  // This is the classic menu-aim slope test. A fixed delay only protects fast
+  // diagonal travel; repeatedly returning a delay while the pointer advances
+  // through this corridor protects slow travel too. Once the pointer stops or
+  // turns away, the pending sibling activates without an arbitrary long lag.
+  const submenuAimDelay = () => {
+    if (openKeyRef.current === null) return 0;
+
+    const locations = mouseLocations.current;
+    const current = locations[locations.length - 1];
+    const previous = locations[0];
+    const submenuNode = listRef.current?.querySelector(":scope > .m-menu-item > .m-menu-list-submenu");
+    if (!current || !previous || !submenuNode) return 0;
+    if (current.x === previous.x && current.y === previous.y) return 0;
+    if (current.x >= submenuNode.getBoundingClientRect().left) return 0;
+
+    const last = lastAimLocation.current;
+    if (last?.x === current.x && last?.y === current.y) return 0;
+
+    const rect = submenuNode.getBoundingClientRect();
+    const upper = { x: rect.left, y: rect.top - SUBMENU_AIM_TOLERANCE };
+    const lower = { x: rect.left, y: rect.bottom + SUBMENU_AIM_TOLERANCE };
+    const slope = (from, to) => (to.y - from.y) / Math.max(1, to.x - from.x);
+    const movingTowardSubmenu =
+      slope(current, upper) < slope(previous, upper) &&
+      slope(current, lower) > slope(previous, lower);
+
+    if (!movingTowardSubmenu) {
+      lastAimLocation.current = null;
+      return 0;
+    }
+
+    lastAimLocation.current = current;
+    return SUBMENU_AIM_DELAY;
+  };
+
+  const hoverOpen = (key, event) => {
+    trackMouse(event);
+    cancelHoverTimers();
+    if (openKeyRef.current === null || openKeyRef.current === key) {
+      openNow(key);
+      return;
+    }
+
+    const possiblyOpen = () => {
+      const delay = submenuAimDelay();
+      if (delay) {
+        switchTimer.current = setTimeout(possiblyOpen, delay);
+        return;
+      }
+      openNow(key);
+    };
+    possiblyOpen();
+  };
+
+  const hoverClose = (key, event) => {
+    trackMouse(event);
+    cancelHoverTimers();
+
+    const possiblyClose = () => {
+      if (openKeyRef.current !== key) return;
+      const delay = submenuAimDelay();
+      if (delay) {
+        closeTimer.current = setTimeout(possiblyClose, delay);
+        return;
+      }
+      if (openKeyRef.current === key) {
+        openNow(null);
+      }
+    };
+    closeTimer.current = setTimeout(possiblyClose, SUBMENU_CLOSE_DELAY);
+  };
+
+  useEffect(() => cancelHoverTimers, []);
+
+  const menu = { openNow, hoverOpen, hoverClose };
 
   return h(
     "ul",
@@ -717,6 +832,7 @@ function MenuList({ items, listRef, onLeafSelect, submenu = false, onCloseToPare
       id,
       className: joinClasses("m-menu-list", submenu && "m-menu-list-submenu", className),
       role: "menu",
+      onMouseMove: trackMouse,
     },
     items.map((item, index) =>
       item.divider
@@ -730,7 +846,7 @@ function MenuList({ items, listRef, onLeafSelect, submenu = false, onCloseToPare
             item,
             index,
             isOpen: openKey === (item.key ?? index),
-            onOpenChange: setOpenKey,
+            menu,
             onLeafSelect,
             listRef,
             submenu,

@@ -5,7 +5,12 @@
 
 import { h, render, unmount, useState } from "../dist/fluxaway.js";
 import { PipelineCanvas } from "../dist/fluxaway-canvas.js";
-import { ZoomStage } from "../dist/fluxaway-zoom.js";
+import {
+  ZOOM_SHAPES,
+  ZOOM_SURFACES,
+  ZOOM_TRANSITIONS,
+  ZoomStage,
+} from "../dist/fluxaway-zoom.js";
 import { test, assert, assertEqual, mountPoint, flush } from "./runner.js";
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -293,6 +298,102 @@ test("ZoomStage: mount fits the camera to the first frame", async () => {
     "translate(200px, 150px) scale(1) rotate(0deg) translate(-200px, -150px)",
     "expected the camera to frame the initial frame exactly",
   );
+});
+
+test("ZoomStage: v2 exposes motion presets and becomes visible only after its camera is ready", async () => {
+  const container = mountPoint();
+  render(zoomApp(), container);
+  await flush();
+
+  assertEqual(ZOOM_TRANSITIONS.join(","), "glide,arc,dolly,orbit,focus,cut");
+  assertEqual(ZOOM_SURFACES.join(","), "card,none,glass");
+  assertEqual(ZOOM_SHAPES.join(","), "rect,circle,pill");
+  assert(container.querySelector(".m-zoom-stage-ready"), "the fitted stage must reveal its world");
+  assertEqual(container.querySelector('[data-zoom-frame-id="intro"]').dataset.zoomPhase, "settled");
+});
+
+test("ZoomStage: camera targets, surfaces, shapes and state-aware renderers stay independent", async () => {
+  const container = mountPoint();
+  const states = [];
+  const frames = [{
+    id: "subject",
+    x: 20,
+    y: 30,
+    w: 240,
+    h: 240,
+    camera: { cx: 100, cy: 80, scale: 1.5, rotate: 12 },
+    surface: "none",
+    shape: "circle",
+    frameClassName: "subject-frame",
+    render: (state) => {
+      states.push(state.phase);
+      return h("span", null, "subject");
+    },
+  }];
+  render(() => h(ZoomStage, { frames, padding: 0, style: CANVAS_SIZE }), container);
+  await flush();
+
+  const frame = container.querySelector(".subject-frame");
+  assert(frame.classList.contains("m-zoom-frame-surface-none"));
+  assert(frame.classList.contains("m-zoom-frame-shape-circle"));
+  assert(states.includes("settled"), "the renderer receives the settled lifecycle phase");
+  assertEqual(
+    container.querySelector(".m-zoom-world").style.transform,
+    "translate(200px, 150px) scale(1.5) rotate(-12deg) translate(-100px, -80px)",
+  );
+});
+
+test("ZoomStage: a flight reports departing, arriving and settled without remounting frames", async () => {
+  const container = mountPoint();
+  const controllerRef = { current: null };
+  const starts = [];
+  const ends = [];
+  render(zoomApp({
+    controllerRef,
+    duration: 48,
+    transition: "arc",
+    onTransitionStart: (event) => starts.push(event),
+    onTransitionEnd: (event) => ends.push(event),
+  }), container);
+  await flush();
+
+  controllerRef.current.next();
+  await flush();
+  assert(container.querySelector(".m-zoom-stage-moving"));
+  assert(container.querySelector('[data-zoom-frame-id="intro"]').classList.contains("m-zoom-frame-departing"));
+  assert(container.querySelector('[data-zoom-frame-id="detail"]').classList.contains("m-zoom-frame-arriving"));
+  assertEqual(starts[0].preset, "arc");
+
+  await sleep(90);
+  await flush();
+  assert(!container.querySelector(".m-zoom-stage-moving"));
+  assert(container.querySelector('[data-zoom-frame-id="detail"]').classList.contains("m-zoom-frame-settled"));
+  assertEqual(controllerRef.current.settledIndex, 1);
+  assertEqual(controllerRef.current.moving, false);
+  assertEqual(ends[0].to.id, "detail");
+  assert(typeof controllerRef.current.prepare === "function");
+});
+
+test("ZoomStage: grabbing the free camera cancels flight state instead of leaving the stage moving", async () => {
+  const container = mountPoint();
+  const controllerRef = { current: null };
+  render(zoomApp({ controllerRef, freeZoom: true, duration: 240 }), container);
+  await flush();
+
+  controllerRef.current.next();
+  await flush();
+  const stage = container.querySelector(".m-zoom-stage");
+  assert(stage.classList.contains("m-zoom-stage-moving"));
+  stage.dispatchEvent(new WheelEvent("wheel", {
+    deltaY: -100,
+    clientX: 200,
+    clientY: 150,
+    bubbles: true,
+    cancelable: true,
+  }));
+  await flush();
+  assert(!stage.classList.contains("m-zoom-stage-moving"));
+  assertEqual(controllerRef.current.moving, false);
 });
 
 test("ZoomStage: de-promotes an oversized world so it can't tile and flicker", async () => {

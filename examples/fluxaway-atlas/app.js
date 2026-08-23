@@ -40,7 +40,10 @@ function App() {
       onIndexChange: setIndex,
       controllerRef,
       className: "atl-stage",
-      duration: 900,
+      duration: "auto",
+      transition: ({ to }) => to.id === "overview"
+        ? { preset: "dolly", lift: 0.2 }
+        : { preset: "arc", curve: 0.18 },
     }),
     h(Compass, { index, total: frames.length, label, controllerRef }),
   );

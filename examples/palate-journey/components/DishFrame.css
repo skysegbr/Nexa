@@ -2,13 +2,20 @@
 .pj-photo-wrap { position: absolute; top: 0; bottom: 0; width: 58%; overflow: hidden; background: #201712; }
 .pj-copy-left .pj-photo-wrap { right: 0; }
 .pj-copy-right .pj-photo-wrap { left: 0; }
-.pj-photo { width: 100%; height: 100%; object-fit: cover; will-change: transform, opacity; }
+.pj-photo { width: 100%; height: 100%; object-fit: cover; }
+.m-zoom-frame:is(.m-zoom-frame-departing, .m-zoom-frame-arriving, .m-zoom-frame-settled) .pj-photo { will-change: transform, opacity; }
 .pj-dish-aperitivo .pj-photo { object-position: 50% 56%; }
 .pj-dish-garden .pj-photo { object-position: 50% 50%; }
 .pj-dish-sushi .pj-photo { object-position: 50% 68%; }
 .pj-dish-carbonara .pj-photo { object-position: 50% 70%; }
 .pj-dish-ember .pj-photo { object-position: 53% 55%; }
-.pj-dish-wine .pj-photo { object-position: 50% 52%; }
+.pj-dish-wine .pj-photo-wrap { background: #05050a; }
+.pj-dish-wine .pj-photo {
+  height: 96%;
+  margin-block: 2%;
+  object-fit: contain;
+  object-position: 50% 50%;
+}
 .pj-dish-cheese .pj-photo { object-position: 58% 50%; }
 .pj-dish-dessert .pj-photo { object-position: 60% 50%; }
 .pj-dish-coffee .pj-photo { object-position: 54% 50%; }

@@ -1,0 +1,19 @@
+.vp-scene { position: relative; width: 100%; height: 100%; color: var(--vp-steel-0); transition: opacity 180ms ease; }
+.vp-scene-inner { position: relative; width: 100%; height: 100%; overflow: hidden; }
+.vp-scene-copy { position: relative; z-index: 4; }
+.vp-scene-index,
+.vp-scene-eyebrow { font-family: var(--m-font-mono); font-weight: 800; letter-spacing: 0.2em; text-transform: uppercase; }
+.vp-scene-index { color: var(--vp-red-hot); font-size: 0.68rem; }
+.vp-scene-eyebrow { color: var(--vp-steel-1); font-size: 0.62rem; }
+.vp-scene h1 { margin: 1rem 0; color: var(--vp-steel-0); font-size: clamp(3rem, 6.5vw, 6rem); font-weight: 520; letter-spacing: -0.07em; line-height: 0.9; }
+.vp-scene p { max-width: 36rem; margin: 0; color: var(--vp-steel-1); font-size: 1.02rem; line-height: 1.65; }
+.vp-red-line { display: inline-block; width: 54px; height: 2px; margin-right: 14px; background: linear-gradient(90deg, var(--vp-red-deep), var(--vp-red-hot)); box-shadow: 0 0 18px rgb(255 54 90 / 0.55); vertical-align: middle; }
+
+.vp-app:not(.vp-app-overview) .vp-scene[data-phase="idle"] { opacity: 0; pointer-events: none; }
+
+.vp-scene-selectable { cursor: zoom-in; transition: opacity 160ms ease, box-shadow 160ms ease; }
+.vp-app-overview:has(.vp-scene-selectable:hover, .vp-scene-selectable:focus-visible)
+  .vp-scene-selectable:not(:hover, :focus-visible) { opacity: 0.28; }
+.vp-scene-selectable:hover,
+.vp-scene-selectable:focus-visible { box-shadow: 0 0 0 10px rgb(255 54 90 / 0.18) inset, 0 0 90px rgb(255 54 90 / 0.16) inset; }
+.vp-scene-selectable:focus-visible { outline: 3px solid var(--vp-red-hot); outline-offset: 10px; }

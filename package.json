@@ -1,6 +1,6 @@
 {
   "name": "fluxaway",
-  "version": "0.24.1",
+  "version": "0.24.2",
   "description": "The no-build UI framework. Code flows. Your way.",
   "private": true,
   "//": "NOT an npm package and never will be — FluxaWay has a strict no-Node policy (see 'No Node, By Design' in README.md). This file exists only so editors and TypeScript resolve the module type and type declarations. Distribution is vendored dist/ files or the jsDelivr CDN.",

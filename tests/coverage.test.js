@@ -1079,6 +1079,82 @@ test("Menu: hovering a parent item opens its submenu; selecting a nested leaf ca
   assertEqual(container.querySelector(".m-menu-list"), null, "selecting a leaf closes the entire menu");
 });
 
+test("Menu: diagonal pointer travel toward an open flyout does not activate a sibling submenu", async () => {
+  const container = mountPoint();
+  const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+  function Widget() {
+    return h(Menu, {
+      trigger: h(Button, null, "File"),
+      items: [
+        {
+          key: "recent",
+          label: "Open Recent",
+          children: [
+            { key: "a", label: "project-a.js" },
+            { key: "b", label: "project-b.js" },
+            { key: "c", label: "project-c.js" },
+          ],
+        },
+        {
+          key: "settings",
+          label: "Settings",
+          children: [{ key: "prefs", label: "Preferences" }],
+        },
+      ],
+    });
+  }
+
+  render(Widget, container);
+  await flush();
+  container.querySelector(".m-menu-trigger").click();
+  await flush();
+
+  const rootList = container.querySelector(".m-menu-list");
+  const parentItems = rootList.querySelectorAll(":scope > .m-menu-item");
+  const recentItem = parentItems[0];
+  const settingsItem = parentItems[1];
+  recentItem.dispatchEvent(new MouseEvent("mouseenter"));
+  await flush();
+
+  const flyout = container.querySelector(".m-menu-list-submenu");
+  const flyoutRect = flyout.getBoundingClientRect();
+  const flyoutMiddle = flyoutRect.top + flyoutRect.height / 2;
+  const entry = {
+    clientX: flyoutRect.left - 120,
+    clientY: flyoutMiddle - 35,
+  };
+  for (let step = 0; step < 3; step += 1) {
+    const approach = {
+      clientX: flyoutRect.left - 180 + step * 20,
+      clientY: flyoutMiddle - 65 + step * 15,
+    };
+    rootList.dispatchEvent(new MouseEvent("mousemove", { ...approach, bubbles: true }));
+  }
+  settingsItem.dispatchEvent(new MouseEvent("mouseenter", { ...entry }));
+  await flush();
+  assertEqual(
+    container.querySelector(".m-menu-list > .m-menu-item .m-menu-button").getAttribute("aria-expanded"),
+    "true",
+    "entering a sibling along the flyout corridor keeps the current submenu open",
+  );
+
+  // Keep advancing toward the flyout for longer than the old one-shot 120ms
+  // delay. A fixed timeout activates Settings here; trajectory-aware intent
+  // keeps Open Recent mounted until the pointer reaches it.
+  for (let step = 1; step <= 4; step += 1) {
+    const point = {
+      clientX: entry.clientX + step * 20,
+      clientY: entry.clientY + step * 10,
+    };
+    rootList.dispatchEvent(new MouseEvent("mousemove", { ...point, bubbles: true }));
+    await sleep(70);
+  }
+
+  assertEqual(recentItem.querySelector(".m-menu-button").getAttribute("aria-expanded"), "true");
+  assert(container.querySelector(".m-menu-list-submenu .m-menu-button")?.textContent.includes("project-a.js"));
+});
+
 test("Menu: ArrowRight opens a submenu and focuses its first item; ArrowLeft closes it and returns focus to the parent", async () => {
   const container = mountPoint();
 

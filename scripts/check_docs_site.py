@@ -151,6 +151,8 @@ def run(browser_type, base: str) -> list[str]:
         "/examples/ssr/",
         "/examples/star-atlas/",
         "/examples/storefront/",
+        "/examples/vitra-protocol/",
+        "/examples/zoom-lab/",
     ]
     examples_trigger = desktop.locator(".nd-header-examples-trigger")
     examples_trigger.click()
@@ -169,7 +171,7 @@ def run(browser_type, base: str) -> list[str]:
     desktop.keyboard.press("Escape")
     expect(desktop.locator("#docs-examples-menu").count() == 0, "Escape did not close examples")
     expect(examples_trigger.evaluate("(button) => document.activeElement === button"), "focus not restored")
-    passed.append("examples menu matches all 22 build links and supports keyboard navigation")
+    passed.append("examples menu matches all 24 build links and supports keyboard navigation")
 
     desktop.locator('.nd-sidebar-link[href="#/getting-started"]').click()
     desktop.wait_for_function("() => document.querySelector('h1')?.textContent === 'Getting started'")
@@ -247,14 +249,14 @@ def run(browser_type, base: str) -> list[str]:
           };
         }"""
     )
-    expect(source_catalog["count"] == 15, "source viewer catalog is incomplete")
+    expect(source_catalog["count"] == 17, "source viewer catalog is incomplete")
     expect(not source_catalog["failed"], f"source viewer files failed: {source_catalog['failed']}")
-    expect(source_catalog["resourceCount"] == 13, "add-on resource catalog is incomplete")
+    expect(source_catalog["resourceCount"] == 15, "add-on resource catalog is incomplete")
     expect(
         not source_catalog["missingResources"],
         f"resources outside CodeEditor: {source_catalog['missingResources']}",
     )
-    expect(source_catalog["previewCount"] == 7, "example viewers are missing demo actions")
+    expect(source_catalog["previewCount"] == 9, "example viewers are missing demo actions")
 
     open_route(desktop, base, "/source/motion-runtime-example", "Runtime showcase source")
     desktop.wait_for_selector(".nd-source-editor .CodeMirror")
@@ -448,6 +450,100 @@ def run(browser_type, base: str) -> list[str]:
     expect(catalog["mismatched"] == 0, f"{catalog['mismatched']} catalog modules do not match metadata")
     expect(catalog["unique"] == catalog["count"], "catalog contains duplicate slugs")
     passed.append("catalog metadata matches all 107 lazy entries")
+
+    zoom_lab = desktop.context.browser.new_page(viewport={"width": 1440, "height": 900})
+    zoom_errors: list[str] = []
+    zoom_lab.on("pageerror", lambda error: zoom_errors.append(str(error)))
+    zoom_lab.on(
+        "console",
+        lambda msg: zoom_errors.append(msg.text) if msg.type == "error" else None,
+    )
+    zoom_lab.goto(base.replace("/examples/docs-site/", "/examples/zoom-lab/"), wait_until="load")
+    zoom_lab.wait_for_selector(".m-zoom-stage-ready")
+    expect(
+        zoom_lab.get_by_role("button", name="Glide", exact=True).get_attribute("aria-pressed") == "true",
+        "Zoom Motion Lab did not identify its initial Glide preset",
+    )
+    zoom_lab.get_by_role("button", name="Dolly", exact=True).click()
+    zoom_lab.wait_for_selector(".m-zoom-stage-moving")
+    zoom_lab.wait_for_selector(".m-zoom-stage:not(.m-zoom-stage-moving)", timeout=4500)
+    expect(
+        zoom_lab.locator(
+            '[data-zoom-frame-id="dolly-gate"][data-zoom-phase="settled"]'
+        ).count() == 1,
+        "Zoom Motion Lab Dolly preset did not land on the Dolly frame",
+    )
+    expect(
+        zoom_lab.get_by_role("button", name="Dolly", exact=True).get_attribute("aria-pressed") == "true",
+        "Zoom Motion Lab did not keep the Dolly preset active",
+    )
+    expect(
+        zoom_lab.get_by_role("button", name="Focus", exact=True).get_attribute("aria-pressed") == "false",
+        "Zoom Motion Lab incorrectly left Focus active",
+    )
+    zoom_lab.get_by_role("button", name="Fit world", exact=True).click()
+    expect(
+        zoom_lab.get_by_role("button", name="Fit world", exact=True).get_attribute("aria-pressed") == "true",
+        "Zoom Motion Lab did not expose its active world overview",
+    )
+    expect(
+        zoom_lab.locator(".zl-scene-selectable").count() == 5,
+        "Zoom Motion Lab did not make every overview frame selectable",
+    )
+    zoom_lab.get_by_role("button", name="Open frame: Dolly", exact=True).click()
+    zoom_lab.wait_for_selector(".m-zoom-stage-moving")
+    zoom_lab.wait_for_selector(".m-zoom-stage:not(.m-zoom-stage-moving)", timeout=4500)
+    expect(
+        zoom_lab.locator(
+            '[data-zoom-frame-id="dolly-gate"][data-zoom-phase="settled"]'
+        ).count() == 1,
+        "Zoom Motion Lab overview did not refocus its previously selected frame",
+    )
+    expect(
+        zoom_lab.get_by_role("button", name="Dolly", exact=True).get_attribute("aria-pressed") == "true",
+        "Zoom Motion Lab overview selection did not preserve the Dolly preset",
+    )
+    expect(
+        zoom_lab.locator(".zl-scene-selectable").count() == 0,
+        "Zoom Motion Lab left frames interactive after leaving the overview",
+    )
+    expect(not zoom_errors, "Zoom Motion Lab browser errors: " + " | ".join(zoom_errors))
+    zoom_lab.close()
+    passed.append("Zoom Motion Lab presets and overview selections focus their matching frames")
+
+    vitra = desktop.context.browser.new_page(viewport={"width": 1440, "height": 900})
+    vitra_errors: list[str] = []
+    vitra.on("pageerror", lambda error: vitra_errors.append(str(error)))
+    vitra.on(
+        "console",
+        lambda msg: vitra_errors.append(msg.text) if msg.type == "error" else None,
+    )
+    vitra.goto(base.replace("/examples/docs-site/", "/examples/vitra-protocol/"), wait_until="load")
+    vitra.wait_for_selector(".m-zoom-stage-ready")
+    vitra.get_by_role("button", name="Glass vessel", exact=True).click()
+    vitra.wait_for_selector(".m-zoom-stage-moving")
+    vitra.wait_for_selector(".m-zoom-stage:not(.m-zoom-stage-moving)", timeout=5000)
+    expect(
+        vitra.locator('[data-zoom-frame-id="vessel"][data-zoom-phase="settled"]').count() == 1,
+        "VITRA Protocol did not settle on its selected glass scene",
+    )
+    vitra.get_by_role("button", name="Final protocol", exact=True).click()
+    vitra.wait_for_selector(".m-zoom-stage-moving")
+    vitra.wait_for_selector(".m-zoom-stage:not(.m-zoom-stage-moving)", timeout=5000)
+    vitra.wait_for_timeout(1800)
+    vitra_fit = vitra.evaluate(
+        """() => {
+          const stage = document.querySelector(".vp-stage").getBoundingClientRect();
+          const console = document.querySelector(".vp-protocol-console").getBoundingClientRect();
+          return console.top >= stage.top - 1 && console.bottom <= stage.bottom + 1;
+        }"""
+    )
+    expect(vitra_fit, "VITRA final camera target clips its complete protocol console")
+    vitra.get_by_role("button", name="Fit system", exact=True).click()
+    expect(vitra.locator(".vp-scene-selectable").count() == 6, "VITRA overview is not selectable")
+    expect(not vitra_errors, "VITRA Protocol browser errors: " + " | ".join(vitra_errors))
+    vitra.close()
+    passed.append("VITRA Protocol combines settled Motion scenes with selectable ZoomStage overview")
 
     expect(not errors, "browser errors: " + " | ".join(errors))
     expect(not failed_responses, "failed responses: " + " | ".join(failed_responses))

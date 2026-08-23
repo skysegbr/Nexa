@@ -33,6 +33,8 @@ export const EXAMPLE_LINKS = [
   { label: "SSR", href: "/examples/ssr/" },
   { label: "Star Atlas", href: "/examples/star-atlas/" },
   { label: "Storefront", href: "/examples/storefront/" },
+  { label: "VITRA Protocol", href: "/examples/vitra-protocol/" },
+  { label: "Zoom Motion Lab", href: "/examples/zoom-lab/" },
 ];
 
 export const QUICK_START = `<!doctype html>

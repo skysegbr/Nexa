@@ -1,0 +1,37 @@
+@import url("./components/SceneFrame.css");
+@import url("./components/MotionConsole.css");
+
+:root {
+  color-scheme: dark;
+  --zl-bg: #05070c;
+  --zl-text: #f4f7fb;
+  --zl-muted: #99a8b9;
+  --zl-cyan: #75e2ff;
+  --zl-violet: #8f76ff;
+  --zl-signal: #ff4f75;
+}
+
+* { box-sizing: border-box; }
+html, body, #app { width: 100%; height: 100%; }
+body { margin: 0; overflow: hidden; background: var(--zl-bg); color: var(--zl-text); font-family: var(--m-font); }
+button { font: inherit; }
+
+.zl-app { position: relative; width: 100%; height: 100%; overflow: hidden; background: var(--zl-bg); }
+.zl-stage { position: absolute; inset: 0; background:
+  radial-gradient(circle at 50% 48%, rgb(117 226 255 / 0.08), transparent 34rem),
+  linear-gradient(rgb(117 226 255 / 0.035) 1px, transparent 1px),
+  linear-gradient(90deg, rgb(117 226 255 / 0.035) 1px, transparent 1px),
+  var(--zl-bg);
+  background-size: auto, 72px 72px, 72px 72px, auto;
+}
+
+.zl-stage .m-zoom-frame { transition: border-color 280ms ease, box-shadow 280ms ease; }
+.zl-stage .m-zoom-frame-active { border-color: color-mix(in srgb, var(--zl-cyan) 65%, transparent); }
+
+.zl-coordinate { position: fixed; z-index: 10; pointer-events: none; background: rgb(117 226 255 / 0.12); }
+.zl-coordinate-x { top: 50%; right: 0; left: 0; height: 1px; }
+.zl-coordinate-y { top: 0; bottom: 0; left: 50%; width: 1px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .zl-stage .m-zoom-frame { transition: none; }
+}

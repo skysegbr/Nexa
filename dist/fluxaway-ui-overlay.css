@@ -477,7 +477,25 @@
 .m-menu-list-submenu {
   top: calc(var(--m-space-1) * -1);
   left: 100%;
+  z-index: calc(var(--m-z-dropdown) + 1);
   margin-left: 2px;
+  /* The 3px overlap with the parent list is intentional: this directional
+     edge shadow makes the flyout read as a raised plane instead of a layout
+     collision, while the regular dropdown shadow preserves elevation. */
+  box-shadow:
+    -10px 0 18px -12px rgb(0 0 0 / 0.52),
+    var(--m-shadow-3);
+}
+
+/* Invisible bridge over the 2px visual gap. Because the flyout is a child of
+   the item, this keeps pointer travel inside the owning <li>. */
+.m-menu-list-submenu::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -8px;
+  width: 8px;
 }
 
 .m-menu-item { position: relative; }
