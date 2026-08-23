@@ -10,8 +10,8 @@ const ENTRANCE = {
   },
 };
 
-export function ThresholdScene({ scene, active }) {
-  const entrance = useSceneEntrance(ENTRANCE, active);
+export function ThresholdScene({ scene, active, phase }) {
+  const entrance = useSceneEntrance(ENTRANCE, active, phase);
   const [bodyBefore = scene.body, bodyAfter = ""] = scene.contrastText
     ? scene.body.split(scene.contrastText)
     : [scene.body];

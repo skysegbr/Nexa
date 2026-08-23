@@ -17,8 +17,8 @@ const ENTRANCE = {
   },
 };
 
-export function ProtocolScene({ scene, active }) {
-  const entrance = useSceneEntrance(ENTRANCE, active);
+export function ProtocolScene({ scene, active, phase }) {
+  const entrance = useSceneEntrance(ENTRANCE, active, phase);
   const beacon = useTimeline({
     duration: 3200,
     loop: true,

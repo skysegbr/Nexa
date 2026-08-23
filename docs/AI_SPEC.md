@@ -2129,7 +2129,12 @@ const frame = {
 there. Never reset an incoming frame's Motion timeline merely because it became
 selected: doing that blanks content while the camera is still travelling and
 looks like a transition flicker. Start its entrance at `settled`, keep departing
-content in its readable resting state, and preload adjacent imagery.
+content in its readable resting state, and preload adjacent imagery. For an
+image-led scene, prepare the incoming timeline at its first frame during
+`arriving` and cover it with a lightweight blurred preview of the decoded image.
+Fade and deblur that preview only after `settled` starts the real entrance. This
+prevents the finished composition from flashing for one paint before an effect
+rewinds the timeline; do not apply the blur to the complete ZoomStage world.
 
 #### ZoomStage composition and viewport contract
 

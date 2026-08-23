@@ -28,6 +28,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   proportional geometry, shaped safe areas, fixed chrome and responsive fit.
 
 ### Fixed
+- VITRA scene flights no longer expose the finished destination before its
+  entrance begins. Incoming timelines are prepared at their first frame behind
+  a decoded, blurred image preview that deblurs and fades as the camera settles;
+  departing scenes remain readable and reduced-motion visits stay immediate.
 - `Menu` submenus are actually reachable with the mouse. Two compounding
   bugs: the 2px visual gap between an item and its flyout fired `mouseleave`
   mid-crossing (fixed with an invisible `::before` hover bridge over the

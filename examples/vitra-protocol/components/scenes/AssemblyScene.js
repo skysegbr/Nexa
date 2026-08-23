@@ -13,9 +13,9 @@ const ENTRANCE = {
   },
 };
 
-export function AssemblyScene({ scene, active }) {
+export function AssemblyScene({ scene, active, phase }) {
   const [status, setStatus] = useState("standby");
-  const entrance = useSceneEntrance(ENTRANCE, active);
+  const entrance = useSceneEntrance(ENTRANCE, active, phase);
   const assembly = useTimeline({
     duration: 2600,
     autoplay: false,

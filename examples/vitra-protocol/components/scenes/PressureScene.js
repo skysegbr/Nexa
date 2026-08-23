@@ -10,8 +10,8 @@ const ENTRANCE = {
   },
 };
 
-export function PressureScene({ scene, active }) {
-  const entrance = useSceneEntrance(ENTRANCE, active);
+export function PressureScene({ scene, active, phase }) {
+  const entrance = useSceneEntrance(ENTRANCE, active, phase);
 
   return h(
     "article",

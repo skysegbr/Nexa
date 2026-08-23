@@ -35,6 +35,15 @@ export function SceneContent({ scene, state, selectable = false, onSelect }) {
       onClick: selectable ? onSelect : undefined,
       onKeyDown: selectable ? onKeyDown : undefined,
     },
-    h(Scene, { scene, active: state.settled }),
+    h(Scene, { scene, active: state.settled, phase: state.phase }),
+    h("div", { className: "vp-scene-flight-preview", ariaHidden: "true" },
+      h("img", {
+        src: scene.image,
+        alt: "",
+        loading: "eager",
+        decoding: "async",
+        draggable: false,
+      }),
+    ),
   );
 }

@@ -9,6 +9,48 @@
 .vp-scene p { max-width: 36rem; margin: 0; color: var(--vp-steel-1); font-size: 1.02rem; line-height: 1.65; }
 .vp-red-line { display: inline-block; width: 54px; height: 2px; margin-right: 14px; background: linear-gradient(90deg, var(--vp-red-deep), var(--vp-red-hot)); box-shadow: 0 0 18px rgb(255 54 90 / 0.55); vertical-align: middle; }
 
+.vp-scene-flight-preview {
+  position: absolute;
+  inset: 0;
+  z-index: 12;
+  overflow: hidden;
+  background: var(--vp-deep);
+  opacity: 0;
+  filter: blur(0) saturate(0.88) brightness(0.78);
+  transform: scale(1.01);
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    opacity 460ms ease,
+    filter 520ms ease,
+    transform 520ms ease,
+    visibility 0s linear 520ms;
+}
+.vp-scene-flight-preview img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  user-select: none;
+}
+.vp-scene-flight-preview::after {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 52% 48%, transparent 30%, rgb(3 5 6 / 0.25) 100%),
+    linear-gradient(90deg, rgb(3 5 6 / 0.32), transparent 45%, rgb(104 7 24 / 0.08));
+  content: "";
+}
+.vp-scene[data-phase="arriving"] .vp-scene-flight-preview {
+  opacity: 0.94;
+  filter: blur(16px) saturate(0.68) brightness(0.62);
+  transform: scale(1.055);
+  visibility: visible;
+  transition-delay: 0s;
+}
+.vp-scene[data-scene="pressure"] .vp-scene-flight-preview img { object-position: 58% center; }
+
 .vp-app:not(.vp-app-overview) .vp-scene[data-phase="idle"] { opacity: 0; pointer-events: none; }
 
 .vp-scene-selectable { cursor: zoom-in; transition: opacity 160ms ease, box-shadow 160ms ease; }
@@ -17,3 +59,15 @@
 .vp-scene-selectable:hover,
 .vp-scene-selectable:focus-visible { box-shadow: 0 0 0 10px rgb(255 54 90 / 0.18) inset, 0 0 90px rgb(255 54 90 / 0.16) inset; }
 .vp-scene-selectable:focus-visible { outline: 3px solid var(--vp-red-hot); outline-offset: 10px; }
+
+@media (max-width: 760px) {
+  .vp-scene[data-scene="threshold"] .vp-scene-flight-preview img { object-position: 64% center; }
+  .vp-scene[data-scene="vessel"] .vp-scene-flight-preview img { object-position: 68% center; }
+  .vp-scene[data-scene="pressure"] .vp-scene-flight-preview img { object-position: 62% 35%; }
+  .vp-scene[data-scene="assembly"] .vp-scene-flight-preview img { object-position: 60% center; }
+  .vp-scene[data-scene="protocol"] .vp-scene-flight-preview img { object-position: 68% center; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vp-scene-flight-preview { display: none; }
+}
